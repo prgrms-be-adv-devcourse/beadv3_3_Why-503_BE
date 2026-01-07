@@ -9,7 +9,7 @@ ext {
 
 group = 'io.why503'
 version = '0.0.1-SNAPSHOT'
-description = 'reservation-service'
+description = 'ticket-service'
 
 java {
     toolchain {

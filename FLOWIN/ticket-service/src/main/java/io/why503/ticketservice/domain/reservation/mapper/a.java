@@ -1,4 +1,4 @@
-package io.why503.reservationservice.domain.reservation.mapper;
+package io.why503.ticketservice.domain.reservation.mapper;
 
 public class a {
 }

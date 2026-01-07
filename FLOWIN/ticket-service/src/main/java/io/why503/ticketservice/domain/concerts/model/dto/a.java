@@ -1,4 +1,4 @@
-package io.why503.reservationservice.domain.concerts.model.dto;
+package io.why503.ticketservice.domain.concerts.model.dto;
 
 public class a {
 }

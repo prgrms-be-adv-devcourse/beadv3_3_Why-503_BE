@@ -1,4 +1,4 @@
-package io.why503.reservationservice.domain.concerts.service;
+package io.why503.ticketservice.domain.concerts.service;
 
 public class a {
 }

@@ -1,6 +1,6 @@
-package io.why503.reservationservice.domain.show.model.entity;
+package io.why503.ticketservice.domain.show.model.entity;
 
-import io.why503.reservationservice.domain.concerts.model.entity.ConcertHall;
+import io.why503.ticketservice.domain.concerts.model.entity.ConcertHall;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package io.why503.reservationservice.domain.show.model.entity;
+package io.why503.ticketservice.domain.show.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

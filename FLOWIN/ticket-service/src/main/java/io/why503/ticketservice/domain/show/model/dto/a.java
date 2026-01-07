@@ -1,4 +1,4 @@
-package io.why503.reservationservice.domain.show.model.dto;
+package io.why503.ticketservice.domain.show.model.dto;
 
 public class a {
 }

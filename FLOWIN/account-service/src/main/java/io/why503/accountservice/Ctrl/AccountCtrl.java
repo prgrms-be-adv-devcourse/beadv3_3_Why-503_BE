@@ -1,12 +1,11 @@
 package io.why503.accountservice.Ctrl;
 
 
-import io.why503.accountservice.Model.Dto.UpsertAccountDto;
+import io.why503.accountservice.Model.Dto.UpsertAccountReq;
 import io.why503.accountservice.Model.Ett.Account;
 import io.why503.accountservice.Sv.AccountSv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +19,7 @@ public class AccountCtrl {
 
     @PostMapping
     public ResponseEntity<Account> create(
-            @RequestBody UpsertAccountDto request
+            @RequestBody UpsertAccountReq request
     ){
         Account savedAccount = accountSv.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -50,7 +49,7 @@ public class AccountCtrl {
     @PatchMapping("/patch/{accountId}")
     public ResponseEntity<Account> create(
             @PathVariable String accountId,
-            @RequestBody UpsertAccountDto request
+            @RequestBody UpsertAccountReq request
     ){
         Account updatedAccount = accountSv.update(accountId , request);
         return ResponseEntity.ok(updatedAccount);

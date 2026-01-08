@@ -1,10 +1,8 @@
-package io.why503.accountservice.Model.Ett.Enum;
+package io.why503.accountservice.Model.Enum;
 
 
-import jakarta.persistence.AttributeConverter;
 import lombok.Getter;
 
-import javax.naming.directory.Attribute;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;

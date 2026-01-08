@@ -1,6 +1,7 @@
 package io.why503.accountservice.Sv.Impl;
 
-import io.why503.accountservice.Model.Dto.UpsertAccountDto;
+import io.why503.accountservice.Mapper.AccountMapper;
+import io.why503.accountservice.Model.Dto.UpsertAccountReq;
 import io.why503.accountservice.Model.Ett.Account;
 import io.why503.accountservice.Repo.AccountRepo;
 import io.why503.accountservice.Sv.AccountSv;
@@ -16,11 +17,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AccountSvImpl implements AccountSv {
     private final AccountRepo accountRepo;
-
+    private final AccountMapper accountMapper;
     @Override
     @Transactional
-    public Account create(UpsertAccountDto request){
-        Account account = new Account(request);
+    public Account create(UpsertAccountReq request){
+
+        Account account = new Account(accountMapper.upsertDtoToUpsertCmd(request));
         return accountRepo.save(account);
     }
 
@@ -48,9 +50,9 @@ public class AccountSvImpl implements AccountSv {
 
     @Override
     @Transactional
-    public Account update(String id, UpsertAccountDto request) {
+    public Account update(String id, UpsertAccountReq request) {
         Account account = readById(id);
-        account.update(request);
+        account.update(accountMapper.upsertDtoToUpsertCmd(request));
         return account;
     }
 

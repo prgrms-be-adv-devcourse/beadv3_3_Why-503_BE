@@ -1,7 +1,6 @@
-package io.why503.accountservice.Model.Ett.EnumConverter;
+package io.why503.accountservice.Model.Enum.EnumConverter;
 
-import io.why503.accountservice.Model.Ett.Enum.UserRole;
-import io.why503.accountservice.Model.Ett.Enum.UserStat;
+import io.why503.accountservice.Model.Enum.UserStat;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

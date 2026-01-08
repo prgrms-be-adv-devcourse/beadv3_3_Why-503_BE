@@ -1,4 +1,4 @@
-package io.why503.accountservice.Model.Ett.Enum;
+package io.why503.accountservice.Model.Enum;
 
 import lombok.Getter;
 

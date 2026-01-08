@@ -1,17 +1,16 @@
 package io.why503.accountservice.Model.Ett;
 
 
-import io.why503.accountservice.Model.Dto.UpsertAccountDto;
-import io.why503.accountservice.Model.Ett.Enum.Gender;
-import io.why503.accountservice.Model.Ett.Enum.UserRole;
-import io.why503.accountservice.Model.Ett.Enum.UserStat;
-import io.why503.accountservice.Model.Ett.EnumConverter.GenderConverter;
-import io.why503.accountservice.Model.Ett.EnumConverter.UserRoleConverter;
-import io.why503.accountservice.Model.Ett.EnumConverter.UserStatConverter;
+import io.why503.accountservice.Model.Dto.UpsertAccountCmd;
+import io.why503.accountservice.Model.Enum.Gender;
+import io.why503.accountservice.Model.Enum.UserRole;
+import io.why503.accountservice.Model.Enum.UserStat;
+import io.why503.accountservice.Model.Enum.EnumConverter.GenderConverter;
+import io.why503.accountservice.Model.Enum.EnumConverter.UserRoleConverter;
+import io.why503.accountservice.Model.Enum.EnumConverter.UserStatConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 
 @Entity
@@ -100,35 +99,38 @@ public class Account {
         withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
     }
 
-    public Account(UpsertAccountDto request){
-        this.id = request.id();                   this.password = request.password();
-        this.name = request.name();               this.birthday = request.birthday();
-        this.gender = request.gender();           this.phone = request.phone();
-        this.email = request.email();             this.basicAddr = request.basicAddr();
-        this.detailAddr = request.detailAddr();   this.post = request.post();
+    public Account(UpsertAccountCmd cmd){
+        this.id = cmd.getId();                  this.password = cmd.getPassword();
+        this.name = cmd.getName();              this.birthday = cmd.getBirthday();
+        this.gender = cmd.getGender();          this.phone = cmd.getPhone();
+        this.email = cmd.getEmail();            this.basicAddr = cmd.getBasicAddr();
+        this.detailAddr = cmd.getDetailAddr();  this.post = cmd.getPost();
         withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
     }
 
-    @Builder
     public void update(
             String id,              String password,
             String name,            LocalDateTime birthday,
             Gender gender,          String phone,
             String email,           String basicAddr,
-            String detailAddr,      String post){
-        this.id = id;                   this.password = password;
-        this.name = name;               this.birthday = birthday;
-        this.gender = gender;           this.phone = phone;
-        this.email = email;             this.basicAddr = basicAddr;
-        this.detailAddr = detailAddr;   this.post = post;
+            String detailAddr,      String post) {
+        this.id = id;
+        this.password = password;
+        this.name = name;
+        this.birthday = birthday;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+        this.basicAddr = basicAddr;
+        this.detailAddr = detailAddr;
+        this.post = post;
     }
-
-    public void update(UpsertAccountDto request) {
-        this.id = request.id();                 this.password = request.password();
-        this.name = request.name();             this.birthday = request.birthday();
-        this.gender = request.gender();         this.phone = request.phone();
-        this.email = request.email();           this.basicAddr = request.basicAddr();
-        this.detailAddr = request.detailAddr(); this.post = request.post();
+    public void update(UpsertAccountCmd cmd){
+        this.id = cmd.getId();                  this.password = cmd.getPassword();
+        this.name = cmd.getName();              this.birthday = cmd.getBirthday();
+        this.gender = cmd.getGender();          this.phone = cmd.getPhone();
+        this.email = cmd.getEmail();            this.basicAddr = cmd.getBasicAddr();
+        this.detailAddr = cmd.getDetailAddr();  this.post = cmd.getPost();
     }
 
     public void increasePoint(Long increase){

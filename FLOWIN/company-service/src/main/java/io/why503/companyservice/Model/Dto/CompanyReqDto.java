@@ -1,4 +1,4 @@
-// 등록
+// 등록 : CompanyRequestDto.java
 
 package io.why503.companyservice.Model.Dto;
 
@@ -18,6 +18,7 @@ public class CompanyReqDto {
     private String companyEmail;
     private String companyAddr;
     private String companyPost;
+
 
     private Long amount;
 }

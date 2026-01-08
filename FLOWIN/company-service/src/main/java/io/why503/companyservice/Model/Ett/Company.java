@@ -1,9 +1,12 @@
+// Company.java
+
 package io.why503.companyservice.Model.Ett;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import io.why503.companyservice.Model.Ett.Enum.CompanyBank;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -75,6 +78,7 @@ public class Company {
         company.companyPost = companyPost;
         company.amount = amount;
         company.amountDate = LocalDateTime.now();
+
         return company;
     }
 }

@@ -1,3 +1,5 @@
+// CompanyBank
+
 package io.why503.companyservice.Model.Ett.Enum;
 
 import lombok.Getter;

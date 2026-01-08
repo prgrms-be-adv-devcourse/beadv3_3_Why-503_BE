@@ -1,4 +1,4 @@
-// 조회
+// 조회 : CompanyResponse.java
 
 package io.why503.companyservice.Model.Dto;
 

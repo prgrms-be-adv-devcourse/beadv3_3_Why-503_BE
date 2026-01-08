@@ -28,7 +28,7 @@ public class Ticketing {
     private LocalDateTime ticketingDt = LocalDateTime.now();
 
     @Column(name = "ticketing_pay")
-    private Integer ticketingPay; // 여기가 Service의 .ticketingPay()와 매칭
+    private Integer ticketingPay; // Service의 .ticketingPay()와 매칭
 
     @Column(name = "ticketing_stat")
     private Integer ticketingStat; // 0: 대기, 1: 완료

@@ -83,10 +83,10 @@ public class BookingSv {
                 .ticketing(ticketing)
                 .showingSeat(seat)
                 .ticketNo(UUID.randomUUID().toString())
-                .ticketRealPrice(price) // 정가
-                .ticketDis(0)       // 👈 이 줄을 추가하세요! (할인금액 0원)
-                .ticketPrice(price)     // 최종가(할인 전)
-                .ticketStat(0)          // PENDING
+                .ticketRealPrice(price)
+                .ticketDis(0)
+                .ticketPrice(price)
+                .ticketStat(0)
                 .build();
 
         // 6. 저장
@@ -122,7 +122,7 @@ public class BookingSv {
         // 5. 결과 반환 (이슈 명세 내용 반영)
         Map<String, Object> result = new HashMap<>();
         result.put("originalPrice", originalPrice);
-        result.put("discountName", discount.getName()); // ★ getName()으로 수정
+        result.put("discountName", discount.getName());
         result.put("discountAmount", discountValue);
         result.put("finalPrice", finalPrice);
 
@@ -140,7 +140,7 @@ public class BookingSv {
         // 최종 결제 명세서 작성
         Map<String, Object> paymentInfo = new HashMap<>();
         paymentInfo.put("bookingId", ticketing.getTicketingSq());
-        paymentInfo.put("showName", "2026 월드투어"); // 실제로는 show 엔티티에서 가져옴
+        paymentInfo.put("showName", "2026 월드투어");
         paymentInfo.put("seatInfo", showingSeat.getShowSeat().getSeat().getSeatArea() + "구역 " +
                 showingSeat.getShowSeat().getSeat().getAreaSeatNo() + "번");
         paymentInfo.put("originalPrice", ticket.getTicketRealPrice());
@@ -195,7 +195,6 @@ public class BookingSv {
         for (Ticket ticket : ticketing.getTickets()) {
             ticket.changeStatus(2); // 티켓도 취소 처리
 
-            // ★ 핵심: 좌석은 다시 누군가 예매할 수 있게 '0'으로 원복!
             ticket.getShowingSeat().changeStatus(0);
         }
     }

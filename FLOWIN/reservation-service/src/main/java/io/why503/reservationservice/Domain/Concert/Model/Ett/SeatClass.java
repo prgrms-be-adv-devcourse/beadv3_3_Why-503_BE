@@ -23,5 +23,5 @@ public class SeatClass {
     private String seatClass; // 등급명 (SS, S, R)
 
     @Column(name = "seat_price")
-    private Integer seatPrice; // ★ 이 필드가 있어야 .getSeatPrice() 에러가 사라짐!
+    private Integer seatPrice;
 }

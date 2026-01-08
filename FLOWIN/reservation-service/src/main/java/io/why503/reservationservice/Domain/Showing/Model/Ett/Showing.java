@@ -19,7 +19,6 @@ public class Showing {
     @Column(name = "showing_sq")
     private Long id;
 
-    // ★ concert 패키지 참조
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "show_sq", nullable = false)
     private Show show;

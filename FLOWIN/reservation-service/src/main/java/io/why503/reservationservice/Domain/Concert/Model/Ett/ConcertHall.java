@@ -24,7 +24,6 @@ public class ConcertHall {
     @Column(name = "concert_hall_seat_scale")
     private Integer seatScale;
 
-    // 나머지 주소, 위경도 등은 생략하거나 필요 시 추가
     @Column(name = "concert_hall_latitude")
     private BigDecimal latitude;
 

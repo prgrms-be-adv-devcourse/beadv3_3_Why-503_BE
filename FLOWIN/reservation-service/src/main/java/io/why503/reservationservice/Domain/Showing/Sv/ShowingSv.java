@@ -21,7 +21,6 @@ public class ShowingSv {
      */
     @Transactional(readOnly = true)
     public List<AreaStatusDto> getAreaStatus(Long showingSq) {
-        // Repo에 아까 만든 findAreaStatus 메서드를 호출합니다.
         List<AreaStatusDto> statusList = showingSeatRepo.findAreaStatus(showingSq);
 
         if (statusList.isEmpty()) {
@@ -36,7 +35,6 @@ public class ShowingSv {
         return showingSeatRepo.findAllSeatStatusDtoByShowingSq(showingSq);
     }
 
-    // ShowingSv.java 에 추가
     @Transactional(readOnly = true)
     public List<SeatStatusDto> getSeatStatusByArea(Long showingSq, String area) {
         return showingSeatRepo.findSeatStatusByArea(showingSq, area);

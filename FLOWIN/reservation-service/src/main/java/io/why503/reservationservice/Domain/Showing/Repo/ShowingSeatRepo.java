@@ -20,7 +20,6 @@ public interface ShowingSeatRepo extends JpaRepository<ShowingSeat, Long> {
     Optional<ShowingSeat> findByIdWithLock(@Param("id") Long id);
 
     // 2. [빠른 선택] 특정 회차(showingSq) + 등급(grade) + 빈 좌석(0) 목록 조회
-    // 엔티티 연관관계: ShowingSeat -> ShowSeat -> SeatClass
     @Query("SELECT ss FROM ShowingSeat ss " +
             "JOIN ss.showSeat s " +
             "JOIN s.seatClass sc " +
@@ -30,7 +29,6 @@ public interface ShowingSeatRepo extends JpaRepository<ShowingSeat, Long> {
     List<ShowingSeat> findAvailableSeats(@Param("showingSq") Long showingSq,
                                          @Param("grade") String grade);
 
-    // ShowingSeatRepo.java에 추가
     @Query("SELECT new io.why503.reservationservice.Domain.Showing.Model.Dto.AreaStatusDto(" +
             "s.seatArea, sc.seatClass, sc.seatPrice, COUNT(ss)) " +
             "FROM ShowingSeat ss " +
@@ -49,14 +47,13 @@ public interface ShowingSeatRepo extends JpaRepository<ShowingSeat, Long> {
             "WHERE ss.showingSq = :showingSq")
     List<SeatStatusDto> findAllSeatStatusDtoByShowingSq(@Param("showingSq") Long showingSq);
 
-    // ShowingSeatRepo.java 에 추가
     @Query("SELECT new io.why503.reservationservice.Domain.Showing.Model.Dto.SeatStatusDto(" +
             "ss.showingSeatSq, s.seatArea, s.areaSeatNo, ss.showingSeatStat) " +
             "FROM ShowingSeat ss " +
             "JOIN ss.showSeat ssj " +
             "JOIN ssj.seat s " +
             "WHERE ss.showingSq = :showingSq " +
-            "AND s.seatArea = :area") // 👈 특정 구역 조건 추가
+            "AND s.seatArea = :area")
     List<SeatStatusDto> findSeatStatusByArea(
             @Param("showingSq") Long showingSq,
             @Param("area") String area

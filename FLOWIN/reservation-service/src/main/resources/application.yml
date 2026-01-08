@@ -1,3 +1,18 @@
 spring:
   application:
-  name: reservation-service
+    name: reservation-service
+
+  datasource:
+    # DB 주소 (포트와 DB이름 확인 필요)
+    url: jdbc:mysql://localhost:3306/flowin?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root          # DB 아이디
+    password: root          # DB 비밀번호
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update      # 개발 단계에서는 update (테이블 자동 변경), 운영은 validate
+    show-sql: true          # 실행되는 SQL을 로그로 보여줌
+    properties:
+      hibernate:
+        format_sql: true    # SQL 예쁘게 정렬

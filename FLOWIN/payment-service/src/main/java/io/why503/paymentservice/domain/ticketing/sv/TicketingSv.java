@@ -1,10 +1,10 @@
 package io.why503.paymentservice.domain.ticketing.sv;
 
-import io.why503.reservationservice.domain.ticket.mapper.TicketingMapper;
-import io.why503.reservationservice.domain.ticket.model.dto.TicketingReqDto;
-import io.why503.reservationservice.domain.ticket.model.dto.TicketingResDto;
-import io.why503.reservationservice.domain.ticket.model.ett.Ticketing;
-import io.why503.reservationservice.domain.ticket.repo.TicketingRepo;
+import io.why503.paymentservice.domain.ticketing.mapper.TicketingMapper;
+import io.why503.paymentservice.domain.ticketing.model.dto.TicketingReqDto;
+import io.why503.paymentservice.domain.ticketing.model.dto.TicketingResDto;
+import io.why503.paymentservice.domain.ticketing.model.ett.Ticketing;
+import io.why503.paymentservice.domain.ticketing.repo.TicketingRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

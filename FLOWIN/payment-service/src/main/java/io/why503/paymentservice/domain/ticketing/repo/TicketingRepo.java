@@ -1,6 +1,6 @@
 package io.why503.paymentservice.domain.ticketing.repo;
 
-import io.why503.reservationservice.domain.ticket.model.ett.Ticketing;
+import io.why503.paymentservice.domain.ticketing.model.ett.Ticketing;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

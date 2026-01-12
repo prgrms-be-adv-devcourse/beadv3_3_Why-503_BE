@@ -1,8 +1,8 @@
 package io.why503.paymentservice.domain.ticketing.ctrl;
 
-import io.why503.reservationservice.domain.ticket.model.dto.TicketingReqDto;
-import io.why503.reservationservice.domain.ticket.model.dto.TicketingResDto;
-import io.why503.reservationservice.domain.ticket.sv.TicketingSv;
+import io.why503.paymentservice.domain.ticketing.model.dto.TicketingReqDto;
+import io.why503.paymentservice.domain.ticketing.model.dto.TicketingResDto;
+import io.why503.paymentservice.domain.ticketing.sv.TicketingSv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

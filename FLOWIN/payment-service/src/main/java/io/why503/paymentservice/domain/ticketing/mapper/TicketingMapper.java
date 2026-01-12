@@ -1,8 +1,8 @@
 package io.why503.paymentservice.domain.ticketing.mapper;
 
-import io.why503.reservationservice.domain.ticket.model.dto.TicketingReqDto;
-import io.why503.reservationservice.domain.ticket.model.ett.Ticket;
-import io.why503.reservationservice.domain.ticket.model.ett.Ticketing;
+import io.why503.paymentservice.domain.ticketing.model.dto.TicketingReqDto;
+import io.why503.paymentservice.domain.ticketing.model.ett.Ticket;
+import io.why503.paymentservice.domain.ticketing.model.ett.Ticketing;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
 

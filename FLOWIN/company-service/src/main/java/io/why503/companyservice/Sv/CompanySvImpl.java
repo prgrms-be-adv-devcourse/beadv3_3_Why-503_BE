@@ -27,18 +27,17 @@ public class CompanySvImpl implements CompanySv {
     public void registerCompany(CompanyReqDto requestDto) {
 
         // 회사 Entity 생성
-        Company company = Company.create(
-                null, // 사용자 연동 전 임시 처리 (추후 userSq 연동 예정)
-                requestDto.getCompanyBank(),
-                requestDto.getAccount(),
-                requestDto.getCompanyName(),
-                requestDto.getOwnerName(),
-                requestDto.getCompanyPhone(),
-                requestDto.getCompanyEmail(),
-                requestDto.getCompanyAddr(),
-                requestDto.getCompanyPost(),
-                requestDto.getAmount()
-        );
+        Company company = Company.builder()
+            .companyBank(requestDto.getCompanyBank())
+            .account(requestDto.getAccount())
+            .companyName(requestDto.getCompanyName())
+            .ownerName(requestDto.getOwnerName())
+            .companyPhone(requestDto.getCompanyPhone())
+            .companyEmail(requestDto.getCompanyEmail())
+            .companyAddr(requestDto.getCompanyAddr())
+            .companyPost(requestDto.getCompanyPost())
+            .amount(requestDto.getAmount())
+            .build();
 
         companyRepository.save(company); // 회사 정보 DB 저장
     }

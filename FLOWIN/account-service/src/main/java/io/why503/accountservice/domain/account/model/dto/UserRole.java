@@ -18,7 +18,7 @@ public enum UserRole {
 
     private static final Map<Integer, UserRole> map = initMap();
     /*
-        가능한 gender을 찾기 쉽게 hashmap으로 선언
+        가능한 UserRole을 찾기 쉽게 hashmap으로 선언
          */
     private static Map<Integer, UserRole> initMap(){
         Map<Integer, UserRole> userRoleMap = new HashMap<>();
@@ -32,7 +32,7 @@ public enum UserRole {
         this.code = code;
     }
     /*
-        현재 gender을 enum(gender)으로 반환
+        현재 UserRole 을 enum( UserRole )으로 반환
          */
     public static UserRole getUserRole(Integer code) throws NoSuchElementException {
         UserRole userRole = map.get(code);

@@ -18,7 +18,7 @@ public enum UserStat {
 
     private static final Map<Integer, UserStat> map = initMap();
     /*
-        가능한 gender을 찾기 쉽게 hashmap으로 선언
+        가능한 UserStat 을 찾기 쉽게 hashmap으로 선언
     */
     private static Map<Integer, UserStat> initMap(){
         Map<Integer, UserStat> userStatMap = new HashMap<>();
@@ -32,7 +32,7 @@ public enum UserStat {
         this.code = code;
     }
     /*
-        현재 gender을 enum(gender)으로 반환
+        현재 UserStat 을 enum( UserStat )으로 반환
     */
     public static UserStat getUserStat(Integer code) throws NoSuchElementException {
         UserStat userStat = map.get(code);

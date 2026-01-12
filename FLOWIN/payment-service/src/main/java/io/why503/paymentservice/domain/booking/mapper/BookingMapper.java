@@ -1,39 +1,52 @@
 package io.why503.paymentservice.domain.booking.mapper;
 
 import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
-import io.why503.paymentservice.domain.booking.model.ett.Ticket;
+import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
+import io.why503.paymentservice.domain.booking.model.dto.TicketDto; // 독립한 DTO 임포트
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
+import io.why503.paymentservice.domain.booking.model.ett.Ticket;
 import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
 
 @Component
 public class BookingMapper {
 
-    // Request DTO -> Booking Entity 변환 로직 분리
+    // 1. ReqDto -> Entity 변환
     public Booking toEntity(BookingReqDto req) {
-        // 1. Booking 본체 생성
         Booking booking = Booking.builder()
                 .userSq(req.getUserSq())
                 .bookingAmount(req.getTotalAmount())
-                // DB 제약조건 방어용 초기값 설정
                 .totalAmount(req.getTotalAmount())
-                .bookingStatus(0) // 0:선점
+                .bookingStatus(0)
                 .build();
 
-        // 2. Ticket 리스트 생성 및 연결
         if (req.getTickets() != null) {
-            for (BookingReqDto.TicketDto item : req.getTickets()) {
+            // TicketDto가 이제 독립된 클래스이므로 바로 사용 가능
+            for (TicketDto item : req.getTickets()) {
                 Ticket ticket = Ticket.builder()
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
                         .finalPrice(item.getFinalPrice())
-                        .ticketStatus(0) // 0:발권
+                        .ticketStatus(0)
                         .build();
-
-                // 부모-자식 연관관계 설정
                 booking.addTicket(ticket);
             }
         }
-
         return booking;
+    }
+
+    // 2. Entity -> ResDto 변환 (★ 여기가 이사 온 로직)
+    public BookingResDto toDto(Booking booking) {
+        return BookingResDto.builder()
+                .bookingSq(booking.getBookingSq())
+                .userSq(booking.getUserSq())
+                .bookingStatus(booking.getBookingStatus())
+                .bookingAmount(booking.getBookingAmount())
+                .bookingDt(booking.getBookingDt())
+                .seatSqs(booking.getTickets().stream()
+                        .map(Ticket::getShowingSeatSq)
+                        .collect(Collectors.toList()))
+                .build();
     }
 }

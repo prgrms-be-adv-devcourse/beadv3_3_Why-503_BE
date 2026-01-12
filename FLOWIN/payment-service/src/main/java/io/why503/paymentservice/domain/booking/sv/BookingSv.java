@@ -23,14 +23,14 @@ public class BookingSv {
     public BookingResDto createBooking(BookingReqDto req) {
         Booking booking = bookingMapper.toEntity(req);
         Booking savedBooking = bookingRepo.save(booking);
-        return BookingResDto.from(savedBooking);
+        return bookingMapper.toDto(savedBooking);
     }
 
     // 2. 예매 상세 조회
     public BookingResDto getBooking(Long bookingSq) {
         Booking booking = bookingRepo.findById(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
-        return BookingResDto.from(booking);
+        return bookingMapper.toDto(booking);
     }
 
     // 3. 예매 취소

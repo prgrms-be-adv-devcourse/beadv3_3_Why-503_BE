@@ -8,14 +8,8 @@ import java.util.List;
 @NoArgsConstructor
 public class BookingReqDto {
     private Long userSq;
-    private Integer totalAmount; // 총 예매 금액
-    private List<TicketDto> tickets; // 선택한 좌석 목록
+    private Integer totalAmount;
 
-    @Getter
-    @NoArgsConstructor
-    public static class TicketDto {
-        private Long showingSeatSq;
-        private Integer originalPrice;
-        private Integer finalPrice;
-    }
+    // 내부 클래스가 아니라, TicketDto 파일을 참조합니다.
+    private List<TicketDto> tickets;
 }

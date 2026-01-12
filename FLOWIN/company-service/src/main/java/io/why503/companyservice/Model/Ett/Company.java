@@ -1,4 +1,9 @@
-// Company.java
+/**
+ * Company Entity
+ *
+ * 사용 목적 :
+ * - 회사 기본 정보 및 정산 정보를 DB에 영속화
+ */
 
 package io.why503.companyservice.Model.Ett;
 
@@ -14,14 +19,10 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class Company {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "company_sq")
     private Long companySq;
-
-    // @Column(name = "user_sq", nullable = false)
-    // private Long userSq;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "company_bank", nullable = false)
@@ -54,9 +55,8 @@ public class Company {
     @Column(name = "amount_date", nullable = false)
     private LocalDateTime amountDate;
 
-    /* 생성 메서드 */
     public static Company create(
-            // Long userSq,
+            Long userSq,
             CompanyBank companyBank,
             String account,
             String companyName,

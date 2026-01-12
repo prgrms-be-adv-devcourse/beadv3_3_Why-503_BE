@@ -1,3 +1,10 @@
+/**
+ * Company Service Implementation
+ *
+ * 사용 목적 :
+ * - 회사 등록 및 조회에 대한 실제 비즈니스 로직 구현
+ * - Repository를 통해 Company Entity 영속화 및 조회 처리
+ */
 package io.why503.companyservice.Sv;
 
 import lombok.RequiredArgsConstructor;
@@ -14,18 +21,14 @@ import io.why503.companyservice.Repo.CompanyRepo;
 @Transactional
 public class CompanySvImpl implements CompanySv {
 
-    private final CompanyRepo companyRepository;
+    private final CompanyRepo companyRepository; // 회사 Entity DB 접근 Repository
 
     @Override
     public void registerCompany(CompanyReqDto requestDto) {
 
-        // // 회원당 회사 1개 제한
-        // if (companyRepository.existsByUserSq(requestDto.getUserSq())) {
-        //     throw new IllegalStateException("이미 등록된 회사가 있습니다.");
-        // }
-
+        // 회사 Entity 생성
         Company company = Company.create(
-                // requestDto.getUserSq(),
+                null, // 사용자 연동 전 임시 처리 (추후 userSq 연동 예정)
                 requestDto.getCompanyBank(),
                 requestDto.getAccount(),
                 requestDto.getCompanyName(),
@@ -37,32 +40,22 @@ public class CompanySvImpl implements CompanySv {
                 requestDto.getAmount()
         );
 
-        companyRepository.save(company);
+        companyRepository.save(company); // 회사 정보 DB 저장
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) // 조회 전용 트랜잭션
     public CompanyResDto getCompanyByCompanySq(Long companySq) {
 
         Company company = companyRepository.findById(companySq)
-                .orElseThrow(() -> new IllegalArgumentException("회사 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("회사 정보를 찾을 수 없습니다.")); // 회사 미존재 시 예외 처리
 
-        return new CompanyResDto(company);
+        return new CompanyResDto(company); // Entity → Response DTO 변환 후 반환
     }
 
-    // @Override
-    // @Transactional(readOnly = true)
-    // public CompanyResDto getCompanyByUserSq(Long userSq) {
-
-    //     Company company = companyRepository.findByUserSq(userSq)
-    //             .orElseThrow(() -> new IllegalArgumentException("회사 정보가 존재하지 않습니다."));
-
-    //     return new CompanyResDto(company);
-    // }
-
-    // @Override
-    // public CompanyReqDto getCompanyByUserDto(Long userSq) {
-    //     // TODO Auto-generated method stub
-    //     throw new UnsupportedOperationException("Unimplemented method 'getCompanyByUserDto'");
-    // }
+    @Override
+    public void registerCompany(CompanyReqDto requestDto, Long userSq) {
+        // 사용자-회사 연동 등록 기능 (추후 구현 예정)
+        throw new UnsupportedOperationException("Unimplemented method 'registerCompany'");
+    }
 }

@@ -4,11 +4,14 @@ import io.why503.companyservice.Model.Dto.CompanyReqDto;
 import io.why503.companyservice.Model.Dto.CompanyResDto;
 
 public interface CompanySv {
-    void registerCompany(CompanyReqDto requestDto);
 
+    // 회사 등록 (사용자 식별자 기반)
+    void registerCompany(CompanyReqDto requestDto, Long userSq);
+
+    // 회사 식별자 기준 회사 정보 조회
     CompanyResDto getCompanyByCompanySq(Long companySq);
-    // CompanyReqDto getCompanyByUserDto(Long userSq);
 
-    // CompanyResDto getCompanyByUserSq(Long userSq);
+    // 회사 등록
+    void registerCompany(CompanyReqDto requestDto);
 
 }

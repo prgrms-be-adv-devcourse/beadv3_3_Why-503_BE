@@ -1,10 +1,15 @@
+/**
+ * Company Email Controller
+ * 회사 이메일 인증을 시작하는 API 컨트롤러
+ *
+ * 사용 목적 :
+ * - 회사 이메일 입력 요청 처리
+ * - 이메일 인증 코드 발송 트리거
+ */
 package io.why503.companyservice.Ctrl;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.why503.companyservice.Model.Dto.CompanyEmailReqDto;
 import io.why503.companyservice.Model.Dto.CompanyEmailResDto;
@@ -12,23 +17,24 @@ import io.why503.companyservice.Sv.CompanyEmailAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-
-
 @RestController
 @RequestMapping("/api/company")
 @RequiredArgsConstructor
 public class CompanyEmailController {
 
-    private final CompanyEmailAuthService companyEmailAuthService;
+    private final CompanyEmailAuthService companyEmailAuthService; // 이메일 인증 비즈니스 로직 처리 Service
 
-    @PostMapping("/email")
+    @PostMapping("/email") // 회사 이메일 인증 요청 API
     public ResponseEntity<CompanyEmailResDto> inputCompanyEMail(
-        @Valid @RequestBody CompanyEmailReqDto reqDto
+            @Valid @RequestBody CompanyEmailReqDto reqDto // 회사 이메일 검증을 위한 요청 데이터
     ) {
-        companyEmailAuthService.sendAuthCode(reqDto.getCompanyEmail());
+        companyEmailAuthService.sendAuthCode(reqDto.getCompanyEmail()); // 회사 이메일로 인증 코드 발송
+
         return ResponseEntity.ok(
-            new CompanyEmailResDto(
-                reqDto.getCompanyEmail(), "회사 이메일이 정상적으로 접수되었습니다")
+                new CompanyEmailResDto(
+                        reqDto.getCompanyEmail(), // 요청된 회사 이메일
+                        "company complete received it by email"
+                )
         );
     }
 }

@@ -44,4 +44,11 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_sq", nullable = false)
     private Booking booking;
+
+
+    // 비즈니스 로직
+    // [추가] 티켓 취소 비즈니스 로직
+    public void cancel() {
+        this.ticketStatus = TicketStatus.CANCELLED; // 4번 상태로 변경
+    }
 }

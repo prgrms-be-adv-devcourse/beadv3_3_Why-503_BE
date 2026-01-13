@@ -98,7 +98,10 @@ public class Booking {
     // 1. 전체 취소
     public void cancel() {
         this.bookingStatus = BookingStatus.CANCELLED;
-        // (추후 여기에 연결된 Ticket들도 모두 CANCELLED로 바꾸는 로직 추가 가능)
+        // 2. ★ 연결된 티켓들도 모두 취소 상태로 변경 (이게 빠져있었음!)
+        for (Ticket ticket : this.tickets) {
+            ticket.cancel();
+        }
     }
 
     // 2. ★ 부분 취소 (새로 추가)

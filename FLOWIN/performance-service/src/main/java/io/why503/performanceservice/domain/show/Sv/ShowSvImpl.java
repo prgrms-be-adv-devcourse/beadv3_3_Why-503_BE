@@ -1,15 +1,22 @@
 /**
  * Show Service Implementation
- * 공연(Show) 도메인의 비즈니스 로직 구현체
+ * 공연 관련 비즈니스 로직 구현체
  *
- * 사용 목적 :
- * - 공연 등록 비즈니스 로직 처리
- * - 공연 단건 조회 비즈니스 로직 처리
- *
- * 설계 포인트 :
+ * 처리 내용 :
+ * - 공연 등록
+ *   - 공연 카테고리 코드 → Enum 변환
+ *   - 공연장(concert_hall) 존재 여부 검증
+ *   - 기본 공연 상태(SCHEDULED) 설정
+ * - 공연 단건 조회
+ * 
+ * * 설계 포인트 :
  * - 트랜잭션 경계는 Service 계층에서 관리
  * - Entity는 DB 구조에 맞춰 int(code) 기반으로 저장
  * - 외부(API, DTO)와의 통신은 Enum 기반으로 처리
+ * 
+ * 주의 사항 :
+ * - 현재는 로그인 / 권한 검증 미포함
+ * - 추후 company 권한 검증, 공연 상태 전이 로직 추가 예정
  */
 package io.why503.performanceservice.domain.show.Sv;
 
@@ -23,36 +30,45 @@ import io.why503.performanceservice.domain.show.Model.Ett.ShowEtt;
 import io.why503.performanceservice.domain.show.Model.Enum.ShowCategory;
 import io.why503.performanceservice.domain.show.Model.Enum.ShowStatus;
 import io.why503.performanceservice.domain.show.Repo.ShowRepo;
+import io.why503.performanceservice.domain.concerthall.Repo.ConcertHallRepo;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 기본은 조회 전용 트랜잭션
+@Transactional(readOnly = true)
 public class ShowSvImpl implements ShowSv {
 
     private final ShowRepo showRepo;
+    private final ConcertHallRepo concertHallRepo;
 
     /**
      * 공연 등록
      *
      * 처리 흐름 :
-     * 1. 요청 DTO의 category(code)를 Enum으로 변환
-     * 2. 공연 기본 정보 Entity 생성
-     * 3. Enum → int(code) 변환 후 Entity에 세팅
-     * 4. DB 저장
-     * 5. 저장 결과를 Response DTO로 변환하여 반환
+     * 1. 공연 카테고리 코드 → Enum 변환
+     * 2. 공연장 식별자 유효성 검증
+     * 3. Show Entity 생성
+     * 4. 기본 공연 상태(SCHEDULED) 설정
+     * 5. 공연 저장
      *
-     * 주의 사항 :
-     * - concertHallSq, companySq 는 FK 제약 조건 존재
-     * - 존재하지 않는 공연장 식별자 전달 시 DB 무결성 오류(500) 발생 가능
+     * @param reqDto 공연 등록 요청 DTO
+     * @return 공연 등록 결과 DTO
      */
     @Override
-    @Transactional // 등록이므로 쓰기 트랜잭션
+    @Transactional
     public ShowResDto createShow(ShowReqDto reqDto) {
 
-        // 요청으로 받은 category 코드 → Enum 변환
+        // 1. 공연 카테고리 코드 검증 및 변환
         ShowCategory category = ShowCategory.fromCode(reqDto.getCategory());
 
-        // 공연 Entity 생성 (enum, status 제외)
+        // 2. 공연장 존재 여부 검증
+        boolean existsConcertHall =
+                concertHallRepo.existsById(reqDto.getConcertHallSq());
+
+        if (!existsConcertHall) {
+            throw new IllegalArgumentException("invalid concert hall");
+        }
+
+        // 3. 공연 Entity 생성
         ShowEtt show = ShowEtt.builder()
                 .showName(reqDto.getShowName())
                 .startDate(reqDto.getStartDate())
@@ -64,16 +80,14 @@ public class ShowSvImpl implements ShowSv {
                 .companySq(reqDto.getCompanySq())
                 .build();
 
-        // Enum → DB 저장용 int(code) 세팅
+        // 4. Enum → code 설정
         show.setCategory(category);
-
-        // 신규 공연은 기본 상태를 "공연 예정(SCHEDULED)" 으로 설정
         show.setShowStatus(ShowStatus.SCHEDULED);
 
-        // 공연 저장
+        // 5. 저장
         ShowEtt saved = showRepo.save(show);
 
-        // 저장 결과를 Response DTO로 변환
+        // 6. 응답 DTO 변환
         return ShowResDto.builder()
                 .showSq(saved.getShowSq())
                 .showName(saved.getShowName())
@@ -82,8 +96,8 @@ public class ShowSvImpl implements ShowSv {
                 .openDt(saved.getOpenDt())
                 .showTime(saved.getShowTime())
                 .viewingAge(saved.getViewingAge())
-                .category(saved.getCategoryEnum())   // code → Enum 변환
-                .showStat(saved.getShowStatus())     // code → Enum 변환
+                .category(saved.getCategoryEnum())
+                .showStat(saved.getShowStatus())
                 .concertHallSq(saved.getConcertHallSq())
                 .companySq(saved.getCompanySq())
                 .build();
@@ -92,20 +106,19 @@ public class ShowSvImpl implements ShowSv {
     /**
      * 공연 단건 조회
      *
-     * @param showSq 조회할 공연 식별자
-     * @return 공연 상세 정보
+     * 처리 흐름 :
+     * 1. 공연 식별자 기준 조회
+     * 2. Entity → Response DTO 변환
      *
-     * 예외 처리 :
-     * - 존재하지 않는 공연 식별자 요청 시 IllegalArgumentException 발생
+     * @param showSq 공연 식별자
+     * @return 공연 응답 DTO
      */
     @Override
     public ShowResDto getShow(Long showSq) {
 
-        // 공연 조회 (없을 경우 예외 발생)
         ShowEtt show = showRepo.findById(showSq)
                 .orElseThrow(() -> new IllegalArgumentException("show not found"));
 
-        // 조회 결과를 Response DTO로 변환
         return ShowResDto.builder()
                 .showSq(show.getShowSq())
                 .showName(show.getShowName())
@@ -114,8 +127,8 @@ public class ShowSvImpl implements ShowSv {
                 .openDt(show.getOpenDt())
                 .showTime(show.getShowTime())
                 .viewingAge(show.getViewingAge())
-                .category(show.getCategoryEnum())   // DB code → Enum
-                .showStat(show.getShowStatus())     // DB code → Enum
+                .category(show.getCategoryEnum())
+                .showStat(show.getShowStatus())
                 .concertHallSq(show.getConcertHallSq())
                 .companySq(show.getCompanySq())
                 .build();

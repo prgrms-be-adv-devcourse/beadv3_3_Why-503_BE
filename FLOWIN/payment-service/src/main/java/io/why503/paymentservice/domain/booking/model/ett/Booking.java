@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.booking.model.ett;
 
 import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -95,7 +96,7 @@ public class Booking {
     }
 
     // 비즈니스 로직
-    // 1. 전체 취소
+    // 전체 취소
     public void cancel() {
         this.bookingStatus = BookingStatus.CANCELLED;
         // 2. 연결된 티켓들도 모두 취소 상태로 변경
@@ -104,13 +105,37 @@ public class Booking {
         }
     }
 
-    // 2. ★ 부분 취소 (새로 추가)
-    // 티켓 중 일부만 취소되었을 때 호출
-    public void partialCancel() {
-        this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
+    // 부분 취소 (새로 추가)
+    public void cancelTicket(Long ticketSq, String reason) {
+        // 1. 취소할 티켓 찾기
+        Ticket targetTicket = this.tickets.stream()
+                .filter(t -> t.getTicketSq().equals(ticketSq))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("해당 예매에 존재하지 않는 티켓입니다."));
+
+        // 2. 이미 취소된 티켓인지 확인
+        if (targetTicket.getTicketStatus() == TicketStatus.CANCELLED) {
+            throw new IllegalStateException("이미 취소된 티켓입니다.");
+        }
+
+        // 3. 해당 티켓만 취소 상태로 변경
+        targetTicket.cancel();
+
+        // 4. 예매 상태(BookingStatus) 재산정 (남은 티켓 확인)
+        boolean hasActiveTicket = this.tickets.stream()
+                .anyMatch(t -> t.getTicketStatus() != TicketStatus.CANCELLED);
+
+        if (!hasActiveTicket) {
+            // 살아있는 티켓이 없으면 -> 전체 취소 처리
+            this.bookingStatus = BookingStatus.CANCELLED;
+            this.cancelReason = reason;
+        } else {
+            // 아직 살아있는 티켓이 있으면 -> 부분 취소 처리
+            this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
+        }
     }
 
-    // 3. 예매 확정 (결제 완료 시)
+    // 예매 확정 (결제 완료 시)
     public void confirm(String paymentKey) {
         this.bookingStatus = BookingStatus.CONFIRMED;
         this.paymentKey = paymentKey;          // PG사에서 받은 결제 키 저장

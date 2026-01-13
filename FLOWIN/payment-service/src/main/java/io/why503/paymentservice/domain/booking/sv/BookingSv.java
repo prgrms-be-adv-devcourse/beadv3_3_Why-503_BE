@@ -41,6 +41,17 @@ public class BookingSv {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
         booking.cancel(); // status: 0 -> 2
     }
+    // 티켓 개별 취소 (부분 취소)
+    @Transactional
+    public void cancelTicket(Long bookingSq, Long ticketSq) {
+        Booking booking = bookingRepo.findById(bookingSq)
+                .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
+
+        // [TODO] PG사 부분 환불 로직이 들어갈 자리
+
+        // 엔티티 로직 호출 ("사용자 요청" 사유)
+        booking.cancelTicket(ticketSq, "사용자 요청에 의한 개별 취소");
+    }
 
     // 4. 예매 확정 (결제 승인)
     @Transactional
@@ -55,4 +66,6 @@ public class BookingSv {
         // 3. 상태 변경 (Pending -> Confirmed)
         booking.confirm(paymentKey);
     }
+
+
 }

@@ -2,7 +2,8 @@ package io.why503.paymentservice.domain.booking.mapper;
 
 import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
 import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
-import io.why503.paymentservice.domain.booking.model.dto.TicketDto; // 독립한 DTO 임포트
+import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto; // 독립한 DTO 임포트
+import io.why503.paymentservice.domain.booking.model.dto.TicketResDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
 import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
@@ -24,13 +25,13 @@ public class BookingMapper {
                 .build();
 
         if (req.getTickets() != null) {
-            // TicketDto가 이제 독립된 클래스이므로 바로 사용 가능
-            for (TicketDto item : req.getTickets()) {
+            // TicketReqDto가 이제 독립된 클래스이므로 바로 사용 가능
+            for (TicketReqDto item : req.getTickets()) {
                 Ticket ticket = Ticket.builder()
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
                         .finalPrice(item.getFinalPrice())
-                        .ticketStatus(TicketStatus.AVAILABLE)
+                        .ticketStatus(TicketStatus.RESERVED)
                         .build();
                 booking.addTicket(ticket);
             }
@@ -46,8 +47,9 @@ public class BookingMapper {
                 .bookingStatus(booking.getBookingStatus())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
-                .seatSqs(booking.getTickets().stream()
-                        .map(Ticket::getShowingSeatSq)
+                // 모든 티켓을 가져오되, TicketResDto로 변환해서 담음
+                .tickets(booking.getTickets().stream()
+                        .map(TicketResDto::from)
                         .collect(Collectors.toList()))
                 .build();
     }

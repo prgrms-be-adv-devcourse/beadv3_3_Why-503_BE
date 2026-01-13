@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.ett;
 
+import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,10 +28,10 @@ public class Booking {
     @Column(name = "user_sq", nullable = false)
     private Long userSq;
 
-    // --- [예매 정보] ---
     @Column(name = "booking_status", nullable = false)
+    @Enumerated(EnumType.ORDINAL)
     @Builder.Default
-    private Integer bookingStatus = 0; // 0:선점, 1:완료, 2:취소
+    private BookingStatus bookingStatus = BookingStatus.PENDING;
 
     @CreationTimestamp // INSERT 시 자동 생성
     @Column(name = "booking_dt", nullable = false, updatable = false)
@@ -93,8 +94,21 @@ public class Booking {
         ticket.setBooking(this);
     }
 
-    // 비즈니스 로직: 예매 취소
+    // 비즈니스 로직
+    // 1. 전체 취소
     public void cancel() {
-        this.bookingStatus = 2;
+        this.bookingStatus = BookingStatus.CANCELLED;
+        // (추후 여기에 연결된 Ticket들도 모두 CANCELLED로 바꾸는 로직 추가 가능)
+    }
+
+    // 2. ★ 부분 취소 (새로 추가)
+    // 티켓 중 일부만 취소되었을 때 호출
+    public void partialCancel() {
+        this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
+    }
+
+    // 3. 예매 확정 (결제 완료 시)
+    public void confirm() {
+        this.bookingStatus = BookingStatus.CONFIRMED;
     }
 }

@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.ett;
 
+import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
@@ -32,8 +33,9 @@ public class Ticket {
     private Integer finalPrice;
 
     @Column(name = "ticket_status", nullable = false)
+    @Enumerated(EnumType.ORDINAL) // 0, 1, 2... 숫자로 저장
     @Builder.Default
-    private Integer ticketStatus = 0; // 0:발권, 1:사용, 2:취소
+    private TicketStatus ticketStatus = TicketStatus.AVAILABLE; // 기본값 0
 
     @Column(name = "ticket_uuid", nullable = false)
     @Builder.Default

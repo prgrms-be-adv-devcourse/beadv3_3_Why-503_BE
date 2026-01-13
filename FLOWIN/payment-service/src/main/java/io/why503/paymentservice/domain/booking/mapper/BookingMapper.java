@@ -5,6 +5,8 @@ import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
 import io.why503.paymentservice.domain.booking.model.dto.TicketDto; // 독립한 DTO 임포트
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
+import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
@@ -18,7 +20,7 @@ public class BookingMapper {
                 .userSq(req.getUserSq())
                 .bookingAmount(req.getTotalAmount())
                 .totalAmount(req.getTotalAmount())
-                .bookingStatus(0)
+                .bookingStatus(BookingStatus.PENDING)
                 .build();
 
         if (req.getTickets() != null) {
@@ -28,7 +30,7 @@ public class BookingMapper {
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
                         .finalPrice(item.getFinalPrice())
-                        .ticketStatus(0)
+                        .ticketStatus(TicketStatus.AVAILABLE)
                         .build();
                 booking.addTicket(ticket);
             }

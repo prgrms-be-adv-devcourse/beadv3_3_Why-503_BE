@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.dto;
 
+import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import java.util.List;
 public class BookingResDto {
     private Long bookingSq;
     private Long userSq;
-    private Integer bookingStatus;
+    private BookingStatus bookingStatus;
     private Integer bookingAmount;
     private LocalDateTime bookingDt;
     private List<Long> seatSqs;

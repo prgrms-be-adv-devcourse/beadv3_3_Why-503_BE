@@ -98,7 +98,7 @@ public class Booking {
     // 1. 전체 취소
     public void cancel() {
         this.bookingStatus = BookingStatus.CANCELLED;
-        // 2. ★ 연결된 티켓들도 모두 취소 상태로 변경 (이게 빠져있었음!)
+        // 2. 연결된 티켓들도 모두 취소 상태로 변경
         for (Ticket ticket : this.tickets) {
             ticket.cancel();
         }

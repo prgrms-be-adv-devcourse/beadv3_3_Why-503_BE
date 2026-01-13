@@ -54,6 +54,7 @@ public class CompanyEmailAuthService {
 
         mailSender.send(message);
 
+        // 인증 코드는 로그에 남기지 않음 (보안)
         log.info("회사 이메일 인증 코드 발송 완료. email={}", email);
     }
 

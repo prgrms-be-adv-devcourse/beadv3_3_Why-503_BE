@@ -32,4 +32,15 @@ public class BookingCtrl {
         bookingSv.cancelBooking(bookingSq);
         return ResponseEntity.ok().build();
     }
+
+    // [추가] 예매 확정 API
+    // 요청 예시: PATCH /bookings/1/confirm?paymentKey=toss_1234
+    @PatchMapping("/{bookingSq}/confirm")
+    public ResponseEntity<Void> confirmBooking(
+            @PathVariable Long bookingSq,
+            @RequestParam String paymentKey
+    ) {
+        bookingSv.confirmBooking(bookingSq, paymentKey);
+        return ResponseEntity.ok().build();
+    }
 }

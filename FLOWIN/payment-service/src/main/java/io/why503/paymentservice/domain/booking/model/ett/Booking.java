@@ -111,7 +111,15 @@ public class Booking {
     }
 
     // 3. 예매 확정 (결제 완료 시)
-    public void confirm() {
+    public void confirm(String paymentKey) {
         this.bookingStatus = BookingStatus.CONFIRMED;
+        this.paymentKey = paymentKey;          // PG사에서 받은 결제 키 저장
+        this.approvedAt = LocalDateTime.now(); // 승인 시간 기록
+        this.paymentMethod = "CARD";           // (나중에 파라미터로 확장 가능)
+
+        // ★ 하위 티켓들도 모두 '결제됨(PAID)' 상태로 변경
+        for (Ticket ticket : this.tickets) {
+            ticket.paid();
+        }
     }
 }

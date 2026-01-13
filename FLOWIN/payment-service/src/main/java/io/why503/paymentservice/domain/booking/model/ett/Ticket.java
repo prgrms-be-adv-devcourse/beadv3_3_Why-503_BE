@@ -45,8 +45,12 @@ public class Ticket {
     @JoinColumn(name = "booking_sq", nullable = false)
     private Booking booking;
 
-
     // 비즈니스 로직
+
+    // [추가] 결제 완료 처리 (Booking에서 호출)
+    public void paid() {
+        this.ticketStatus = TicketStatus.PAID;
+    }
     // [추가] 티켓 취소 비즈니스 로직
     public void cancel() {
         this.ticketStatus = TicketStatus.CANCELLED; // 4번 상태로 변경

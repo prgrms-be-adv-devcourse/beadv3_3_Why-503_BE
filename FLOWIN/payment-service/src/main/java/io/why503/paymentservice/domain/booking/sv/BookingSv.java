@@ -41,4 +41,18 @@ public class BookingSv {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
         booking.cancel(); // status: 0 -> 2
     }
+
+    // 4. 예매 확정 (결제 승인)
+    @Transactional
+    public void confirmBooking(Long bookingSq, String paymentKey) {
+        // 1. 예매 내역 조회
+        Booking booking = bookingRepo.findById(bookingSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
+
+        // 2. [TODO] 추후 PG사 승인 검증 로직 추가 (PaymentClient.confirm...)
+        // 지금은 무조건 결제 성공이라고 가정합니다.
+
+        // 3. 상태 변경 (Pending -> Confirmed)
+        booking.confirm(paymentKey);
+    }
 }

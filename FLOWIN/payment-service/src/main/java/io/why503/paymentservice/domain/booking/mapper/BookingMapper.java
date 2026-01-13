@@ -8,12 +8,16 @@ import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
 import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
 import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
+import lombok.RequiredArgsConstructor; // ★ 추가
 import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class BookingMapper {
+
+    private final TicketMapper ticketMapper;
 
     // 1. ReqDto -> Entity 변환
     public Booking toEntity(BookingReqDto req) {
@@ -47,9 +51,9 @@ public class BookingMapper {
                 .bookingStatus(booking.getBookingStatus())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
-                // 모든 티켓을 가져오되, TicketResDto로 변환해서 담음
+                // [변경] TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용
                 .tickets(booking.getTickets().stream()
-                        .map(TicketResDto::from)
+                        .map(ticketMapper::toDto)
                         .collect(Collectors.toList()))
                 .build();
     }

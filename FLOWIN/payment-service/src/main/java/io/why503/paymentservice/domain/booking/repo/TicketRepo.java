@@ -8,6 +8,11 @@ import java.util.Collection;
 
 public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
-    // "특정 좌석(showingSeatSq)이면서 + 상태가 목록(statuses) 중 하나라도 겹치면 -> true 반환"
+    /**
+     * [변경 사항]
+     * 리뷰 피드백 반영: 불필요한 비관적 락(@Lock) 제거
+     * 단순 조회용 메서드로 변경
+     */
     boolean existsByShowingSeatSqAndTicketStatusIn(Long showingSeatSq, Collection<TicketStatus> statuses);
+
 }

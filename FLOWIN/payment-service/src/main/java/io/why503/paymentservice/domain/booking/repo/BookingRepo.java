@@ -7,12 +7,13 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-// Booking 엔티티용 JPA 리포지토리
 public interface BookingRepo extends JpaRepository<Booking, Long> {
 
-    // [리뷰 반영] N+1 문제 해결을 위한 Fetch Join 쿼리
-    // Booking을 조회할 때 연관된 Tickets까지 한 방에 가져옵니다.
-    // DISTINCT: 1:N 조인 시 Booking 데이터 뻥튀기 방지 (JPA 엔티티 중복 제거)
+    /**
+     * 예매 상세 조회 (Fetch Join)
+     * - 연관된 Ticket 목록을 함께 조회하여 N+1 문제를 방지합니다.
+     * - DISTINCT: 1:N 조인으로 인한 Booking 엔티티 중복을 제거합니다.
+     */
     @Query("SELECT DISTINCT b FROM Booking b JOIN FETCH b.tickets WHERE b.bookingSq = :bookingSq")
     Optional<Booking> findByIdWithTickets(@Param("bookingSq") Long bookingSq);
 }

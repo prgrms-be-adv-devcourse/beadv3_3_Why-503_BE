@@ -11,61 +11,56 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 조회 성능 최적화
+@Transactional(readOnly = true)
 public class BookingSv {
 
     private final BookingRepo bookingRepo;
     private final BookingMapper bookingMapper;
 
-    // 1. 예매 생성
-    // - Mapper를 통해 Entity 변환 후 저장 (Cascade로 Ticket도 자동 저장)
-    @Transactional // 쓰기 허용
+    // 예매 생성
+    @Transactional
     public BookingResDto createBooking(BookingReqDto req) {
         Booking booking = bookingMapper.toEntity(req);
         Booking savedBooking = bookingRepo.save(booking);
         return bookingMapper.toDto(savedBooking);
     }
 
-    // 2. 예매 상세 조회
+    // 예매 상세 조회
     public BookingResDto getBooking(Long bookingSq) {
-        Booking booking = bookingRepo.findById(bookingSq)
+        // Fetch Join을 사용하여 티켓 정보까지 한 번에 조회 (N+1 문제 방지)
+        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
         return bookingMapper.toDto(booking);
     }
 
-    // 3. 예매 취소
-    // - 상태값 변경 (Dirty Checking으로 자동 Update)
-    @Transactional // 쓰기 허용
-    public void cancelBooking(Long bookingSq) {
-        Booking booking = bookingRepo.findById(bookingSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
-        booking.cancel(); // status: 0 -> 2
-    }
-    // 티켓 개별 취소 (부분 취소)
-    @Transactional
-    public void cancelTicket(Long bookingSq, Long ticketSq) {
-        Booking booking = bookingRepo.findById(bookingSq)
-                .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
-
-        // [TODO] PG사 부분 환불 로직이 들어갈 자리
-
-        // 엔티티 로직 호출 ("사용자 요청" 사유)
-        booking.cancelTicket(ticketSq, "사용자 요청에 의한 개별 취소");
-    }
-
-    // 4. 예매 확정 (결제 승인)
+    // 예매 확정 (결제 승인)
     @Transactional
     public void confirmBooking(Long bookingSq, String paymentKey) {
-        // 1. 예매 내역 조회
-        Booking booking = bookingRepo.findById(bookingSq)
+        // 추후 PG사 승인 연동 시, 외부 API 호출은 트랜잭션 범위 밖으로 분리 필요
+
+        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
-        // 2. [TODO] 추후 PG사 승인 검증 로직 추가 (PaymentClient.confirm...)
-        // 지금은 무조건 결제 성공이라고 가정합니다.
-
-        // 3. 상태 변경 (Pending -> Confirmed)
         booking.confirm(paymentKey);
     }
 
+    // 예매 취소 (전체 취소)
+    @Transactional
+    public void cancelBooking(Long bookingSq) {
+        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
+        booking.cancel();
+    }
+
+    // 티켓 개별 취소 (부분 취소)
+    @Transactional
+    public void cancelTicket(Long bookingSq, Long ticketSq) {
+        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+                .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
+
+        // 추후 PG사 환불 연동 시, 외부 API 호출은 트랜잭션 범위 밖으로 분리 필요 (DB 커넥션 점유 시간 최소화)
+
+        booking.cancelTicket(ticketSq, "사용자 요청에 의한 개별 취소");
+    }
 
 }

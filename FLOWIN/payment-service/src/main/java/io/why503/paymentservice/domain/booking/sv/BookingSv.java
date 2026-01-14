@@ -3,11 +3,16 @@ package io.why503.paymentservice.domain.booking.sv;
 import io.why503.paymentservice.domain.booking.mapper.BookingMapper;
 import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
 import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
+import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
+import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
+import io.why503.paymentservice.domain.booking.repo.TicketRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,11 +20,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookingSv {
 
     private final BookingRepo bookingRepo;
+    private final TicketRepo ticketRepo;
     private final BookingMapper bookingMapper;
 
     // 예매 생성
     @Transactional
     public BookingResDto createBooking(BookingReqDto req) {
+        // 이미 선점(RESERVED)되었거나 결제(PAID)된 티켓은 구매 불가!
+        List<TicketStatus> soldStatuses = List.of(TicketStatus.RESERVED, TicketStatus.PAID);
+
+        if (req.getTickets() != null) {
+            for (TicketReqDto ticketReq : req.getTickets()) {
+                // DB에 물어봅니다: "이 좌석(101번) 혹시 팔렸나요?"
+                boolean isSold = ticketRepo.existsByShowingSeatSqAndTicketStatusIn(
+                        ticketReq.getShowingSeatSq(),
+                        soldStatuses
+                );
+
+                // 팔렸으면 에러를 냅니다! (예매 중단)
+                if (isSold) {
+                    throw new IllegalStateException("이미 선택된 좌석입니다. (좌석번호: " + ticketReq.getShowingSeatSq() + ")");
+                }
+            }
+        }
+
         Booking booking = bookingMapper.toEntity(req);
         Booking savedBooking = bookingRepo.save(booking);
         return bookingMapper.toDto(savedBooking);

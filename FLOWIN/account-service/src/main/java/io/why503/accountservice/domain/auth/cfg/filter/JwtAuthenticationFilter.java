@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -93,8 +94,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         wrapped.addHeader("X-USER-NAME", tokenBody.name());
         wrapped.addHeader("X-USER-ROLE", tokenBody.role().getCode().toString());
 
-        //다음 토큰으로
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(
+                        details,
+                        null,
+                        details.getAuthorities()
+                );
 
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        //다음 토큰으로
+        filterChain.doFilter(wrapped, response);
         //filterChain.doFilter(request, response); //나중에 gateway 추가 시 부활
     }
 

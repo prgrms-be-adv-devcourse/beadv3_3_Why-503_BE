@@ -29,7 +29,6 @@ public class CompanyEmailCtrl {
     public ResponseEntity<CompanyEmailResDto> inputCompanyEMail(
             @Valid @RequestBody CompanyEmailReqDto reqDto // 회사 이메일 검증을 위한 요청 데이터
     ) {
-        log.info("you luck");
         companyEmailAuthService.sendAuthCode(reqDto.getCompanyEmail()); // 회사 이메일로 인증 코드 발송
 
         return ResponseEntity.ok(

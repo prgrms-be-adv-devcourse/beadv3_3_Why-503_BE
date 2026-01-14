@@ -44,8 +44,6 @@ public class CompanyEmailAuthSvImpl implements CompanyEmailAuthSv {
 
         // 인증 코드 이메일 발송 메시지 구성
         SimpleMailMessage message = new SimpleMailMessage();
-
-        log.info("you fuck");
         message.setFrom(mailFrom);
         message.setTo(email);
         message.setSubject("[Company Service] 이메일 인증 코드");

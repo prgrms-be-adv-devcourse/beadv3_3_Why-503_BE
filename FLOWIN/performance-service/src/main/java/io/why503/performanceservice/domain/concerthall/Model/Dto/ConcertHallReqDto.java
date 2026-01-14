@@ -43,7 +43,7 @@ public class ConcertHallReqDto {
 
     /**
      * 공연장 상태
-     * (예: Y/N, 0/1 등 문자열 기준)
+     * (Y/N)
      */
     private String concertHallStat;
 

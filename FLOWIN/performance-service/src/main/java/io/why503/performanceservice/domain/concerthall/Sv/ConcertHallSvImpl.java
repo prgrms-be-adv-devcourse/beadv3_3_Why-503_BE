@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
 import io.why503.performanceservice.domain.concerthall.Model.Ett.ConcertHallEtt;
 import io.why503.performanceservice.domain.concerthall.Repo.ConcertHallRepo;
 
@@ -46,13 +47,15 @@ public class ConcertHallSvImpl implements ConcertHallSv {
                 .concertHallPost(reqDto.getConcertHallPost())
                 .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
                 .concertHallDetailAddr(reqDto.getConcertHallDetailAddr())
-                .concertHallStat(reqDto.getConcertHallStat())
                 .concertHallSeatScale(reqDto.getConcertHallSeatScale())
                 .concertHallStructure(reqDto.getConcertHallStructure())
                 .concertHallLatitude(reqDto.getConcertHallLatitude())
                 .concertHallLongitude(reqDto.getConcertHallLongitude())
                 .build();
 
+        hall.setConcertHallStatus(
+            ConcertHallStatus.fromCode(reqDto.getConcertHallStat())
+        );
         concertHallRepo.save(hall);
     }
 
@@ -78,7 +81,7 @@ public class ConcertHallSvImpl implements ConcertHallSv {
                 .concertHallPost(hall.getConcertHallPost())
                 .concertHallBasicAddr(hall.getConcertHallBasicAddr())
                 .concertHallDetailAddr(hall.getConcertHallDetailAddr())
-                .concertHallStat(hall.getConcertHallStat())
+                .concertHallStatus(hall.getConcertHallStatus())
                 .concertHallSeatScale(hall.getConcertHallSeatScale())
                 .concertHallStructure(hall.getConcertHallStructure())
                 .concertHallLatitude(hall.getConcertHallLatitude())

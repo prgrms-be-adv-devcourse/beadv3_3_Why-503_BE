@@ -15,6 +15,8 @@ package io.why503.performanceservice.domain.concerthall.Model.Ett;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
+
 
 @Entity
 @Table(name = "concert_hall")
@@ -24,52 +26,33 @@ import java.math.BigDecimal;
 @Builder
 public class ConcertHallEtt {
 
-    /**
-     * 공연장 식별자 (PK)
-     */
+    // 공연장 식별자 (PK)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "concert_hall_sq")
     private Long concertHallSq;
 
-    /**
-     * 공연장명
-     */
+    // 공연장명
     @Column(name = "concert_hall_name", nullable = false, length = 100)
     private String concertHallName;
 
-    /**
-     * 공연장 우편번호
-     */
+    // 공연장 우편번호
     @Column(name = "concert_hall_post", nullable = false, length = 8)
     private String concertHallPost;
 
-    /**
-     * 공연장 기본 주소
-     */
+    // 공연장 기본 주소
     @Column(name = "concert_hall_basic_addr", nullable = false, length = 255)
     private String concertHallBasicAddr;
 
-    /**
-     * 공연장 상세 주소
-     */
+    // 공연장 상세 주소
     @Column(name = "concert_hall_detail_addr", nullable = false, length = 255)
     private String concertHallDetailAddr;
 
-    /**
-     * 공연장 상태
-     *
-     * 현재는 문자 기반 컬럼으로 관리
-     * (예: Y/N, 0/1 등)
-     *
-     * 추후 Enum 분리 가능
-     */
+    // 공연장 상태 (Enum)
     @Column(name = "concert_hall_stat", nullable = false, length = 1)
     private String concertHallStat;
 
-    /**
-     * 공연장 총 좌석 수
-     */
+    // 공연장 총 좌석 수
     @Column(name = "concert_hall_seat_scale", nullable = false)
     private Integer concertHallSeatScale;
 
@@ -80,15 +63,23 @@ public class ConcertHallEtt {
     @Column(name = "concert_hall_structure", nullable = false, length = 50)
     private String concertHallStructure;
 
-    /**
-     * 공연장 위도
-     */
+    // 공연장 위도
     @Column(name = "concert_hall_latitude", nullable = false, precision = 10, scale = 8)
     private BigDecimal concertHallLatitude;
 
-    /**
-     * 공연장 경도
-     */
+    // 공연장 경도
     @Column(name = "concert_hall_longitude", nullable = false, precision = 11, scale = 8)
     private BigDecimal concertHallLongitude;
+
+    // ===== Enum 변환 메서드 =====
+
+    // 콘서트 상태 코드 -> Enum 반환
+    public ConcertHallStatus getConcertHallStatus() {
+        return ConcertHallStatus.fromCode(this.concertHallStat);
+    }
+
+    // 콘서트 Enum -> 코드 값 저장
+    public void setConcertHallStatus(ConcertHallStatus status) {
+        this.concertHallStat = status.getCode();
+    }
 }

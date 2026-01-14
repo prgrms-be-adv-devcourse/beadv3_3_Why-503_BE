@@ -14,6 +14,7 @@ package io.why503.performanceservice.domain.concerthall.Model.Dto;
 
 import java.math.BigDecimal;
 
+import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -49,7 +50,7 @@ public class ConcertHallResDto {
     /**
      * 공연장 상태
      */
-    private String concertHallStat;
+    private ConcertHallStatus concertHallStatus;
 
     /**
      * 총 좌석 수

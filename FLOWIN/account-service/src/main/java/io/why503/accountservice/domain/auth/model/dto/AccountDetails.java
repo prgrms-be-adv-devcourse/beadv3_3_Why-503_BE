@@ -2,6 +2,8 @@ package io.why503.accountservice.domain.auth.model.dto;
 
 
 import io.why503.accountservice.domain.account.model.dto.UserRole;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +18,7 @@ jwt payload에 쓰는 클래스
  */
 @Getter
 @RequiredArgsConstructor
+@Builder
 public class AccountDetails implements UserDetails {
     private final String username;
     private final String password;

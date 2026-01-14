@@ -43,7 +43,7 @@ public enum UserRole {
     }
     /*
         enum 변환기
-        json -> java에서 작동함
+        json <-> java에서 작동함
     * */
     @JsonCreator
     public static UserRole from(Integer code) {

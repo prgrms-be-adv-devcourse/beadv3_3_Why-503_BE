@@ -5,7 +5,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 /*
 enum 변환기 vec.UserStat
-java -> sql에서 작동함
+java <-> sql에서 작동함
 * */
 @Converter(autoApply = false)
 public class UserStatConverter implements AttributeConverter<UserStat, Integer> {

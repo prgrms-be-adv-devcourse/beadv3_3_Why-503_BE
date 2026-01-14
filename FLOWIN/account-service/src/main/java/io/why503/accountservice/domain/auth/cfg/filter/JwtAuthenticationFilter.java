@@ -1,8 +1,11 @@
 package io.why503.accountservice.domain.auth.cfg.filter;
 
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
+import io.why503.accountservice.domain.auth.model.dto.TokenBody;
+import io.why503.accountservice.domain.auth.sv.JwtProvider;
 import io.why503.accountservice.domain.auth.sv.impl.JwtProviderImpl;
 import io.why503.accountservice.domain.auth.sv.impl.AccountDetailsSvImpl;
+import io.why503.accountservice.util.UserRequestWrapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -31,12 +34,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Value("${custom.jwt.cookie-name}")
     private String cookieName;
 
-    //AccountDetail id변수 이름
-    @Value("${custom.jwt.id}")
-    private String id;
 
 
-    private final JwtProviderImpl jwtProvider;
+    private final JwtProvider jwtProvider;
     private final AccountDetailsSvImpl accountDetailsSv;
 
     //login접근에는 필터 x
@@ -77,17 +77,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         //jwt의 payload를 변수에 저장
-        Map<String, Object> claims = jwtProvider.getClaims(token);
+        TokenBody tokenBody = jwtProvider.parse(token);
         //payload를 AccountDetails로 변환
-        AccountDetails details = accountDetailsSv.loadUserByUsername(claims.get(id).toString());
-        //다음 필터에 넘길 토큰 생성
-        UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(
-                details, null, details.getAuthorities()
+        AccountDetails details = new AccountDetails(
+                null,
+                null,
+                tokenBody.sq(),
+                tokenBody.name(),
+                tokenBody.role()
         );
-        //인증 되었다는 걸 토큰과 함께 컨텍스트에 태움
-        SecurityContextHolder.getContext().setAuthentication(upat);
+        //가짜 헤더
+        UserRequestWrapper wrapped = new UserRequestWrapper(request);
+        //헤더에 추가
+        wrapped.addHeader("X-USER-SQ", tokenBody.sq().toString());
+        wrapped.addHeader("X-USER-NAME", tokenBody.name());
+        wrapped.addHeader("X-USER-ROLE", tokenBody.role().getCode().toString());
+
         //다음 토큰으로
-        filterChain.doFilter(request, response);
+
+        //filterChain.doFilter(request, response); //나중에 gateway 추가 시 부활
     }
 
 }

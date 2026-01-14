@@ -1,13 +1,14 @@
 package io.why503.accountservice.domain.account.model.ett;
 
 
-import io.why503.accountservice.domain.account.model.dto.UpsertAccountCmd;
+import io.why503.accountservice.domain.account.model.dto.cmd.UpsertAccountCmd;
 import io.why503.accountservice.domain.account.model.dto.Gender;
 import io.why503.accountservice.domain.account.model.dto.UserRole;
 import io.why503.accountservice.domain.account.model.dto.UserStat;
 import io.why503.accountservice.domain.account.model.dto.enumconverter.GenderConverter;
 import io.why503.accountservice.domain.account.model.dto.enumconverter.UserRoleConverter;
 import io.why503.accountservice.domain.account.model.dto.enumconverter.UserStatConverter;
+import io.why503.accountservice.domain.company.model.ett.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -84,6 +85,9 @@ public class Account {
     @Column(name = "user_stat")
     @Convert(converter = UserStatConverter.class)
     private UserStat stat = UserStat.NORMAL;
+
+    @OneToOne(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Company company;
 
     @Column(name = "user_point")
     private Long point = 0L;

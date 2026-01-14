@@ -1,16 +1,18 @@
 package io.why503.accountservice.domain.account.ctrl;
 
 
-import io.why503.accountservice.domain.account.model.dto.UpsertAccountReq;
+import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
 import io.why503.accountservice.domain.account.sv.AccountSv;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/account")
@@ -28,6 +30,7 @@ public class AccountCtrl {
     //모두 조회
     @GetMapping
     public ResponseEntity<List<Account>> readAll(){
+        log.info("account");
         List<Account> foundAccountList = accountSv.readAll();
         return ResponseEntity.ok(foundAccountList);
     }

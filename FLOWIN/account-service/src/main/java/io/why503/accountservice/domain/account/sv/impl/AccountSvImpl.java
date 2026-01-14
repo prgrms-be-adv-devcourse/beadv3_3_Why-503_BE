@@ -1,8 +1,8 @@
 package io.why503.accountservice.domain.account.sv.impl;
 
 
-import io.why503.accountservice.mapper.AccountMapper;
-import io.why503.accountservice.domain.account.model.dto.UpsertAccountReq;
+import io.why503.accountservice.util.AccountMapper;
+import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
 import io.why503.accountservice.domain.account.repo.AccountRepo;
 import io.why503.accountservice.domain.account.sv.AccountSv;

@@ -33,7 +33,7 @@ public class BookingCtrl {
         return ResponseEntity.ok().build();
     }
 
-    // [추가] 예매 확정 API
+    // 예매 확정 API
     // 요청 예시: PATCH /bookings/1/confirm?paymentKey=toss_1234
     @PatchMapping("/{bookingSq}/confirm")
     public ResponseEntity<Void> confirmBooking(
@@ -41,6 +41,16 @@ public class BookingCtrl {
             @RequestParam String paymentKey
     ) {
         bookingSv.confirmBooking(bookingSq, paymentKey);
+        return ResponseEntity.ok().build();
+    }
+
+    // 개별 티켓 취소 API
+    @PatchMapping("/{bookingSq}/tickets/{ticketSq}/cancel")
+    public ResponseEntity<Void> cancelTicket(
+            @PathVariable Long bookingSq,
+            @PathVariable Long ticketSq
+    ) {
+        bookingSv.cancelTicket(bookingSq, ticketSq);
         return ResponseEntity.ok().build();
     }
 }

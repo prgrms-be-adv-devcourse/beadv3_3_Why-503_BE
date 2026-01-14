@@ -16,5 +16,7 @@ public class BookingResDto {
     private BookingStatus bookingStatus;
     private Integer bookingAmount;
     private LocalDateTime bookingDt;
-    private List<Long> seatSqs;
+
+    // [변경] 단순 좌석번호 리스트 -> 티켓 상세 리스트
+    private List<TicketResDto> tickets;
 }

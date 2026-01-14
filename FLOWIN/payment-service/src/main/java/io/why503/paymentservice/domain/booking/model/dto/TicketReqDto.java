@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class TicketDto {
+public class TicketReqDto {
     private Long showingSeatSq;
     private Integer originalPrice;
     private Integer finalPrice;

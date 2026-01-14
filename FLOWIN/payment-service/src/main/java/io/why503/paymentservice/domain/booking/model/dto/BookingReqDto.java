@@ -11,5 +11,5 @@ public class BookingReqDto {
     private Integer totalAmount;
 
     // 내부 클래스가 아니라, TicketDto 파일을 참조합니다.
-    private List<TicketDto> tickets;
+    private List<TicketReqDto> tickets;
 }

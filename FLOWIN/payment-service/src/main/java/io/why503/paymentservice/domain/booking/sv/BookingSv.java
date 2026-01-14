@@ -11,6 +11,7 @@ import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
 import io.why503.paymentservice.domain.booking.repo.TicketRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,31 +28,35 @@ public class BookingSv {
 
     /**
      * 예매 생성
-     * 동시성 제어를 위해 비관적 락(Pessimistic Lock)을 사용합니다.
      */
     @Transactional
     public BookingResDto createBooking(BookingReqDto req) {
-        // 구매 불가 상태 정의 (이미 선점되었거나 결제된 티켓)
+        // 이미 팔린 것으로 간주할 상태들
         List<TicketStatus> soldStatuses = List.of(TicketStatus.RESERVED, TicketStatus.PAID);
 
         if (req.getTickets() != null) {
             for (TicketReqDto ticketReq : req.getTickets()) {
-                // [Critical] 동시성 이슈 방지: 배타적 락(Write Lock) 획득
-                // 해당 좌석이 비어있음을 보장받은 상태에서만 진행
-                List<Ticket> soldTickets = ticketRepo.findWithLockByShowingSeatSqAndTicketStatusIn(
+
+                boolean isSold = ticketRepo.existsByShowingSeatSqAndTicketStatusIn(
                         ticketReq.getShowingSeatSq(),
                         soldStatuses
                 );
 
-                if (!soldTickets.isEmpty()) {
+                if (isSold) {
                     throw new IllegalStateException("이미 선택된 좌석입니다. (좌석번호: " + ticketReq.getShowingSeatSq() + ")");
                 }
             }
         }
 
-        Booking booking = bookingMapper.toEntity(req);
-        Booking savedBooking = bookingRepo.save(booking);
-        return bookingMapper.toDto(savedBooking);
+        try {
+            // 검증 통과 -> 예매 생성
+            Booking booking = bookingMapper.toEntity(req);
+            Booking savedBooking = bookingRepo.save(booking);
+            return bookingMapper.toDto(savedBooking);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("동시에 다른 사용자가 좌석을 선점했습니다. 다시 시도해주세요.");
+        }
     }
 
     /**

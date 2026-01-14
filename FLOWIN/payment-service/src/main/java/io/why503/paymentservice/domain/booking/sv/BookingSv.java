@@ -48,15 +48,9 @@ public class BookingSv {
             }
         }
 
-        try {
-            // 검증 통과 -> 예매 생성
-            Booking booking = bookingMapper.toEntity(req);
-            Booking savedBooking = bookingRepo.save(booking);
-            return bookingMapper.toDto(savedBooking);
-
-        } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("동시에 다른 사용자가 좌석을 선점했습니다. 다시 시도해주세요.");
-        }
+        Booking booking = bookingMapper.toEntity(req);
+        Booking savedBooking = bookingRepo.save(booking);
+        return bookingMapper.toDto(savedBooking);
     }
 
     /**

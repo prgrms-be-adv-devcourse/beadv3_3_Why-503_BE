@@ -25,7 +25,7 @@ public class ShowReqDto {
 
     // 공연 카테고리 (번호로 전달받음)
     // 예: 0 콘서트 / 1 뮤지컬 / 2 연극 / 3 클래식
-    private int category;
+    private Integer category;
 
     private Long concertHallSq;       // 공연장 식별자
     private Long companySq;            // 회사 식별자

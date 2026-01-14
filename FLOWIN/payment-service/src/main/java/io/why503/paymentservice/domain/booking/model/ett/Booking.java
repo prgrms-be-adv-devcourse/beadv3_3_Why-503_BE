@@ -136,15 +136,35 @@ public class Booking {
     }
 
     // 예매 확정 (결제 완료 시)
-    public void confirm(String paymentKey) {
+    public void confirm(String paymentKey, String method) {
+        // (BookingStatus가 Enum이라고 가정할 때)
+        if (this.bookingStatus != BookingStatus.PENDING) {
+            throw new IllegalStateException("결제 대기 중인 예약만 승인할 수 있습니다. (현재 상태: " + this.bookingStatus + ")");
+        }
         this.bookingStatus = BookingStatus.CONFIRMED;
         this.paymentKey = paymentKey;          // PG사에서 받은 결제 키 저장
         this.approvedAt = LocalDateTime.now(); // 승인 시간 기록
-        this.paymentMethod = "CARD";           // (나중에 파라미터로 확장 가능)
+        this.paymentMethod= method;
 
         // ★ 하위 티켓들도 모두 '결제됨(PAID)' 상태로 변경
         for (Ticket ticket : this.tickets) {
             ticket.paid();
         }
     }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        if (this.bookingDt == null) this.bookingDt = LocalDateTime.now();
+        if (this.bookingStatus == null) this.bookingStatus = BookingStatus.PENDING; // PENDING
+        // 가격 정보가 null이면 0원으로 강제 세팅
+        if (this.bookingAmount == null) this.bookingAmount = 0;
+        if (this.totalAmount == null) this.totalAmount = 0;
+        if (this.usedPoint == null) this.usedPoint = 0;
+        if (this.pgAmount == null) this.pgAmount = 0;
+
+        // 결제 수단도 없으면 기본값
+        if (this.paymentMethod == null) this.paymentMethod = "PENDING";
+    }
+
 }

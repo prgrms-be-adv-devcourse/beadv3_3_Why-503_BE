@@ -1,11 +1,14 @@
 package io.why503.paymentservice.domain.booking.model.dto;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 
 @Getter
+@Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class BookingReqDto {
     private Long userSq;
     private Integer totalAmount;

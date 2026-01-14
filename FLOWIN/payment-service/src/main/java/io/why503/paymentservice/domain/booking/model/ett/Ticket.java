@@ -55,4 +55,14 @@ public class Ticket {
     public void cancel() {
         this.ticketStatus = TicketStatus.CANCELLED; // 4번 상태로 변경
     }
+
+    // 저장 전 null 방어 로직
+    @PrePersist
+    public void prePersist() {
+        if (this.originalPrice == null) this.originalPrice = 0;
+        if (this.discountAmount == null) this.discountAmount = 0;
+        if (this.finalPrice == null) this.finalPrice = 0;
+        if (this.ticketStatus == null) this.ticketStatus = TicketStatus.AVAILABLE;
+        if (this.ticketUuid == null) this.ticketUuid = java.util.UUID.randomUUID().toString();
+    }
 }

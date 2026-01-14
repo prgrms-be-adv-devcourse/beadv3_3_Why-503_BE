@@ -5,6 +5,7 @@ import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
 import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
 import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
+import io.why503.paymentservice.domain.booking.model.ett.Ticket;
 import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
 import io.why503.paymentservice.domain.booking.repo.TicketRepo;
@@ -31,14 +32,15 @@ public class BookingSv {
 
         if (req.getTickets() != null) {
             for (TicketReqDto ticketReq : req.getTickets()) {
-                // DB에 물어봅니다: "이 좌석(101번) 혹시 팔렸나요?"
-                boolean isSold = ticketRepo.existsByShowingSeatSqAndTicketStatusIn(
+                // [변경] 단순 조회(exists) -> 락 조회(findWithLock)
+                // DB에 락을 걸고 확인합니다. 데이터가 있으면 가져오고, 없으면 대기하거나 빈 공간을 잠급니다.
+                List<Ticket> soldTickets = ticketRepo.findWithLockByShowingSeatSqAndTicketStatusIn(
                         ticketReq.getShowingSeatSq(),
                         soldStatuses
                 );
 
-                // 팔렸으면 에러를 냅니다! (예매 중단)
-                if (isSold) {
+                // 리스트가 비어있지 않다면 -> 누군가 이미 선점함!
+                if (!soldTickets.isEmpty()) {
                     throw new IllegalStateException("이미 선택된 좌석입니다. (좌석번호: " + ticketReq.getShowingSeatSq() + ")");
                 }
             }
@@ -65,7 +67,7 @@ public class BookingSv {
         Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
-        booking.confirm(paymentKey);
+        booking.confirm(paymentKey, "CARD");
     }
 
     // 예매 취소 (전체 취소)

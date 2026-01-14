@@ -29,11 +29,30 @@ ext {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// web / jpa
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// service discovery
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+	// feign (service to service)
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// security (추후 사용)
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// db
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

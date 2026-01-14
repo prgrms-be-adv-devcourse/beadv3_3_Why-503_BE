@@ -6,6 +6,7 @@ import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
 import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
+import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
 import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
 import io.why503.paymentservice.domain.booking.repo.TicketRepo;
@@ -78,14 +79,30 @@ public class BookingSv {
     }
 
     /**
-     * 예매 취소 (전체 취소)
+     * 예매 전체 취소
+     * - 결제 전(PENDING): 데이터 완전 삭제 (Delete)
+     * - 결제 후(CONFIRMED): 취소 상태로 변경 (Soft Delete / Refund)
      */
     @Transactional
     public void cancelBooking(Long bookingSq) {
         Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
-        booking.cancel();
+        // [분기 처리]
+        if (booking.getBookingStatus() == BookingStatus.PENDING) {
+            // 1. 결제 전: 깔끔하게 삭제
+            // CascadeType.ALL 덕분에 딸려있는 Ticket들도 같이 삭제됩니다.
+            bookingRepo.delete(booking);
+
+        } else if (booking.getBookingStatus() == BookingStatus.CONFIRMED ||
+                booking.getBookingStatus() == BookingStatus.PARTIAL_CANCEL) {
+            // 2. 결제 후: 기록 남기고 취소 처리
+            // TODO: PG사 전체 환불 API 연동 필요
+            booking.cancel("사용자 요청에 의한 전체 취소");
+
+        } else if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("이미 취소된 예매입니다.");
+        }
     }
 
     /**
@@ -93,11 +110,30 @@ public class BookingSv {
      */
     @Transactional
     public void cancelTicket(Long bookingSq, Long ticketSq) {
-        // TODO: 추후 PG사 부분 환불 API 연동 필요
-
+        // 1. Booking 조회 (티켓과 함께)
         Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
 
-        booking.cancelTicket(ticketSq, "사용자 요청에 의한 개별 취소");
+        // 2. 현재 상태에 따른 분기 처리
+        if (booking.getBookingStatus() == BookingStatus.PENDING) {
+            // A. 결제 전: 선점 취소 (데이터 삭제)
+            booking.deleteTicket(ticketSq);
+
+            // 티켓이 하나도 안 남았다면 예매 자체를 삭제
+            if (booking.getTickets().isEmpty()) {
+                bookingRepo.delete(booking);
+            }
+
+        } else if (booking.getBookingStatus() == BookingStatus.CONFIRMED ||
+                booking.getBookingStatus() == BookingStatus.PARTIAL_CANCEL) {
+            // B. 결제 후: 부분 환불 (데이터 유지, 상태 변경)
+            // TODO: PG사 부분 취소 API 연동 위치
+            booking.cancelTicket(ticketSq, "사용자 요청에 의한 개별 취소");
+
+        } else {
+            throw new IllegalStateException("취소할 수 없는 예매 상태입니다. (상태: " + booking.getBookingStatus() + ")");
+        }
+
+        // Dirty Checking으로 인해 변경 사항(삭제 or 상태변경)이 자동 반영됨
     }
 }

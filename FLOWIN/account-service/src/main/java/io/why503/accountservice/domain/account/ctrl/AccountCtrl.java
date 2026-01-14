@@ -30,7 +30,6 @@ public class AccountCtrl {
     //모두 조회
     @GetMapping
     public ResponseEntity<List<Account>> readAll(){
-        log.info("account");
         List<Account> foundAccountList = accountSv.readAll();
         return ResponseEntity.ok(foundAccountList);
     }

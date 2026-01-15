@@ -1,65 +1,95 @@
 /**
  * Concert Hall Controller
- * 공연장 등록 및 조회 요청을 처리하는 API 컨트롤러
+ * 공연장 등록 및 조회를 담당하는 Controller
  *
  * 사용 목적 :
- * - 관리자 또는 내부 시스템에서 공연장 정보 등록
- * - 공연장 식별자 기준 단건 조회
+ * - 공연장 등록
+ * - 공연장 단건 조회
+ * - 공연장 등록 시 좌석 자동 생성 분기 처리
  *
- * 설계 메모 :
- * - 공연장 도메인은 다른 도메인(Show, Seat)의 기준 데이터 역할
- * - FK 참조 대상이므로 삭제/수정 시 주의 필요
+ * 설계 의도 :
+ * - 좌석 생성 로직은 Service에 위임
+ * - Controller에서는 요청 타입에 따라 Service 메서드만 분기
  */
 package io.why503.performanceservice.domain.concerthall.Ctrl;
 
+import java.util.List;
+
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallWithSeatsReq;
 import io.why503.performanceservice.domain.concerthall.Sv.ConcertHallSv;
+import io.why503.performanceservice.domain.seat.Model.Dto.Cmd.SeatAreaCreateCmd;
 
 @RestController
-@RequiredArgsConstructor // Service 의존성 생성자 주입
 @RequestMapping("/concert-halls")
+@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 public class ConcertHallCtrl {
 
     private final ConcertHallSv concertHallSv;
 
     /**
-     * 공연장 등록
+     * 공연장 등록 (좌석 생성 없음 - 기존 방식)
      *
-     * 처리 내용 :
-     * - 공연장 기본 정보 DB 저장
-     * - 공연 등록(Show) 시 참조되는 기준 데이터 생성
-     *
-     * @param reqDto 공연장 등록 요청 DTO
-     * @return 200 OK
+     * POST /concert-halls
      */
     @PostMapping
-    public ResponseEntity<Void> createConcertHall(
+    public void createConcertHall(
             @RequestBody ConcertHallReqDto reqDto
     ) {
         concertHallSv.createConcertHall(reqDto);
-        return ResponseEntity.ok().build();
     }
 
     /**
      * 공연장 단건 조회
      *
-     * 처리 내용 :
-     * - 공연장 식별자 기준 조회
-     * - 존재하지 않을 경우 예외 발생
-     *
-     * @param concertHallSq 공연장 식별자
-     * @return 공연장 응답 DTO
+     * GET /concert-halls/{concertHallSq}
      */
     @GetMapping("/{concertHallSq}")
-    public ResponseEntity<ConcertHallResDto> getConcertHall(
+    public ConcertHallResDto getConcertHall(
             @PathVariable Long concertHallSq
     ) {
-        ConcertHallResDto res = concertHallSv.getConcertHall(concertHallSq);
-        return ResponseEntity.ok(res);
+        return concertHallSv.getConcertHall(concertHallSq);
+    }
+
+    /**
+     * 기본 좌석 자동 생성 공연장 등록
+     *
+     * POST /concert-halls/default-seats
+     */
+    @PostMapping("/default-seats")
+    public Long createConcertHallWithDefaultSeats(
+            @RequestBody ConcertHallReqDto reqDto
+    ) {
+        return concertHallSv.createWithDefaultSeats(reqDto);
+    }
+
+    /**
+     * 관리자 입력 기반 좌석 생성 공연장 등록
+     *
+     * POST /concert-halls/custom-seats
+     *
+     * 요청 바디 예시:
+     * {
+     *   "concertHall": { ... },
+     *   "seatAreas": [
+     *     { "seatArea": "A", "seatCount": 20 },
+     *     { "seatArea": "B", "seatCount": 40 }
+     *   ]
+     * }
+     */
+    @PostMapping("/custom-seats")
+    public Long createConcertHallWithCustomSeats(
+            @RequestBody ConcertHallWithSeatsReq req
+    ) {
+        return concertHallSv.createWithCustomSeats(
+                req.getConcertHall(),
+                req.getSeatAreas()
+        );
     }
 }

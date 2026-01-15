@@ -3,16 +3,22 @@
  * 공연장 관련 비즈니스 로직 구현체
  *
  * 처리 내용 :
- * - 공연장 등록 시 Entity 변환 및 저장
- * - 공연장 조회 시 Entity → DTO 변환
+ * - 공연장 등록
+ * - 공연장 조회
+ * - 공연장 등록 시 좌석 자동 생성
  *
  * 주의 사항 :
- * - 현재는 단순 CRUD 수준
- * - 추후 공연장 상태 관리, 권한 체크 로직 추가 가능
+ * - 좌석은 공연장에 종속된 고정 자원
+ * - 좌석 생성 실패 시 공연장 생성도 롤백되어야 함
  */
 package io.why503.performanceservice.domain.concerthall.Sv;
 
+import java.util.List;
+
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,22 +26,20 @@ import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallReqD
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResDto;
 import io.why503.performanceservice.domain.concerthall.Model.Ett.ConcertHallEtt;
 import io.why503.performanceservice.domain.concerthall.Repo.ConcertHallRepo;
+import io.why503.performanceservice.domain.seat.Model.Dto.Cmd.SeatAreaCreateCmd;
+import io.why503.performanceservice.domain.seat.Sv.SeatSv;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 @Transactional(readOnly = true)
 public class ConcertHallSvImpl implements ConcertHallSv {
 
     private final ConcertHallRepo concertHallRepo;
+    private final SeatSv seatSv;
 
     /**
-     * 공연장 등록
-     *
-     * 처리 흐름 :
-     * 1. 요청 DTO → Entity 변환
-     * 2. 공연장 Entity 저장
-     *
-     * @param reqDto 공연장 등록 요청 DTO
+     * 공연장 등록 (좌석 생성 없음)
      */
     @Override
     @Transactional
@@ -58,13 +62,6 @@ public class ConcertHallSvImpl implements ConcertHallSv {
 
     /**
      * 공연장 단건 조회
-     *
-     * 처리 흐름 :
-     * 1. 공연장 식별자 기준 조회
-     * 2. Entity → Response DTO 변환
-     *
-     * @param concertHallSq 공연장 식별자
-     * @return 공연장 응답 DTO
      */
     @Override
     public ConcertHallResDto getConcertHall(Long concertHallSq) {
@@ -84,5 +81,62 @@ public class ConcertHallSvImpl implements ConcertHallSv {
                 .concertHallLatitude(hall.getConcertHallLatitude())
                 .concertHallLongitude(hall.getConcertHallLongitude())
                 .build();
+    }
+
+    /**
+     * 기본 좌석 자동 생성 공연장 등록
+     */
+    @Override
+    @Transactional
+    public Long createWithDefaultSeats(ConcertHallReqDto reqDto) {
+        log.info("seatSv is null? {}", seatSv == null);
+        ConcertHallEtt hall = concertHallRepo.save(
+                ConcertHallEtt.builder()
+                        .concertHallName(reqDto.getConcertHallName())
+                        .concertHallPost(reqDto.getConcertHallPost())
+                        .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
+                        .concertHallDetailAddr(reqDto.getConcertHallDetailAddr())
+                        .concertHallStat(reqDto.getConcertHallStat())
+                        .concertHallSeatScale(reqDto.getConcertHallSeatScale())
+                        .concertHallStructure(reqDto.getConcertHallStructure())
+                        .concertHallLatitude(reqDto.getConcertHallLatitude())
+                        .concertHallLongitude(reqDto.getConcertHallLongitude())
+                        .build()
+        );
+
+        // 공연장 생성 후 기본 좌석 자동 생성
+        seatSv.createDefaultSeats(hall);
+
+        return hall.getConcertHallSq();
+    }
+
+    /**
+     * 관리자 입력 기반 좌석 생성 공연장 등록
+     */
+    @Override
+    @Transactional
+    public Long createWithCustomSeats(
+            ConcertHallReqDto reqDto,
+            List<SeatAreaCreateCmd> seatAreaCmds
+    ) {
+
+        ConcertHallEtt hall = concertHallRepo.save(
+                ConcertHallEtt.builder()
+                        .concertHallName(reqDto.getConcertHallName())
+                        .concertHallPost(reqDto.getConcertHallPost())
+                        .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
+                        .concertHallDetailAddr(reqDto.getConcertHallDetailAddr())
+                        .concertHallStat(reqDto.getConcertHallStat())
+                        .concertHallSeatScale(reqDto.getConcertHallSeatScale())
+                        .concertHallStructure(reqDto.getConcertHallStructure())
+                        .concertHallLatitude(reqDto.getConcertHallLatitude())
+                        .concertHallLongitude(reqDto.getConcertHallLongitude())
+                        .build()
+        );
+
+        // 공연장 생성 후 관리자 입력 기반 좌석 생성
+        seatSv.createCustomSeats(hall, seatAreaCmds);
+
+        return hall.getConcertHallSq();
     }
 }

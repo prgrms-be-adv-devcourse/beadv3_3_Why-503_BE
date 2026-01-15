@@ -58,11 +58,6 @@ public class ConcertHallEtt {
 
     /**
      * 공연장 상태
-     *
-     * 현재는 문자 기반 컬럼으로 관리
-     * (예: Y/N, 0/1 등)
-     *
-     * 추후 Enum 분리 가능
      */
     @Column(name = "concert_hall_stat", nullable = false, length = 1)
     private String concertHallStat;

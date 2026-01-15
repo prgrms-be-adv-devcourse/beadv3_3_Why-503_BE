@@ -68,20 +68,9 @@ public class ConcertHallReqDto {
      */
     private BigDecimal concertHallLongitude;
 
-    @Builder
-    public ConcertHallReqDto(
-            String concertHallName,
-            String concertHallPost,
-            String concertHallBasicAddr,
-            String concertHallDetailAddr,
-            Integer concertHallSeatScale,
-            String concertHallStructure
-    ) {
-        this.concertHallName = concertHallName;
-        this.concertHallPost = concertHallPost;
-        this.concertHallBasicAddr = concertHallBasicAddr;
-        this.concertHallDetailAddr = concertHallDetailAddr;
-        this.concertHallSeatScale = concertHallSeatScale;
-        this.concertHallStructure = concertHallStructure;
-    }
+    /**
+     * 생성자가 조건문에 필요하지 않아 삭제했습니다.
+     */
+
+
 }

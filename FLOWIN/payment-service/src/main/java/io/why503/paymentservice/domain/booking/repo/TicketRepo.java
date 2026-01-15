@@ -8,11 +8,8 @@ import java.util.Collection;
 
 public interface TicketRepo extends JpaRepository<Ticket, Long> {
 
-    /**
-     * [변경 사항]
-     * 리뷰 피드백 반영: 불필요한 비관적 락(@Lock) 제거
-     * 단순 조회용 메서드로 변경
-     */
+    // @Query 문자열 없이, 메서드 이름만으로 JPA가 알아서 SQL을 만들어줍니다.
+    // 해석: "ShowingSeatSq가 일치하고(AND), TicketStatus가 목록 안에 포함되는(In) 데이터가 존재하는가(Exists)?"
     boolean existsByShowingSeatSqAndTicketStatusIn(Long showingSeatSq, Collection<TicketStatus> statuses);
 
 }

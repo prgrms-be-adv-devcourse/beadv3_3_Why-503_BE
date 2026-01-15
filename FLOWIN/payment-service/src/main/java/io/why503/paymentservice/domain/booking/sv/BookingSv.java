@@ -59,7 +59,7 @@ public class BookingSv {
      */
     public BookingResDto getBooking(Long bookingSq) {
         // 성능 최적화: Fetch Join으로 Ticket 목록까지 즉시 로딩 (N+1 문제 방지)
-        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+        Booking booking = bookingRepo.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
         return bookingMapper.toDto(booking);
@@ -72,7 +72,7 @@ public class BookingSv {
     public void confirmBooking(Long bookingSq, String paymentKey) {
         // TODO: 추후 PG사 승인 API 연동 시 트랜잭션 분리 고려 (외부 네트워크 지연 방지)
 
-        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+        Booking booking = bookingRepo.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
         booking.confirm(paymentKey, "CARD");
@@ -85,7 +85,7 @@ public class BookingSv {
      */
     @Transactional
     public void cancelBooking(Long bookingSq) {
-        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+        Booking booking = bookingRepo.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매 번호입니다: " + bookingSq));
 
         // [분기 처리]
@@ -111,7 +111,7 @@ public class BookingSv {
     @Transactional
     public void cancelTicket(Long bookingSq, Long ticketSq) {
         // 1. Booking 조회 (티켓과 함께)
-        Booking booking = bookingRepo.findByIdWithTickets(bookingSq)
+        Booking booking = bookingRepo.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
 
         // 2. 현재 상태에 따른 분기 처리

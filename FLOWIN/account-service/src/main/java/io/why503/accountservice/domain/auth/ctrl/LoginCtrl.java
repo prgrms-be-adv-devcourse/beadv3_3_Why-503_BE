@@ -1,6 +1,6 @@
 package io.why503.accountservice.domain.auth.ctrl;
 
-import io.why503.accountservice.domain.account.model.dto.UpsertAccountReq;
+import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
 import io.why503.accountservice.domain.account.sv.AccountSv;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,7 @@
 package io.why503.accountservice.domain.auth.sv.impl;
 
 import io.jsonwebtoken.*;
+import io.why503.accountservice.domain.account.model.dto.UserRole;
 import io.why503.accountservice.domain.auth.model.dto.TokenBody;
 import io.why503.accountservice.domain.auth.sv.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,6 @@ import java.util.Map;
 public class JwtProviderImpl implements JwtProvider {
     private final PrivateKey privateKey; //주입 받은 PrivateKey
     private final PublicKey publicKey; //주입 받은 PublicKey
-
-    @Value("${custom.jwt.sq}")
-    private String detailsSq;
 
     @Override
     public String issue(Long validTime, Map<String, Object> claims) {
@@ -49,12 +47,14 @@ public class JwtProviderImpl implements JwtProvider {
                 .parseSignedClaims(token);
         return parsedJwt.getPayload();
     }
-    //toeknBody를 sq로 생성
+    //tokenBody를 생성
     @Override
     public TokenBody parse(String t) {
-        Object claim = getClaims(t).get(detailsSq);
-        Long sq = ((Number)claim).longValue();
-        return new TokenBody(sq);
+        Map<String, Object> claim = getClaims(t);
+        Long sq = ((Number)(claim.get("sq"))).longValue();
+        String name = claim.get("name").toString();
+        UserRole role = UserRole.getUserRole(((Number)claim.get("role")).intValue());
+        return new TokenBody(sq, name, role);
     }
     //jwt 검증
     @Override

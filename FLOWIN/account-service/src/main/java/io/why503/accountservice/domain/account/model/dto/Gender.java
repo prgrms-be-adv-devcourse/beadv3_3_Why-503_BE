@@ -47,7 +47,7 @@ public enum Gender {
     }
     /*
         enum 변환기
-        json -> java에서 작동함
+        json <-> java에서 작동함
     * */
     @JsonCreator
     public static Gender from(Integer code) {

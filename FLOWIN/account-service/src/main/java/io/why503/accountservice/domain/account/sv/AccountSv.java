@@ -1,7 +1,7 @@
 package io.why503.accountservice.domain.account.sv;
 
 
-import io.why503.accountservice.domain.account.model.dto.UpsertAccountReq;
+import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
 
 import java.util.List;

@@ -5,7 +5,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 /*
 enum 변환기 ver.UserRole
-java -> sql에서 작동함
+java <-> sql에서 작동함
 * */
 @Converter(autoApply = false)
 public class UserRoleConverter implements AttributeConverter<UserRole, Integer> {

@@ -2,7 +2,7 @@ package io.why503.accountservice.domain.auth.sv.impl;
 
 
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
-import io.why503.accountservice.mapper.AccountMapper;
+import io.why503.accountservice.util.AccountMapper;
 import io.why503.accountservice.domain.account.model.ett.Account;
 import io.why503.accountservice.domain.account.repo.AccountRepo;
 import lombok.RequiredArgsConstructor;

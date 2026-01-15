@@ -2,6 +2,7 @@ package io.why503.accountservice.domain.auth.cfg;
 
 
 import io.why503.accountservice.domain.auth.cfg.filter.JwtAuthenticationFilter;
+import io.why503.accountservice.domain.auth.sv.impl.AuthenticationSuccessHandlerImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;

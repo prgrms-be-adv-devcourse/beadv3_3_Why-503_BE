@@ -16,8 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,49 +59,65 @@ public class ShowingSv {
     }
 
     /**
-     * 특정 공연의 모든 회차 조회 (Admin/Management 용)
+     * 특정 공연의 모든 회차 조회 (관리자, 기업회원용)
      * - 예매 가능 여부와 상관없이, 해당 공연의 전체 스케줄을 확인할 때 사용
-     * - 예: 관리자 페이지의 회차 관리 목록
      */
     public List<ShowingResDto> getShowingListByShow(Long showSq) {
-        return showingRepo.findByShow(showSq).stream()
-                .map(showingMapper::ettToDto)
-                .collect(Collectors.toList());
+        //DB에서 리스트를 꺼냄
+        List<ShowingEtt> ettList = showingRepo.findByShow(showSq);
+
+        List<ShowingResDto> resList = new ArrayList<>();
+
+        //  DB에서 꺼낸 것을 하나씩 반복하며 변환
+        for (ShowingEtt ett : ettList) {
+            // Ett를 Dto로 변환
+            ShowingResDto res = showingMapper.ettToDto(ett);
+            // 리스트에 추가
+            resList.add(res);
+        }
+        return resList;
     }
+        /**
+         * 특정 공연의 예매 가능한 회차만 조회 (User 용)
+         * - 사용자가 예매를 위해 날짜/회차를 선택할 때 사용
+         * - 예매 종료나 취소된 회차는 제외
+         */
+        public List<ShowingResDto> getAvailableShowingList (Long showSq){
+            // DB에서 예매가능 상태인 것만 꺼냄
+            List<ShowingEtt> ettList = showingRepo.findByShowAndStat(showSq, ShowingStat.AVAILABLE);
 
-    /**
-     * 특정 공연의 예매 가능한 회차만 조회 (User 용)
-     * - 사용자가 예매를 위해 날짜/회차를 선택할 때 사용
-     * - 예매 종료나 취소된 회차는 제외
-     */
-    public List<ShowingResDto> getAvailableShowingList(Long showSq) {
-        return showingRepo.findByShowAndStat(showSq, ShowingStat.AVAILABLE).stream()
-                .map(showingMapper::ettToDto)
-                .collect(Collectors.toList());
+            List<ShowingResDto> resList = new ArrayList<>();
+
+            for (ShowingEtt ett : ettList) {
+                ShowingResDto res = showingMapper.ettToDto(ett);
+                resList.add(res);
+            }
+
+            return resList;
+        }
+        /**
+         * 회차 단건 상세 조회
+         * - 특정 회차의 상세 정보를 보여줌
+         * - 결제 전 최종 확인 페이지나, 좌석 선택 진입 전 정보 확인에 사용
+         * - 데이터가 없으면 404 Not Found 에러를 발생
+         */
+        public ShowingResDto getShowingDetail (Long showingSq){
+            ShowingEtt showing = showingRepo.findById(showingSq)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
+
+            return showingMapper.ettToDto(showing);
+        }
+
+        //회차 상태 변경
+        @Transactional
+        public ShowingResDto patchShowingStat (Long showingSq, ShowingStat newStat){
+            // 존재 여부 확인
+            ShowingEtt showing = showingRepo.findById(showingSq)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회차입니다."));
+
+            // 상태 변경 수행
+            showing.updateStat(newStat);
+
+            return showingMapper.ettToDto(showing);
+        }
     }
-    /**
-     * 회차 단건 상세 조회
-     * - 특정 회차의 상세 정보를 보여줌
-     * - 결제 전 최종 확인 페이지나, 좌석 선택 진입 전 정보 확인에 사용
-     * - 데이터가 없으면 404 Not Found 에러를 발생
-     */
-    public ShowingResDto getShowingDetail(Long showingSq) {
-        ShowingEtt showing = showingRepo.findById(showingSq)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
-
-        return showingMapper.ettToDto(showing);
-    }
-
-    //회차 상태 변경
-    @Transactional
-    public ShowingResDto patchShowingStat(Long showingSq, ShowingStat newStat) {
-        // 존재 여부 확인 (없으면 404 에러 발생 후 중단)
-        ShowingEtt showing = showingRepo.findById(showingSq)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 회차입니다."));
-
-        // 존재한다면 상태 변경 수행
-        showing.updateStat(newStat);
-
-        return showingMapper.ettToDto(showing);
-    }
-}

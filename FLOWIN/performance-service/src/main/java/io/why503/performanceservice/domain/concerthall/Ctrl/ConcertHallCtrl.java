@@ -41,8 +41,13 @@ public class ConcertHallCtrl {
     public ResponseEntity<Void> createConcertHall(
             @RequestBody ConcertHallReqDto reqDto
     ) {
-        concertHallSv.createConcertHall(reqDto);
-        return ResponseEntity.ok().build();
+        try {
+            concertHallSv.createConcertHall(reqDto);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
     }
 
     /**

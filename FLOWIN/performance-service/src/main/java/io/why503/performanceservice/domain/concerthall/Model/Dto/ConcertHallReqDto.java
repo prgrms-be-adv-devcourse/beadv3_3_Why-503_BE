@@ -66,4 +66,20 @@ public class ConcertHallReqDto {
      * 공연장 경도
      */
     private BigDecimal concertHallLongitude;
+
+    private ConcertHallReqDto(
+            String concertHallName,
+            String concertHallPost,
+            String concertHallBasicAddr,
+            String concertHallDetailAddr,
+            Integer concertHallSeatScale,
+            String concertHallStructure
+    ) {
+        this.concertHallName = concertHallName;
+        this.concertHallPost = concertHallPost;
+        this.concertHallBasicAddr = concertHallBasicAddr;
+        this.concertHallDetailAddr = concertHallDetailAddr;
+        this.concertHallSeatScale = concertHallSeatScale;
+        this.concertHallStructure = concertHallStructure;
+    }
 }

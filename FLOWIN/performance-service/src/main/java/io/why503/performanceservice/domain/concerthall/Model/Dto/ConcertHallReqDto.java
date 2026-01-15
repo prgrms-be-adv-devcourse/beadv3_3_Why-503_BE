@@ -69,7 +69,7 @@ public class ConcertHallReqDto {
     private BigDecimal concertHallLongitude;
 
     @Builder
-    private ConcertHallReqDto(
+    public ConcertHallReqDto(
             String concertHallName,
             String concertHallPost,
             String concertHallBasicAddr,

@@ -51,11 +51,11 @@ public class ShowingSv {
         Integer nextNo = count + 1;
 
         //엔티티 생성
-        ShowingEtt showing = showingMapper.toEtt(req, nextNo);
+        ShowingEtt showing = showingMapper.dtoToEtt(req, nextNo);
 
         //저장 및 반환
         ShowingEtt savedShowing = showingRepo.save(showing);
-        return showingMapper.toDto(savedShowing);
+        return showingMapper.ettToDto(savedShowing);
     }
 
     /**
@@ -65,7 +65,7 @@ public class ShowingSv {
      */
     public List<ShowingResDto> getShowingListByShow(Long showSq) {
         return showingRepo.findByShow(showSq).stream()
-                .map(showingMapper::toDto)
+                .map(showingMapper::ettToDto)
                 .collect(Collectors.toList());
     }
 
@@ -76,7 +76,7 @@ public class ShowingSv {
      */
     public List<ShowingResDto> getAvailableShowingList(Long showSq) {
         return showingRepo.findByShowAndStat(showSq, ShowingStat.AVAILABLE).stream()
-                .map(showingMapper::toDto)
+                .map(showingMapper::ettToDto)
                 .collect(Collectors.toList());
     }
     /**
@@ -89,7 +89,7 @@ public class ShowingSv {
         ShowingEtt showing = showingRepo.findById(showingSq)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
 
-        return showingMapper.toDto(showing);
+        return showingMapper.ettToDto(showing);
     }
 
     //회차 상태 변경
@@ -102,6 +102,6 @@ public class ShowingSv {
         // 존재한다면 상태 변경 수행
         showing.updateStat(newStat);
 
-        return showingMapper.toDto(showing);
+        return showingMapper.ettToDto(showing);
     }
 }

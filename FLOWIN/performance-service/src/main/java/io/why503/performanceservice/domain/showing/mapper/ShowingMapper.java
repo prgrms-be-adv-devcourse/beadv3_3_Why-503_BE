@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class ShowingMapper {
 
     //Req -> Ett
-    public ShowingEtt toEtt(ShowingReqDto req, Integer calculatedNo) {
+    public ShowingEtt dtoToEtt(ShowingReqDto req, Integer calculatedNo) {
         return ShowingEtt.builder()
                 .show(req.getShowSq())
                 .dt(req.getDt())
@@ -20,7 +20,7 @@ public class ShowingMapper {
     }
 
     //Ett -> Res
-    public ShowingResDto toDto(ShowingEtt ett) {
+    public ShowingResDto ettToDto(ShowingEtt ett) {
         return ShowingResDto.builder()
                 .sq(ett.getSq())
                 .showSq(ett.getShow())

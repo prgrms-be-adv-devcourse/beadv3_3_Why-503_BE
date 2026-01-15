@@ -114,7 +114,6 @@ public class AccountSvImpl implements AccountSv {
     @Transactional
     public Account updateUserRoleBySq(Long sq, UserRole role) {
         Account account = readBySq(sq);
-        log.info("{} change Role {}", sq, role.name());
         account.setRole(role);
         return account;
     }

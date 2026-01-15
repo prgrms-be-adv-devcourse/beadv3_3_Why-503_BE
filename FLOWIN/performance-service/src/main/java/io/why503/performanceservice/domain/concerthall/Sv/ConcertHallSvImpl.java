@@ -13,6 +13,8 @@
 package io.why503.performanceservice.domain.concerthall.Sv;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResD
 import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
 import io.why503.performanceservice.domain.concerthall.Model.Ett.ConcertHallEtt;
 import io.why503.performanceservice.domain.concerthall.Repo.ConcertHallRepo;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +45,54 @@ public class ConcertHallSvImpl implements ConcertHallSv {
     @Override
     @Transactional
     public void createConcertHall(ConcertHallReqDto reqDto) {
+
+//        Authentication auth = SecurityContextHolder
+//                .getContext()
+//                .getAuthentication();
+//
+//        if (auth == null || !auth.isAuthenticated()) {
+//            throw new IllegalArgumentException("로그인이 필요합니다.");
+//        }
+//
+//        boolean isUserRole = auth.getAuthorities().stream()
+//                .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
+//
+//        if (isUserRole) {
+//            throw new IllegalArgumentException("기업 회원만 사용할 수 있습니다.");
+//        }
+
+
+        if ( reqDto.getConcertHallName() == null || reqDto.getConcertHallName().isBlank()) {
+            throw new IllegalArgumentException("공연장 이름 필수입니다.");
+        }
+        if ( reqDto.getConcertHallPost() == null || reqDto.getConcertHallPost().isBlank()) {
+            throw new IllegalArgumentException("우편 번호 이름 필수입니다.");
+        }
+        if ( reqDto.getConcertHallBasicAddr() == null || reqDto.getConcertHallBasicAddr().isBlank()) {
+            throw new IllegalArgumentException("기본 주소 이름 필수입니다.");
+        }
+        if ( reqDto.getConcertHallDetailAddr() == null || reqDto.getConcertHallDetailAddr().isBlank()) {
+            throw new IllegalArgumentException("상세 주소 이름 필수입니다.");
+        }
+        if ( reqDto.getConcertHallSeatScale() == null || reqDto.getConcertHallSeatScale() <= 0) {
+            throw new IllegalArgumentException("좌석 수가  1이상이어야 합니다");
+        }
+        if ( reqDto.getConcertHallStructure() == null || reqDto.getConcertHallStructure().isBlank()) {
+            throw new IllegalArgumentException("구조 이름 필수입니다.");
+        }
+
+        BigDecimal lat = reqDto.getConcertHallLatitude();
+        BigDecimal lon = reqDto.getConcertHallLongitude();
+
+        if (lat.compareTo(BigDecimal.valueOf(-90)) < 0 ||
+                lat.compareTo(BigDecimal.valueOf(90)) > 0) {
+            throw new IllegalArgumentException("위도는 -90 ~ 90 사이여야 합니다.");
+        }
+
+        if (lon.compareTo(BigDecimal.valueOf(-180)) < 0 ||
+                lon.compareTo(BigDecimal.valueOf(180)) > 0) {
+            throw new IllegalArgumentException("경도는 -180 ~ 180 사이여야 합니다.");
+        }
 
         ConcertHallEtt hall = ConcertHallEtt.builder()
                 .concertHallName(reqDto.getConcertHallName())

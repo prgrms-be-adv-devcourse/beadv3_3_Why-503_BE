@@ -5,6 +5,7 @@
  * 사용 목적 :
  * - 공연장 등록
  * - 공연장 단건 조회
+ * - 공연장 등록 시 좌석 자동 생성
  *
  * 설계 의도 :
  * - Controller 와 Repository 사이의 중간 계층
@@ -12,8 +13,11 @@
  */
 package io.why503.performanceservice.domain.concerthall.Sv;
 
+import java.util.List;
+
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.seat.Model.Dto.Cmd.SeatAreaCreateCmd;
 
 public interface ConcertHallSv {
 
@@ -31,4 +35,20 @@ public interface ConcertHallSv {
      * @return 공연장 응답 DTO
      */
     ConcertHallResDto getConcertHall(Long concertHallSq);
+
+    /**
+     * 관리자 입력 기반 좌석 생성 공연장 등록
+     *
+     * 처리 내용 :
+     * - 공연장 생성
+     * - 관리자 입력 구역/좌석 수 기준 좌석 생성
+     *
+     * @param reqDto 공연장 등록 요청 DTO
+     * @param seatAreaCmds 좌석 구역 생성 정보
+     * @return 생성된 공연장 식별자
+     */
+    Long createWithCustomSeats(
+            ConcertHallReqDto reqDto,
+            List<SeatAreaCreateCmd> seatAreaCmds
+    );
 }

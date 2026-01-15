@@ -1,6 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.ett;
 
-import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
@@ -35,7 +35,7 @@ public class Ticket {
     @Column(name = "ticket_status", nullable = false)
     @Enumerated(EnumType.ORDINAL) // 0, 1, 2... 숫자로 저장
     @Builder.Default
-    private TicketStatus ticketStatus = TicketStatus.AVAILABLE; // 기본값 0
+    private TicketStat ticketStat = TicketStat.AVAILABLE; // 기본값 0
 
     @Column(name = "ticket_uuid", nullable = false)
     @Builder.Default
@@ -49,11 +49,11 @@ public class Ticket {
 
     // 결제 완료 처리 (Booking에서 호출)
     public void paid() {
-        this.ticketStatus = TicketStatus.PAID;
+        this.ticketStat = TicketStat.PAID;
     }
     // 티켓 취소 비즈니스 로직
     public void cancel() {
-        this.ticketStatus = TicketStatus.CANCELLED; // 4번 상태로 변경
+        this.ticketStat = TicketStat.CANCELLED; // 4번 상태로 변경
     }
 
     // 저장 전 null 방어 로직
@@ -62,7 +62,7 @@ public class Ticket {
         if (this.originalPrice == null) this.originalPrice = 0;
         if (this.discountAmount == null) this.discountAmount = 0;
         if (this.finalPrice == null) this.finalPrice = 0;
-        if (this.ticketStatus == null) this.ticketStatus = TicketStatus.AVAILABLE;
+        if (this.ticketStat == null) this.ticketStat = TicketStat.AVAILABLE;
         if (this.ticketUuid == null) this.ticketUuid = java.util.UUID.randomUUID().toString();
     }
 }

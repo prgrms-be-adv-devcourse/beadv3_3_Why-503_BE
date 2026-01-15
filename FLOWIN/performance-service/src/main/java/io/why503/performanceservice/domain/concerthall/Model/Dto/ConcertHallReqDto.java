@@ -14,6 +14,7 @@ package io.why503.performanceservice.domain.concerthall.Model.Dto;
 
 import java.math.BigDecimal;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -67,6 +68,7 @@ public class ConcertHallReqDto {
      */
     private BigDecimal concertHallLongitude;
 
+    @Builder
     private ConcertHallReqDto(
             String concertHallName,
             String concertHallPost,

@@ -21,6 +21,9 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class Booking {
 
+    // =================================================================
+    //  1. 기본 식별자 및 상태
+    // =================================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_sq")
@@ -34,19 +37,16 @@ public class Booking {
     @Builder.Default
     private BookingStat bookingStat = BookingStat.PENDING;
 
-    @CreationTimestamp // INSERT 시 자동 생성
-    @Column(name = "booking_dt", nullable = false, updatable = false)
-    private LocalDateTime bookingDt;
-
-    @Column(name = "booking_amount", nullable = false)
-    private Integer bookingAmount;
-
-    // --- [결제 정보 (NOT NULL 방어용)] ---
-    // SQL 제약조건(NOT NULL) 회피를 위한 초기값 설정
-
-    @Column(name = "total_amount", nullable = false)
+    @Column(name = "order_id", nullable = false, unique = true)
     @Builder.Default
-    private Integer totalAmount = 0;
+    private String orderId = UUID.randomUUID().toString(); // 결제용 고유 ID
+
+    // =================================================================
+    //  2. 결제 금액 및 수단
+    // =================================================================
+    @Column(name = "booking_amount", nullable = false)
+    @Builder.Default
+    private Integer bookingAmount = 0; // 순수 예매 금액
 
     @Column(name = "used_point", nullable = false)
     @Builder.Default
@@ -54,160 +54,175 @@ public class Booking {
 
     @Column(name = "pg_amount", nullable = false)
     @Builder.Default
-    private Integer pgAmount = 0;
+    private Integer pgAmount = 0; // 실제 결제 금액 (총액 - 포인트)
+
+    @Column(name = "total_amount", nullable = false)
+    @Builder.Default
+    private Integer totalAmount = 0;
 
     @Column(name = "payment_method", nullable = false)
     @Builder.Default
-    private String paymentMethod = "PENDING"; // 결제 대기중
+    private String paymentMethod = "PENDING";
 
     @Column(name = "payment_key")
-    private String paymentKey;
-
-    @Column(name = "order_id", nullable = false, unique = true)
-    @Builder.Default
-    private String orderId = UUID.randomUUID().toString(); // 필수값: UUID 자동 생성
-
-    @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
+    private String paymentKey; // PG사 승인 키
 
     @Column(name = "receipt_url")
-    private String receiptUrl;
+    private String receiptUrl; // 영수증 URL
 
     @Column(name = "cancel_reason")
     private String cancelReason;
 
-    // --- [시스템 시간] ---
-    @CreationTimestamp // INSERT 시 자동 생성
+    // =================================================================
+    //  3. 시간 정보 (Auditing)
+    // =================================================================
+    @CreationTimestamp
+    @Column(name = "booking_dt", nullable = false, updatable = false)
+    private LocalDateTime bookingDt; // 예매 일시
+
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // 데이터 생성 일시
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt; // 수정 일시
 
-    // --- [연관 관계] ---
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt; // 결제 승인 일시
+
+    // =================================================================
+    //  4. 연관 관계 (중요!)
+    // =================================================================
     @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();
 
-    // 연관관계 편의 메서드
+    /**
+     * [연관관계 편의 메서드]
+     * 티켓을 추가할 때 부모(Booking) 정보도 자동으로 주입
+     */
     public void addTicket(Ticket ticket) {
         this.tickets.add(ticket);
         ticket.setBooking(this);
     }
 
-    // 비즈니스 로직
-    // 전체 취소 (결제 후 환불 처리용)
+    // =================================================================
+    //  5. 비즈니스 로직 (상태 변경)
+    // =================================================================
+
+    /**
+     * [결제 확정] PG사 승인 완료 시 호출
+     */
+    public void confirm(String paymentKey, String method) {
+        if (this.bookingStat != BookingStat.PENDING) {
+            throw new IllegalStateException("결제 대기 상태에서만 승인이 가능합니다.");
+        }
+        this.bookingStat = BookingStat.CONFIRMED;
+        this.paymentKey = paymentKey;
+        this.paymentMethod = method;
+        this.approvedAt = LocalDateTime.now();
+
+        // 하위 티켓들도 모두 '결제됨' 처리
+        this.tickets.forEach(Ticket::paid);
+    }
+
+    /**
+     * [전체 취소] 결제 후 환불
+     */
     public void cancel(String reason) {
         this.bookingStat = BookingStat.CANCELLED;
         this.cancelReason = reason;
 
-        // 하위 티켓들도 모두 취소 상태로 변경
-        for (Ticket ticket : this.tickets) {
-            // 이미 취소된 티켓이 아닐 경우에만 취소 처리
-            if (ticket.getTicketStat() != TicketStat.CANCELLED) {
-                ticket.cancel();
-            }
-        }
+        this.tickets.stream()
+                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
+                .forEach(Ticket::cancel);
     }
 
-    // 부분 취소 (새로 추가)
+    /**
+     * [부분 취소] 특정 티켓만 환불
+     */
     public void cancelTicket(Long ticketSq, String reason) {
-        // 1. 취소할 티켓 찾기
-        Ticket targetTicket = this.tickets.stream()
-                .filter(t -> t.getTicketSq().equals(ticketSq))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 예매에 존재하지 않는 티켓입니다."));
+        Ticket targetTicket = findTicketOrThrow(ticketSq);
 
-        // 2. 이미 취소된 티켓인지 확인
         if (targetTicket.getTicketStat() == TicketStat.CANCELLED) {
             throw new IllegalStateException("이미 취소된 티켓입니다.");
         }
 
-        // 3. 해당 티켓만 취소 상태로 변경
+        // 티켓 취소
         targetTicket.cancel();
 
-        // 4. 예매 상태(BookingStatus) 재산정 (남은 티켓 확인)
-        boolean hasActiveTicket = this.tickets.stream()
+        // 남은 티켓이 하나도 없으면 '전체 취소'로 상태 변경
+        boolean hasActive = this.tickets.stream()
                 .anyMatch(t -> t.getTicketStat() != TicketStat.CANCELLED);
 
-        if (!hasActiveTicket) {
-            // 살아있는 티켓이 없으면 -> 전체 취소 처리
+        if (!hasActive) {
             this.bookingStat = BookingStat.CANCELLED;
             this.cancelReason = reason;
         } else {
-            // 아직 살아있는 티켓이 있으면 -> 부분 취소 처리
             this.bookingStat = BookingStat.PARTIAL_CANCEL;
         }
-    }
 
-    // 예매 확정 (결제 완료 시)
-    public void confirm(String paymentKey, String method) {
-        if (this.bookingStat != BookingStat.PENDING) {
-            throw new IllegalStateException("결제 대기 중인 예약만 승인할 수 있습니다. (현재 상태: " + this.bookingStat + ")");
-        }
-        this.bookingStat = BookingStat.CONFIRMED;
-        this.paymentKey = paymentKey;          // PG사에서 받은 결제 키 저장
-        this.approvedAt = LocalDateTime.now(); // 승인 시간 기록
-        this.paymentMethod= method;
-
-        // 하위 티켓들도 모두 '결제됨(PAID)' 상태로 변경
-        for (Ticket ticket : this.tickets) {
-            ticket.paid();
-        }
-    }
-
-    // [NEW] 1. 선점 취소 (결제 전 티켓 삭제)
-    public void deleteTicket(Long ticketSq) {
-        if (this.bookingStat != BookingStat.PENDING) {
-            throw new IllegalStateException("선점 취소(삭제)는 결제 대기 상태에서만 가능합니다.");
-        }
-
-        Ticket targetTicket = this.tickets.stream()
-                .filter(t -> t.getTicketSq().equals(ticketSq))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 티켓이 존재하지 않습니다."));
-
-        // 리스트에서 제거 -> orphanRemoval=true에 의해 DB DELETE 발생
-        this.tickets.remove(targetTicket);
-        targetTicket.setBooking(null); // 안전하게 관계 끊기
-
-        // 금액 재계산
+        // 금액 재계산이 필요하다면 여기서 호출 (PG사 부분 취소 로직에 따라 다름)
         recalculateAmounts();
     }
 
-    // [NEW] 금액 재계산 로직
+    /**
+     * [선점 취소] 결제 전(PENDING) 상태에서 티켓 삭제 (Hard Delete)
+     */
+    public void deleteTicket(Long ticketSq) {
+        if (this.bookingStat != BookingStat.PENDING) {
+            throw new IllegalStateException("선점 취소는 결제 대기 상태에서만 가능합니다.");
+        }
+
+        Ticket targetTicket = findTicketOrThrow(ticketSq);
+
+        // 리스트에서 제거 -> OrphanRemoval 동작으로 DB 삭제됨
+        this.tickets.remove(targetTicket);
+        targetTicket.setBooking(null);
+
+        // 티켓이 줄었으니 금액 재계산
+        recalculateAmounts();
+    }
+
+    // =================================================================
+    //  6. 내부 로직 (Private Helpers)
+    // =================================================================
+
+    // 금액 재계산 (티켓 삭제/취소 시 호출)
     private void recalculateAmounts() {
         if (this.tickets.isEmpty()) {
             this.bookingAmount = 0;
             this.totalAmount = 0;
             this.pgAmount = 0;
-        } else {
-            // 남은 티켓들의 최종 가격 합산
-            int sum = this.tickets.stream()
-                    .mapToInt(Ticket::getFinalPrice)
-                    .sum();
-
-            this.bookingAmount = sum;
-            this.totalAmount = sum;
-            // 포인트 사용액이 전체 금액보다 크면 0원으로 처리 (방어 로직)
-            this.pgAmount = Math.max(0, sum - this.usedPoint);
+            return;
         }
+
+        // 부분 취소 시에도 유효한 티켓들의 가격만 합산
+        int sum = this.tickets.stream()
+                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
+                .mapToInt(Ticket::getFinalPrice)
+                .sum();
+
+        this.bookingAmount = sum;
+        this.totalAmount = sum;
+        this.pgAmount = Math.max(0, sum - this.usedPoint);
     }
 
+    // 티켓 찾기 (중복 코드 제거)
+    private Ticket findTicketOrThrow(Long ticketSq) {
+        return this.tickets.stream()
+                .filter(t -> t.getTicketSq().equals(ticketSq))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 티켓입니다."));
+    }
 
+    // NULL 방어 로직 (JPA 저장 전 실행)
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        if (this.bookingDt == null) this.bookingDt = LocalDateTime.now();
-        if (this.bookingStat == null) this.bookingStat = BookingStat.PENDING; // PENDING
-        // 가격 정보가 null이면 0원으로 강제 세팅
         if (this.bookingAmount == null) this.bookingAmount = 0;
         if (this.totalAmount == null) this.totalAmount = 0;
         if (this.usedPoint == null) this.usedPoint = 0;
         if (this.pgAmount == null) this.pgAmount = 0;
-
-        // 결제 수단도 없으면 기본값
-        if (this.paymentMethod == null) this.paymentMethod = "PENDING";
+        if (this.bookingStat == null) this.bookingStat = BookingStat.PENDING;
     }
-
 }

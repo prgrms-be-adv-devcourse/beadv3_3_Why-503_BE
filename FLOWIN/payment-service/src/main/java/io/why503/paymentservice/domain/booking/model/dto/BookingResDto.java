@@ -17,6 +17,6 @@ public class BookingResDto {
     private Integer bookingAmount;
     private LocalDateTime bookingDt;
 
-    // [변경] 단순 좌석번호 리스트 -> 티켓 상세 리스트
+    // 단순 좌석번호 리스트 -> 티켓 상세 리스트
     private List<TicketResDto> tickets;
 }

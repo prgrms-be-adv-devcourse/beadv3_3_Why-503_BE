@@ -7,9 +7,7 @@ import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
 import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
-import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
-import io.why503.paymentservice.domain.booking.repo.TicketRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,28 +24,41 @@ import java.util.List;
 public class BookingSv {
 
     private final BookingRepo bookingRepo;
-    private final TicketRepo ticketRepo;
     private final BookingMapper bookingMapper;
 
     /**
      * 예매 생성
-     * - 좌석 선점 여부를 1차로 확인하고, 예매 데이터를 생성합니다.
+     * 1. 회차좌석 서비스(Showing-Seat)에 좌석 선점 요청 (검증)
+     * 2. 예매 정보 및 티켓 데이터 DB 저장 (생성)
      */
     @Transactional
     public BookingResDto createBooking(BookingReqDto req) {
-        // 중복 예매 방지를 위한 검증 (선점됨 or 결제됨 상태는 불가)
-        List<TicketStat> soldStatuses = List.of(TicketStat.RESERVED, TicketStat.PAID);
 
+        // 1. [외부 연동] 회차좌석 서비스에 좌석 선점(Lock) 요청
+        // -> MSA 환경: 타 서비스의 API를 호출하여 재고(좌석) 가능 여부를 확인하고 잠금을 겁니다.
         if (req.getTickets() != null) {
             for (TicketReqDto ticketReq : req.getTickets()) {
-                if (ticketRepo.isSold(ticketReq.getShowingSeatSq(), soldStatuses)) {
-                    throw new IllegalStateException("이미 선택된 좌석입니다. (좌석번호: " + ticketReq.getShowingSeatSq() + ")");
-                }
+                Long seatId = ticketReq.getShowingSeatSq();
+
+                // TODO: [Feign Client] showingSeatClient.reserve(seatId);
+                log.info(">>> [Request] 회차좌석 서비스 좌석 선점 요청 (SeatId: {})", seatId);
             }
         }
 
+        // 2. [변환] 요청 DTO -> Booking 엔티티 변환
         Booking booking = bookingMapper.toEntity(req);
-        return bookingMapper.toDto(bookingRepo.save(booking));
+
+        // 3. [연관관계] Booking(부모) - Ticket(자식) 참조 설정
+        // -> JPA Cascade 저장 시, Ticket 엔티티에 booking_sq(FK)가 누락되지 않도록 연결합니다.
+        if (booking.getTickets() != null) {
+            for (Ticket ticket : booking.getTickets()) {
+                ticket.setBooking(booking);
+            }
+        }
+
+        // 4. [저장] 예매 및 티켓 정보 저장
+        Booking savedBooking = bookingRepo.save(booking);
+        return bookingMapper.toDto(savedBooking);
     }
 
     /**

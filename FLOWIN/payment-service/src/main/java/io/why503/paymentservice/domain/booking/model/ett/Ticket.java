@@ -3,17 +3,20 @@ package io.why503.paymentservice.domain.booking.model.ett;
 import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.UUID;
 
 @Entity
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "ticket")
 public class Ticket {
 
+    // =================================================================
+    //  1. 식별자 및 외부 참조
+    // =================================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ticket_sq")
@@ -22,6 +25,13 @@ public class Ticket {
     @Column(name = "showing_seat_sq", nullable = false)
     private Long showingSeatSq;
 
+    @Column(name = "ticket_uuid", nullable = false)
+    @Builder.Default
+    private String ticketUuid = UUID.randomUUID().toString();
+
+    // =================================================================
+    //  2. 가격 정보
+    // =================================================================
     @Column(name = "original_price", nullable = false)
     private Integer originalPrice;
 
@@ -32,37 +42,45 @@ public class Ticket {
     @Column(name = "final_price", nullable = false)
     private Integer finalPrice;
 
+    // =================================================================
+    //  3. 상태 정보
+    // =================================================================
     @Column(name = "ticket_status", nullable = false)
-    @Enumerated(EnumType.ORDINAL) // 0, 1, 2... 숫자로 저장
+    @Enumerated(EnumType.ORDINAL) // 숫자 저장 (0, 1, 2...)
     @Builder.Default
-    private TicketStat ticketStat = TicketStat.AVAILABLE; // 기본값 0
+    private TicketStat ticketStat = TicketStat.AVAILABLE;
 
-    @Column(name = "ticket_uuid", nullable = false)
-    @Builder.Default
-    private String ticketUuid = UUID.randomUUID().toString(); // QR용 코드 자동 생성
-
+    // =================================================================
+    //  4. 연관 관계
+    // =================================================================
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_sq", nullable = false)
     private Booking booking;
 
-    // 비즈니스 로직
+    // =================================================================
+    //  5. 비즈니스 로직
+    // =================================================================
 
-    // 결제 완료 처리 (Booking에서 호출)
+    // 결제 완료 처리
     public void paid() {
         this.ticketStat = TicketStat.PAID;
     }
-    // 티켓 취소 비즈니스 로직
+
+    // 취소 처리
     public void cancel() {
-        this.ticketStat = TicketStat.CANCELLED; // 4번 상태로 변경
+        this.ticketStat = TicketStat.CANCELLED;
     }
 
-    // 저장 전 null 방어 로직
+    // =================================================================
+    //  6. 내부 로직 (Null 방어)
+    // =================================================================
     @PrePersist
     public void prePersist() {
         if (this.originalPrice == null) this.originalPrice = 0;
         if (this.discountAmount == null) this.discountAmount = 0;
         if (this.finalPrice == null) this.finalPrice = 0;
         if (this.ticketStat == null) this.ticketStat = TicketStat.AVAILABLE;
-        if (this.ticketUuid == null) this.ticketUuid = java.util.UUID.randomUUID().toString();
+        if (this.ticketUuid == null) this.ticketUuid = UUID.randomUUID().toString();
     }
 }

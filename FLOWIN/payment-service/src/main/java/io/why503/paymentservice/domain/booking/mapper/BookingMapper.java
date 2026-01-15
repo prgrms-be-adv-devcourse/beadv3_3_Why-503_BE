@@ -42,7 +42,7 @@ public class BookingMapper {
         return booking;
     }
 
-    // 2. Entity -> ResDto 변환 (★ 여기가 이사 온 로직)
+    // 2. Entity -> ResDto 변환
     public BookingResDto toDto(Booking booking) {
         return BookingResDto.builder()
                 .bookingSq(booking.getBookingSq())
@@ -50,7 +50,7 @@ public class BookingMapper {
                 .bookingStat(booking.getBookingStat())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
-                // [변경] TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용
+                //  TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용
                 .tickets(booking.getTickets().stream()
                         .map(ticketMapper::toDto)
                         .collect(Collectors.toList()))

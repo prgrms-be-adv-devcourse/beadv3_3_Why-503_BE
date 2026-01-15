@@ -31,41 +31,6 @@ public class SeatSvImpl implements SeatSv {
     }
 
     /**
-     * 기본 좌석 자동 생성
-     * - 예시 규칙: A~J, 구역당 100석
-     */
-    @Override
-    @Transactional
-    public void createDefaultSeats(ConcertHallEtt concertHall) {
-
-        List<SeatEtt> seats = new ArrayList<>();
-
-        int areaCount = 8;       // A ~ H
-        int seatPerArea = 100;
-        int globalSeatNo = 1;
-
-        for (int i = 0; i < areaCount; i++) {
-            String area = String.valueOf((char) ('A' + i));
-
-            for (int num = 1; num <= seatPerArea; num++) {
-                seats.add(new SeatEtt(
-                        concertHall,
-                        area,
-                        num,
-                        globalSeatNo++
-                ));
-            }
-        }
-
-        try {
-            seatRepo.saveAll(seats);
-        } catch (DataIntegrityViolationException e) {
-            log.error("기본 좌석 생성 중 중복 오류 발생", e);
-            throw e;
-        }
-    }
-
-    /**
      * 관리자 입력 기반 커스텀 좌석 생성
      */
     @Override

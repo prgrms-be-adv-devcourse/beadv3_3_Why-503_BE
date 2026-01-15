@@ -37,18 +37,6 @@ public interface ConcertHallSv {
     ConcertHallResDto getConcertHall(Long concertHallSq);
 
     /**
-     * 기본 좌석 자동 생성 공연장 등록
-     *
-     * 처리 내용 :
-     * - 공연장 생성
-     * - 기본 규칙에 따라 좌석 자동 생성
-     *
-     * @param reqDto 공연장 등록 요청 DTO
-     * @return 생성된 공연장 식별자
-     */
-    Long createWithDefaultSeats(ConcertHallReqDto reqDto);
-
-    /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
      *
      * 처리 내용 :

@@ -58,18 +58,6 @@ public class ConcertHallCtrl {
     }
 
     /**
-     * 기본 좌석 자동 생성 공연장 등록
-     *
-     * POST /concert-halls/default-seats
-     */
-    @PostMapping("/default-seats")
-    public Long createConcertHallWithDefaultSeats(
-            @RequestBody ConcertHallReqDto reqDto
-    ) {
-        return concertHallSv.createWithDefaultSeats(reqDto);
-    }
-
-    /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
      *
      * POST /concert-halls/custom-seats

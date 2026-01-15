@@ -84,33 +84,6 @@ public class ConcertHallSvImpl implements ConcertHallSv {
     }
 
     /**
-     * 기본 좌석 자동 생성 공연장 등록
-     */
-    @Override
-    @Transactional
-    public Long createWithDefaultSeats(ConcertHallReqDto reqDto) {
-        log.info("seatSv is null? {}", seatSv == null);
-        ConcertHallEtt hall = concertHallRepo.save(
-                ConcertHallEtt.builder()
-                        .concertHallName(reqDto.getConcertHallName())
-                        .concertHallPost(reqDto.getConcertHallPost())
-                        .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
-                        .concertHallDetailAddr(reqDto.getConcertHallDetailAddr())
-                        .concertHallStat(reqDto.getConcertHallStat())
-                        .concertHallSeatScale(reqDto.getConcertHallSeatScale())
-                        .concertHallStructure(reqDto.getConcertHallStructure())
-                        .concertHallLatitude(reqDto.getConcertHallLatitude())
-                        .concertHallLongitude(reqDto.getConcertHallLongitude())
-                        .build()
-        );
-
-        // 공연장 생성 후 기본 좌석 자동 생성
-        seatSv.createDefaultSeats(hall);
-
-        return hall.getConcertHallSq();
-    }
-
-    /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
      */
     @Override

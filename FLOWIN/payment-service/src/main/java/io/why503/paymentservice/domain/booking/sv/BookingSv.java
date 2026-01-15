@@ -11,11 +11,12 @@ import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
 import io.why503.paymentservice.domain.booking.repo.BookingRepo;
 import io.why503.paymentservice.domain.booking.repo.TicketRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -134,5 +135,41 @@ public class BookingSv {
         }
 
         // Dirty Checking으로 인해 변경 사항(삭제 or 상태변경)이 자동 반영됨
+    }
+
+    @Transactional
+    public int cancelExpiredBookings() {
+        // 1. 기준 시간 설정 (현재 시간 - 10분)
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(10);
+
+        // 2. 대상 조회 (10분 넘게 PENDING 상태인 것들)
+        List<Booking> expiredBookings = bookingRepo.findByBookingStatusAndBookingDtBefore(
+                BookingStatus.PENDING,
+                threshold
+        );
+
+        int count = 0;
+        for (Booking booking : expiredBookings) {
+            try {
+                // 3. [MSA] Performance Service에 좌석 선점 해제 요청
+                // (booking에 딸린 ticket들의 showingSeatSq 목록 추출 필요)
+                List<Long> seatIds = booking.getTickets().stream()
+                        .map(Ticket::getShowingSeatSq)
+                        .collect(Collectors.toList());
+
+                // performanceClient.releaseSeats(seatIds); // ★ Mock 클라이언트 호출
+
+                // 4. 내 DB에서 삭제 (기존 cancelBooking 로직과 동일하게 PENDING은 삭제)
+                // CascadeType.ALL로 인해 Ticket들도 같이 삭제됨
+                bookingRepo.delete(booking);
+
+                count++;
+            } catch (Exception e) {
+                // 하나가 실패해도 나머지는 계속 취소 시도해야 함 (로그만 남기고 continue)
+                System.err.println("자동 취소 실패 (BookingSq: " + booking.getBookingSq() + "): " + e.getMessage());
+            }
+        }
+
+        return count; // 취소된 건수 반환 (로깅용)
     }
 }

@@ -7,13 +7,15 @@
  */
 package io.why503.accountservice.domain.company.ctrl;
 
-import io.why503.accountservice.domain.auth.model.dto.TokenBody;
+import io.why503.accountservice.domain.account.model.dto.UserRole;
+import io.why503.accountservice.domain.account.sv.AccountSv;
 import io.why503.accountservice.domain.company.model.dto.req.CompanyReqDto;
 import io.why503.accountservice.domain.company.model.dto.res.CompanyResDto;
 import io.why503.accountservice.domain.company.sv.CompanySv;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +26,16 @@ import org.springframework.web.bind.annotation.*;
 public class CompanyCtrl {
 
     private final CompanySv companyService; // 회사 비즈니스 로직 처리 Service
-
+    private final AccountSv accountSv;
     @PostMapping // 회사 등록 API
     public ResponseEntity<Void> registerCompany(
             @RequestBody CompanyReqDto requestDto, // 회사 등록에 필요한 요청 데이터
             @RequestHeader("X-USER-SQ") Long sq
     ) {
+        //권한이 COMPANY가 아니면 거부
+        if(accountSv.readUserRoleBySq(sq) != UserRole.COMPANY){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         // 회사 등록 비즈니스 로직
         companyService.registerCompany(sq, requestDto);
 

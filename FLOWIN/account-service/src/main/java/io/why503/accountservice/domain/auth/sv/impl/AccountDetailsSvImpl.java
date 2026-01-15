@@ -24,4 +24,11 @@ public class AccountDetailsSvImpl implements UserDetailsService {
         );
         return accountMapper.EttToDetail(account);
     }
+    public AccountDetails loadUserBySq(Long sq) throws UsernameNotFoundException {
+        Account account = accountRepo.findBySq(sq).orElseThrow(
+                () -> new IllegalArgumentException("id = " + sq + " Account is not found")
+        );
+        return accountMapper.EttToDetail(account);
+    }
+
 }

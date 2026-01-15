@@ -1,6 +1,7 @@
 package io.why503.accountservice.domain.account.sv.impl;
 
 
+import io.why503.accountservice.domain.account.model.dto.UserRole;
 import io.why503.accountservice.util.AccountMapper;
 import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
@@ -8,6 +9,7 @@ import io.why503.accountservice.domain.account.repo.AccountRepo;
 import io.why503.accountservice.domain.account.sv.AccountSv;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,6 +54,13 @@ public class AccountSvImpl implements AccountSv {
                 () -> new IllegalArgumentException("id = " + id + " Account is not found")
         );
     }
+    //sq로 UserRole 조회
+    @Override
+    @Transactional(readOnly = true)
+    public UserRole readUserRoleBySq(Long sq) {
+        return readBySq(sq).getRole();
+    }
+
     //sq기반 수정
     @Override
     @Transactional
@@ -98,5 +107,14 @@ public class AccountSvImpl implements AccountSv {
         }catch (IllegalArgumentException a){
             return true;
         }
+    }
+
+    //sq로 UserRole 수정
+    @Override
+    @Transactional
+    public Account updateUserRoleBySq(Long sq, UserRole role) {
+        Account account = readBySq(sq);
+        account.setRole(role);
+        return account;
     }
 }

@@ -1,6 +1,7 @@
 package io.why503.accountservice.domain.account.sv;
 
 
+import io.why503.accountservice.domain.account.model.dto.UserRole;
 import io.why503.accountservice.domain.account.model.dto.req.UpsertAccountReq;
 import io.why503.accountservice.domain.account.model.ett.Account;
 
@@ -13,8 +14,10 @@ public interface AccountSv {
     public List<Account> readAll();
     public Account readBySq(Long sq);
     public Account readById(String id);
+    public UserRole readUserRoleBySq(Long sq);
     public Account updateBySq(Long sq, UpsertAccountReq request);
     public Account updateById(String id, UpsertAccountReq request);
+    public Account updateUserRoleBySq(Long sq, UserRole role);
     public Account deleteBySq(Long sq);
     public Account deleteById(String id);
     public boolean existId(String id);

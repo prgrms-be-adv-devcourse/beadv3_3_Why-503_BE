@@ -34,7 +34,6 @@ public class AccountMapper {
                 account.getId(),
                 account.getPassword(),
                 account.getSq(),
-                account.getName(),
                 account.getRole());
     }
 }

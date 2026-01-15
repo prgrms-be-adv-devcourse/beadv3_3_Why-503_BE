@@ -1,7 +1,7 @@
 package io.why503.paymentservice.domain.booking.model.ett;
 
-import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
-import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,7 +32,7 @@ public class Booking {
     @Column(name = "booking_status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
-    private BookingStatus bookingStatus = BookingStatus.PENDING;
+    private BookingStat bookingStat = BookingStat.PENDING;
 
     @CreationTimestamp // INSERT 시 자동 생성
     @Column(name = "booking_dt", nullable = false, updatable = false)
@@ -98,13 +98,13 @@ public class Booking {
     // 비즈니스 로직
     // 전체 취소 (결제 후 환불 처리용)
     public void cancel(String reason) {
-        this.bookingStatus = BookingStatus.CANCELLED;
+        this.bookingStat = BookingStat.CANCELLED;
         this.cancelReason = reason;
 
         // 하위 티켓들도 모두 취소 상태로 변경
         for (Ticket ticket : this.tickets) {
             // 이미 취소된 티켓이 아닐 경우에만 취소 처리
-            if (ticket.getTicketStatus() != TicketStatus.CANCELLED) {
+            if (ticket.getTicketStat() != TicketStat.CANCELLED) {
                 ticket.cancel();
             }
         }
@@ -119,7 +119,7 @@ public class Booking {
                 .orElseThrow(() -> new IllegalArgumentException("해당 예매에 존재하지 않는 티켓입니다."));
 
         // 2. 이미 취소된 티켓인지 확인
-        if (targetTicket.getTicketStatus() == TicketStatus.CANCELLED) {
+        if (targetTicket.getTicketStat() == TicketStat.CANCELLED) {
             throw new IllegalStateException("이미 취소된 티켓입니다.");
         }
 
@@ -128,24 +128,24 @@ public class Booking {
 
         // 4. 예매 상태(BookingStatus) 재산정 (남은 티켓 확인)
         boolean hasActiveTicket = this.tickets.stream()
-                .anyMatch(t -> t.getTicketStatus() != TicketStatus.CANCELLED);
+                .anyMatch(t -> t.getTicketStat() != TicketStat.CANCELLED);
 
         if (!hasActiveTicket) {
             // 살아있는 티켓이 없으면 -> 전체 취소 처리
-            this.bookingStatus = BookingStatus.CANCELLED;
+            this.bookingStat = BookingStat.CANCELLED;
             this.cancelReason = reason;
         } else {
             // 아직 살아있는 티켓이 있으면 -> 부분 취소 처리
-            this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
+            this.bookingStat = BookingStat.PARTIAL_CANCEL;
         }
     }
 
     // 예매 확정 (결제 완료 시)
     public void confirm(String paymentKey, String method) {
-        if (this.bookingStatus != BookingStatus.PENDING) {
-            throw new IllegalStateException("결제 대기 중인 예약만 승인할 수 있습니다. (현재 상태: " + this.bookingStatus + ")");
+        if (this.bookingStat != BookingStat.PENDING) {
+            throw new IllegalStateException("결제 대기 중인 예약만 승인할 수 있습니다. (현재 상태: " + this.bookingStat + ")");
         }
-        this.bookingStatus = BookingStatus.CONFIRMED;
+        this.bookingStat = BookingStat.CONFIRMED;
         this.paymentKey = paymentKey;          // PG사에서 받은 결제 키 저장
         this.approvedAt = LocalDateTime.now(); // 승인 시간 기록
         this.paymentMethod= method;
@@ -158,7 +158,7 @@ public class Booking {
 
     // [NEW] 1. 선점 취소 (결제 전 티켓 삭제)
     public void deleteTicket(Long ticketSq) {
-        if (this.bookingStatus != BookingStatus.PENDING) {
+        if (this.bookingStat != BookingStat.PENDING) {
             throw new IllegalStateException("선점 취소(삭제)는 결제 대기 상태에서만 가능합니다.");
         }
 
@@ -199,7 +199,7 @@ public class Booking {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         if (this.bookingDt == null) this.bookingDt = LocalDateTime.now();
-        if (this.bookingStatus == null) this.bookingStatus = BookingStatus.PENDING; // PENDING
+        if (this.bookingStat == null) this.bookingStat = BookingStat.PENDING; // PENDING
         // 가격 정보가 null이면 0원으로 강제 세팅
         if (this.bookingAmount == null) this.bookingAmount = 0;
         if (this.totalAmount == null) this.totalAmount = 0;

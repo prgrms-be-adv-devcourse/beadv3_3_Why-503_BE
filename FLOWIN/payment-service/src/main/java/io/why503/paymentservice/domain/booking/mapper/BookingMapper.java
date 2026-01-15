@@ -3,11 +3,10 @@ package io.why503.paymentservice.domain.booking.mapper;
 import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
 import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
 import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto; // 독립한 DTO 임포트
-import io.why503.paymentservice.domain.booking.model.dto.TicketResDto;
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
 import io.why503.paymentservice.domain.booking.model.ett.Ticket;
-import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
-import io.why503.paymentservice.domain.booking.model.type.TicketStatus;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
 import lombok.RequiredArgsConstructor; // ★ 추가
 import org.springframework.stereotype.Component;
 
@@ -25,7 +24,7 @@ public class BookingMapper {
                 .userSq(req.getUserSq())
                 .bookingAmount(req.getTotalAmount())
                 .totalAmount(req.getTotalAmount())
-                .bookingStatus(BookingStatus.PENDING)
+                .bookingStat(BookingStat.PENDING)
                 .build();
 
         if (req.getTickets() != null) {
@@ -35,7 +34,7 @@ public class BookingMapper {
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
                         .finalPrice(item.getFinalPrice())
-                        .ticketStatus(TicketStatus.RESERVED)
+                        .ticketStat(TicketStat.RESERVED)
                         .build();
                 booking.addTicket(ticket);
             }
@@ -48,7 +47,7 @@ public class BookingMapper {
         return BookingResDto.builder()
                 .bookingSq(booking.getBookingSq())
                 .userSq(booking.getUserSq())
-                .bookingStatus(booking.getBookingStatus())
+                .bookingStat(booking.getBookingStat())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
                 // [변경] TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용

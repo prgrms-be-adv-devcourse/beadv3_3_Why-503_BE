@@ -1,11 +1,11 @@
-package io.why503.paymentservice.domain.booking.model.type;
+package io.why503.paymentservice.domain.booking.model.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum BookingStatus {
+public enum BookingStat {
     // 순서가 중요합니다! (DB 저장값: 0, 1, 2, 3)
     PENDING("예매대기"),       // 0
     CONFIRMED("예매완료"),      // 1

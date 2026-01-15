@@ -13,7 +13,7 @@ public class TicketMapper {
                 .ticketSq(ticket.getTicketSq())
                 .seatSq(ticket.getShowingSeatSq())
                 // Enum의 한글 설명을 꺼내서 담습니다
-                .status(ticket.getTicketStatus().getDescription())
+                .status(ticket.getTicketStat().getDescription())
                 .build();
     }
 }

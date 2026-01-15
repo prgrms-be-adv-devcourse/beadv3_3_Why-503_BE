@@ -1,7 +1,7 @@
 package io.why503.paymentservice.domain.booking.repo;
 
 import io.why503.paymentservice.domain.booking.model.ett.Booking;
-import io.why503.paymentservice.domain.booking.model.type.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -19,5 +19,5 @@ public interface BookingRepo extends JpaRepository<Booking, Long> {
     @EntityGraph(attributePaths = {"tickets"})
     Optional<Booking> findByBookingSq(Long bookingSq);
 
-    List<Booking> findByBookingStatusAndBookingDtBefore(BookingStatus status, LocalDateTime dateTime);
+    List<Booking> findExpired(BookingStat status, LocalDateTime dateTime);
 }

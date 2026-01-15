@@ -12,27 +12,23 @@ import org.springframework.stereotype.Component;
 public class BookingScheduler {
 
     private final BookingSv bookingSv;
+    private static final long SCAN_INTERVAL_MS = 60 * 1000;
 
     /**
-     * 1분마다 실행
-     * fixedDelay: 이전 작업이 '끝난 시점'부터 1분 뒤 실행 (중복 실행 방지)
+     * [자동 취소 스케줄러]
+     * - 주기: 1분 (이전 작업 종료 후 1분 대기)
+     * - 대상: 10분이 지나도 결제되지 않은(PENDING) 예매 건
      */
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = SCAN_INTERVAL_MS)
     public void autoCancelExpiredBookings() {
-        log.info("[Scheduler] 만료된 예매 대기 건 자동 취소 시작...");
-
         long startTime = System.currentTimeMillis();
-
-        // 서비스 로직 호출
-        int cancelledCount = bookingSv.cancelExpiredBookings();
-
+        // 서비스 로직 실행
+        int deletedCount = bookingSv.cancelExpiredBookings();
         long endTime = System.currentTimeMillis();
-
-        if (cancelledCount > 0) {
-            log.info("[Scheduler] 총 {}건의 미결제 예약을 취소했습니다. (소요시간: {}ms)",
-                    cancelledCount, (endTime - startTime));
-        } else {
-            log.info("[Scheduler] 취소할 만료 예약이 없습니다.");
+        // "처리가 발생했을 때만" 로그를 남김 (Silence is Golden)
+        if (deletedCount > 0) {
+            log.info("[Scheduler] 만료된 예매 {}건 자동 취소 완료 (소요시간: {}ms)",
+                    deletedCount, (endTime - startTime));
         }
     }
 }

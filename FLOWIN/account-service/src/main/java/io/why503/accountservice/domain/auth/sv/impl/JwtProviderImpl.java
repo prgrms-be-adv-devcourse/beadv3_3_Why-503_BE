@@ -52,9 +52,7 @@ public class JwtProviderImpl implements JwtProvider {
     public TokenBody parse(String t) {
         Map<String, Object> claim = getClaims(t);
         Long sq = ((Number)(claim.get("sq"))).longValue();
-        String name = claim.get("name").toString();
-        UserRole role = UserRole.getUserRole(((Number)claim.get("role")).intValue());
-        return new TokenBody(sq, name, role);
+        return new TokenBody(sq);
     }
     //jwt 검증
     @Override

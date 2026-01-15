@@ -9,8 +9,6 @@ import lombok.Getter;
 인덱스값만 뽑아서 전달하는 것이 목표, 후에 변경할 가능성 있음
  */
 public record TokenBody(
-        Long sq,
-        String name,
-        UserRole role
+        Long sq
 ) {
 }

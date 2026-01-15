@@ -24,7 +24,6 @@ public class AccountDetails implements UserDetails {
     private final String password;
     //위까지가 기본 UserDetails에 들어가는 변수
     private final Long sq;
-    private final String name;
     private final UserRole role;
     //여기까지가 더 넣어줄 변수
 

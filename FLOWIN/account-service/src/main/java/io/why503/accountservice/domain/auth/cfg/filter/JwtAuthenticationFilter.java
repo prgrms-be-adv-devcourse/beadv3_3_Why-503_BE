@@ -1,5 +1,6 @@
 package io.why503.accountservice.domain.auth.cfg.filter;
 
+import io.why503.accountservice.domain.account.sv.AccountSv;
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
 import io.why503.accountservice.domain.auth.model.dto.TokenBody;
 import io.why503.accountservice.domain.auth.sv.JwtProvider;
@@ -34,7 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     //cookie 이름 yml파일 명시
     @Value("${custom.jwt.cookie-name}")
     private String cookieName;
-
 
 
     private final JwtProvider jwtProvider;
@@ -80,19 +80,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         //jwt의 payload를 변수에 저장
         TokenBody tokenBody = jwtProvider.parse(token);
         //payload를 AccountDetails로 변환
-        AccountDetails details = new AccountDetails(
-                null,
-                null,
-                tokenBody.sq(),
-                tokenBody.name(),
-                tokenBody.role()
-        );
+        AccountDetails details = accountDetailsSv.loadUserBySq(tokenBody.sq());
         //가짜 헤더
         UserRequestWrapper wrapped = new UserRequestWrapper(request);
         //헤더에 추가
         wrapped.addHeader("X-USER-SQ", tokenBody.sq().toString());
-        wrapped.addHeader("X-USER-NAME", tokenBody.name());
-        wrapped.addHeader("X-USER-ROLE", tokenBody.role().getCode().toString());
 
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(

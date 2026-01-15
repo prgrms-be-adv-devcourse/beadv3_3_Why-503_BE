@@ -42,8 +42,6 @@ public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHa
         Map<String, Object> body = new HashMap<>();
 
         body.put("sq", details.getSq());
-        body.put("name", details.getName());
-        body.put("role", details.getRole().getCode());
 
         //jwt 생성
         String token = jwtProvider.issue(validTime , body);

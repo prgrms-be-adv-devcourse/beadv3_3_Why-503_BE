@@ -123,7 +123,9 @@ public class Booking {
         this.approvedAt = LocalDateTime.now();
 
         // 하위 티켓들도 모두 '결제됨' 처리
-        this.tickets.forEach(Ticket::paid);
+        for (Ticket ticket : this.tickets) {
+            ticket.paid();
+        }
     }
 
     /**
@@ -133,9 +135,11 @@ public class Booking {
         this.bookingStatus = BookingStatus.CANCELLED;
         this.cancelReason = reason;
 
-        this.tickets.stream()
-                .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
-                .forEach(Ticket::cancel);
+        for (Ticket t : this.tickets) {
+            if (t.getTicketStatus() != TicketStatus.CANCELLED) {
+                t.cancel();
+            }
+        }
     }
 
     /**
@@ -152,8 +156,13 @@ public class Booking {
         targetTicket.cancel();
 
         // 남은 티켓이 하나도 없으면 '전체 취소'로 상태 변경
-        boolean hasActive = this.tickets.stream()
-                .anyMatch(t -> t.getTicketStatus() != TicketStatus.CANCELLED);
+        boolean hasActive = false;
+        for (Ticket t : this.tickets) {
+            if (t.getTicketStatus() != TicketStatus.CANCELLED) {
+                hasActive = true;
+                break;
+            }
+        }
 
         if (!hasActive) {
             this.bookingStatus = BookingStatus.CANCELLED;
@@ -198,10 +207,13 @@ public class Booking {
         }
 
         // 부분 취소 시에도 유효한 티켓들의 가격만 합산
-        int sum = this.tickets.stream()
-                .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
-                .mapToInt(Ticket::getFinalPrice)
-                .sum();
+        int sum = 0;
+        for (Ticket ticket : this.tickets) {
+            if (ticket.getTicketStatus() != TicketStatus.CANCELLED) {
+                int finalPrice = ticket.getFinalPrice();
+                sum += finalPrice;
+            }
+        }
 
         this.bookingAmount = sum;
         this.totalAmount = sum;

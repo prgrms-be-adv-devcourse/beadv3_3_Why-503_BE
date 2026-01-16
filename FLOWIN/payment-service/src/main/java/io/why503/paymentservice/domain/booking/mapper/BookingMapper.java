@@ -21,7 +21,7 @@ public class BookingMapper {
     // 1. ReqDto -> Entity 변환
     public Booking toEntity(BookingRequest bookingRequest) {
         Booking booking = Booking.builder()
-                .userSq(bookingRequest.getUserSq())
+                .userSq(bookingRequest.getUserSq()) //
                 .bookingAmount(bookingRequest.getTotalAmount())
                 .totalAmount(bookingRequest.getTotalAmount())
                 .bookingStatus(BookingStatus.PENDING)
@@ -49,7 +49,6 @@ public class BookingMapper {
                 .bookingStatus(booking.getBookingStatus())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
-                //  TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용
                 .tickets(booking.getTickets().stream()
                         .map(ticketMapper::toDto)
                         .collect(Collectors.toList()))

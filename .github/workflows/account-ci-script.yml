@@ -6,7 +6,7 @@ on:
       - main
       - dev
     paths: #얘 수정 밑에 이거
-      - '/FLOWIN/account-service/**'
+      - 'FLOWIN/account-service/**'
 
 jobs:
    execute-test:

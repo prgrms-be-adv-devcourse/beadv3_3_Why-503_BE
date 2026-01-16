@@ -6,11 +6,11 @@ on:
       - main
       - dev
   paths: #얘 수정 밑에 이거
-    - '/FLOWIN/account-service/**' 
+    - '/FLOWIN/payment-service/**'
 
 jobs:
    execute-test:
     uses: ./.github/workflows/ci-script.yml
     secrets: inherit
     with:
-      service-name: account-service #얘 수정
+      service-name: payment-service #얘 수정

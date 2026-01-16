@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.gatewayservice.auth.model.dto.JwtAuthResponseBody;
 import io.why503.gatewayservice.auth.model.dto.TokenBody;
-import io.why503.gatewayservice.auth.sv.JwtValidator;
+import io.why503.gatewayservice.auth.service.JwtValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;

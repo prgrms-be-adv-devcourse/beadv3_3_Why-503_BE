@@ -1,11 +1,11 @@
-package io.why503.gatewayservice.auth.sv.impl;
+package io.why503.gatewayservice.auth.service.impl;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.why503.gatewayservice.auth.model.dto.TokenBody;
-import io.why503.gatewayservice.auth.sv.JwtValidator;
+import io.why503.gatewayservice.auth.service.JwtValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

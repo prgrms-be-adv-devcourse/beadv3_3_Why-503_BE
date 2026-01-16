@@ -1,4 +1,4 @@
-package io.why503.gatewayservice.auth.sv;
+package io.why503.gatewayservice.auth.service;
 
 import io.why503.gatewayservice.auth.model.dto.TokenBody;
 import java.util.Map;

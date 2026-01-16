@@ -29,7 +29,6 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
-//    private final AccountClient accountClient;
 
     /**
      * 예매 생성
@@ -37,13 +36,6 @@ public class BookingService {
     @Transactional
     public BookingResponse createBooking(BookingRequest req) {
         log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", req.getUserSq());
-//
-//        // 1-1. 회원 정보 조회
-//        AccountRes member = accountClient.getAccount(req.getUserSq());
-//        if (member == null) {
-//            throw new IllegalArgumentException("존재하지 않는 회원입니다. (UserSq=" + req.getUserSq() + ")");
-//        }
-
         // 1. [외부 연동] 회차좌석 서비스 좌석 선점
         if (req.getTickets() != null) {
             for (TicketRequest ticketRequest : req.getTickets()) {

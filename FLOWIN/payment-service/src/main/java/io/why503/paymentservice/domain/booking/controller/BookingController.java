@@ -1,8 +1,8 @@
-package io.why503.paymentservice.domain.booking.ctrl;
+package io.why503.paymentservice.domain.booking.controller;
 
-import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
-import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
-import io.why503.paymentservice.domain.booking.sv.BookingSv;
+import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
+import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,26 +10,26 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/bookings") // 복수형 URL 권장
 @RequiredArgsConstructor
-public class BookingCtrl {
+public class BookingController {
 
-    private final BookingSv bookingSv;
+    private final BookingService bookingService;
 
     // 예매 생성
     @PostMapping
-    public ResponseEntity<BookingResDto> createBooking(@RequestBody BookingReqDto req) {
-        return ResponseEntity.ok(bookingSv.createBooking(req));
+    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest req) {
+        return ResponseEntity.ok(bookingService.createBooking(req));
     }
 
     // 예매 상세 조회
     @GetMapping("/{bookingSq}")
-    public ResponseEntity<BookingResDto> getBooking(@PathVariable Long bookingSq) {
-        return ResponseEntity.ok(bookingSv.getBooking(bookingSq));
+    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingSq) {
+        return ResponseEntity.ok(bookingService.getBooking(bookingSq));
     }
 
     // 예매 취소
     @PatchMapping("/{bookingSq}/cancel")
     public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingSq) {
-        bookingSv.cancelBooking(bookingSq);
+        bookingService.cancelBooking(bookingSq);
         return ResponseEntity.ok().build();
     }
 
@@ -40,7 +40,7 @@ public class BookingCtrl {
             @PathVariable Long bookingSq,
             @RequestParam String paymentKey
     ) {
-        bookingSv.confirmBooking(bookingSq, paymentKey);
+        bookingService.confirmBooking(bookingSq, paymentKey);
         return ResponseEntity.ok().build();
     }
 
@@ -50,7 +50,7 @@ public class BookingCtrl {
             @PathVariable Long bookingSq,
             @PathVariable Long ticketSq
     ) {
-        bookingSv.cancelTicket(bookingSq, ticketSq);
+        bookingService.cancelTicket(bookingSq, ticketSq);
         return ResponseEntity.ok().build();
     }
 }

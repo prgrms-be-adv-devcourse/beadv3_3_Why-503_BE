@@ -5,8 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum TicketStat {
-    // DB에 0, 1, 2, 3, 4 순서대로 저장됩니다.
+public enum TicketStatus {
     AVAILABLE("예매가능"), // 0
     RESERVED("선점됨"),   // 1
     PAID("결제됨"),       // 2

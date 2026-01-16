@@ -1,7 +1,7 @@
-package io.why503.paymentservice.domain.booking.model.ett;
+package io.why503.paymentservice.domain.booking.model.entity;
 
-import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
-import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,7 +35,7 @@ public class Booking {
     @Column(name = "booking_status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
-    private BookingStat bookingStat = BookingStat.PENDING;
+    private BookingStatus bookingStatus = BookingStatus.PENDING;
 
     @Column(name = "order_id", nullable = false, unique = true)
     @Builder.Default
@@ -114,10 +114,10 @@ public class Booking {
      * [결제 확정] PG사 승인 완료 시 호출
      */
     public void confirm(String paymentKey, String method) {
-        if (this.bookingStat != BookingStat.PENDING) {
+        if (this.bookingStatus != BookingStatus.PENDING) {
             throw new IllegalStateException("결제 대기 상태에서만 승인이 가능합니다.");
         }
-        this.bookingStat = BookingStat.CONFIRMED;
+        this.bookingStatus = BookingStatus.CONFIRMED;
         this.paymentKey = paymentKey;
         this.paymentMethod = method;
         this.approvedAt = LocalDateTime.now();
@@ -130,11 +130,11 @@ public class Booking {
      * [전체 취소] 결제 후 환불
      */
     public void cancel(String reason) {
-        this.bookingStat = BookingStat.CANCELLED;
+        this.bookingStatus = BookingStatus.CANCELLED;
         this.cancelReason = reason;
 
         this.tickets.stream()
-                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
+                .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
                 .forEach(Ticket::cancel);
     }
 
@@ -144,7 +144,7 @@ public class Booking {
     public void cancelTicket(Long ticketSq, String reason) {
         Ticket targetTicket = findTicketOrThrow(ticketSq);
 
-        if (targetTicket.getTicketStat() == TicketStat.CANCELLED) {
+        if (targetTicket.getTicketStatus() == TicketStatus.CANCELLED) {
             throw new IllegalStateException("이미 취소된 티켓입니다.");
         }
 
@@ -153,13 +153,13 @@ public class Booking {
 
         // 남은 티켓이 하나도 없으면 '전체 취소'로 상태 변경
         boolean hasActive = this.tickets.stream()
-                .anyMatch(t -> t.getTicketStat() != TicketStat.CANCELLED);
+                .anyMatch(t -> t.getTicketStatus() != TicketStatus.CANCELLED);
 
         if (!hasActive) {
-            this.bookingStat = BookingStat.CANCELLED;
+            this.bookingStatus = BookingStatus.CANCELLED;
             this.cancelReason = reason;
         } else {
-            this.bookingStat = BookingStat.PARTIAL_CANCEL;
+            this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
         }
 
         // 금액 재계산이 필요하다면 여기서 호출 (PG사 부분 취소 로직에 따라 다름)
@@ -170,7 +170,7 @@ public class Booking {
      * [선점 취소] 결제 전(PENDING) 상태에서 티켓 삭제 (Hard Delete)
      */
     public void deleteTicket(Long ticketSq) {
-        if (this.bookingStat != BookingStat.PENDING) {
+        if (this.bookingStatus != BookingStatus.PENDING) {
             throw new IllegalStateException("선점 취소는 결제 대기 상태에서만 가능합니다.");
         }
 
@@ -199,7 +199,7 @@ public class Booking {
 
         // 부분 취소 시에도 유효한 티켓들의 가격만 합산
         int sum = this.tickets.stream()
-                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
+                .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
                 .mapToInt(Ticket::getFinalPrice)
                 .sum();
 
@@ -223,6 +223,6 @@ public class Booking {
         if (this.totalAmount == null) this.totalAmount = 0;
         if (this.usedPoint == null) this.usedPoint = 0;
         if (this.pgAmount == null) this.pgAmount = 0;
-        if (this.bookingStat == null) this.bookingStat = BookingStat.PENDING;
+        if (this.bookingStatus == null) this.bookingStatus = BookingStatus.PENDING;
     }
 }

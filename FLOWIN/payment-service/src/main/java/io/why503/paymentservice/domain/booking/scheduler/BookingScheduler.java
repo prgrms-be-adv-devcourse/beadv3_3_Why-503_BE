@@ -1,6 +1,6 @@
 package io.why503.paymentservice.domain.booking.scheduler;
 
-import io.why503.paymentservice.domain.booking.sv.BookingSv;
+import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class BookingScheduler {
 
-    private final BookingSv bookingSv;
+    private final BookingService bookingService;
     private static final long SCAN_INTERVAL_MS = 60 * 1000;
 
     /**
@@ -23,7 +23,7 @@ public class BookingScheduler {
     public void autoCancelExpiredBookings() {
         long startTime = System.currentTimeMillis();
         // 서비스 로직 실행
-        int deletedCount = bookingSv.cancelExpiredBookings();
+        int deletedCount = bookingService.cancelExpiredBookings();
         long endTime = System.currentTimeMillis();
         // "처리가 발생했을 때만" 로그를 남김 (Silence is Golden)
         if (deletedCount > 0) {

@@ -1,4 +1,4 @@
-name: Account CI 스크립트
+name: Payment CI 스크립트
 
 on:
   pull_request:

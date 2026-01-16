@@ -5,8 +5,8 @@ on:
     branches:
       - main
       - dev
-  paths: #얘 수정 밑에 이거
-    - '/FLOWIN/payment-service/**'
+    paths: #얘 수정 밑에 이거
+      - '/FLOWIN/payment-service/**'
 
 jobs:
    execute-test:

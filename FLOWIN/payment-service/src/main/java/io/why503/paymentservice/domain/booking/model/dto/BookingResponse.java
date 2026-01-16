@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
-public class BookingRes {
+public class BookingResponse {
     private Long bookingSq;
     private Long userSq;
     private BookingStatus bookingStatus;
@@ -18,5 +18,5 @@ public class BookingRes {
     private LocalDateTime bookingDt;
 
     // 단순 좌석번호 리스트 -> 티켓 상세 리스트
-    private List<TicketRes> tickets;
+    private List<TicketResponse> tickets;
 }

@@ -1,8 +1,8 @@
 package io.why503.paymentservice.domain.booking.mapper;
 
-import io.why503.paymentservice.domain.booking.model.dto.BookingReq;
-import io.why503.paymentservice.domain.booking.model.dto.BookingRes;
-import io.why503.paymentservice.domain.booking.model.dto.TicketReq; // 독립한 DTO 임포트
+import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
+import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+import io.why503.paymentservice.domain.booking.model.dto.TicketRequest; // 독립한 DTO 임포트
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
@@ -19,7 +19,7 @@ public class BookingMapper {
     private final TicketMapper ticketMapper;
 
     // 1. ReqDto -> Entity 변환
-    public Booking toEntity(BookingReq req) {
+    public Booking toEntity(BookingRequest req) {
         Booking booking = Booking.builder()
                 .userSq(req.getUserSq())
                 .bookingAmount(req.getTotalAmount())
@@ -28,7 +28,7 @@ public class BookingMapper {
                 .build();
 
         if (req.getTickets() != null) {
-            for (TicketReq item : req.getTickets()) {
+            for (TicketRequest item : req.getTickets()) {
                 Ticket ticket = Ticket.builder()
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
@@ -42,8 +42,8 @@ public class BookingMapper {
     }
 
     // 2. Entity -> ResDto 변환
-    public BookingRes toDto(Booking booking) {
-        return BookingRes.builder()
+    public BookingResponse toDto(Booking booking) {
+        return BookingResponse.builder()
                 .bookingSq(booking.getBookingSq())
                 .userSq(booking.getUserSq())
                 .bookingStatus(booking.getBookingStatus())

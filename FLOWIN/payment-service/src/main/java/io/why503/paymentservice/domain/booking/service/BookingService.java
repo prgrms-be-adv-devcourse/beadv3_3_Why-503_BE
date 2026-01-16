@@ -1,11 +1,11 @@
 package io.why503.paymentservice.domain.booking.service;
 
 import io.why503.paymentservice.client.AccountClient;
-import io.why503.paymentservice.client.dto.AccountResponse;
+import io.why503.paymentservice.client.dto.AccountRes;
 import io.why503.paymentservice.domain.booking.mapper.BookingMapper;
-import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
-import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
-import io.why503.paymentservice.domain.booking.model.dto.TicketRequest;
+import io.why503.paymentservice.domain.booking.model.dto.BookingReq;
+import io.why503.paymentservice.domain.booking.model.dto.BookingRes;
+import io.why503.paymentservice.domain.booking.model.dto.TicketReq;
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
@@ -37,18 +37,18 @@ public class BookingService {
      * 예매 생성
      */
     @Transactional
-    public BookingResponse createBooking(BookingRequest req) {
+    public BookingRes createBooking(BookingReq req) {
         log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", req.getUserSq());
 
         // 1-1. 회원 정보 조회
-        AccountResponse member = accountClient.getAccount(req.getUserSq());
+        AccountRes member = accountClient.getAccount(req.getUserSq());
         if (member == null) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다. (UserSq=" + req.getUserSq() + ")");
         }
 
         // 1. [외부 연동] 회차좌석 서비스 좌석 선점
         if (req.getTickets() != null) {
-            for (TicketRequest ticketReq : req.getTickets()) {
+            for (TicketReq ticketReq : req.getTickets()) {
                 Long seatId = ticketReq.getShowingSeatSq();
                 // TODO: [Feign Client] showingSeatClient.reserve(seatId);
                 log.info(">>> [MSA] 좌석 선점 요청 | SeatId={}", seatId);
@@ -73,7 +73,7 @@ public class BookingService {
     /**
      * 예매 상세 조회
      */
-    public BookingResponse getBooking(Long bookingSq) {
+    public BookingRes getBooking(Long bookingSq) {
         Booking booking = findBookingThrow(bookingSq);
         return bookingMapper.toDto(booking);
     }

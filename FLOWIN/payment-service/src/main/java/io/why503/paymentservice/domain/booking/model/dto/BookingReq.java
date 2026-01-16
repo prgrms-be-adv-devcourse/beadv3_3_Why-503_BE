@@ -9,10 +9,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookingRequest {
+public class BookingReq {
     private Long userSq;
     private Integer totalAmount;
 
     // 내부 클래스가 아니라, TicketDto 파일을 참조합니다.
-    private List<TicketRequest> tickets;
+    private List<TicketReq> tickets;
 }

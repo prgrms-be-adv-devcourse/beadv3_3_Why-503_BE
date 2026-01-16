@@ -1,7 +1,7 @@
 package io.why503.paymentservice.domain.booking.controller;
 
-import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
-import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+import io.why503.paymentservice.domain.booking.model.dto.BookingReq;
+import io.why503.paymentservice.domain.booking.model.dto.BookingRes;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +16,13 @@ public class BookingController {
 
     // 예매 생성
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest req) {
+    public ResponseEntity<BookingRes> createBooking(@RequestBody BookingReq req) {
         return ResponseEntity.ok(bookingService.createBooking(req));
     }
 
     // 예매 상세 조회
     @GetMapping("/{bookingSq}")
-    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingSq) {
+    public ResponseEntity<BookingRes> getBooking(@PathVariable Long bookingSq) {
         return ResponseEntity.ok(bookingService.getBooking(bookingSq));
     }
 

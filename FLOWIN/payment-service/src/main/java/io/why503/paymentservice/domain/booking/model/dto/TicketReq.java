@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketRequest {
+public class TicketReq {
     private Long showingSeatSq;
     private Integer originalPrice;
     private Integer finalPrice;

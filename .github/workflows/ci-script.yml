@@ -22,8 +22,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: gradlew 권한 세팅
-        run: chmod +x ./gradlew
+#      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.
+#      - name: gradlew 권한 세팅
+#        run: chmod +x ./gradlew
 
       - name: gradlew 권한 세팅
         run: chmod +x ./FLOWIN/${{ inputs.service-name }}/gradlew

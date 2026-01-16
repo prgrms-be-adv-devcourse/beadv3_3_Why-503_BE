@@ -17,7 +17,6 @@ import lombok.*;
 import java.math.BigDecimal;
 import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
 
-
 @Entity
 @Table(name = "concert_hall")
 @Getter

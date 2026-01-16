@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallWithSeatsReq;
 import io.why503.performanceservice.domain.concerthall.Sv.ConcertHallSv;
+
 
 @RestController
 @RequiredArgsConstructor // Service 의존성 생성자 주입
@@ -66,5 +68,29 @@ public class ConcertHallCtrl {
     ) {
         ConcertHallResDto res = concertHallSv.getConcertHall(concertHallSq);
         return ResponseEntity.ok(res);
+    }
+
+    /**
+     * 관리자 입력 기반 좌석 생성 공연장 등록
+     *
+     * POST /concert-halls/custom-seats
+     *
+     * 요청 바디 예시:
+     * {
+     *   "concertHall": { ... },
+     *   "seatAreas": [
+     *     { "seatArea": "A", "seatCount": 20 },
+     *     { "seatArea": "B", "seatCount": 40 }
+     *   ]
+     * }
+     */
+    @PostMapping("/custom-seats")
+    public Long createConcertHallWithCustomSeats(
+            @RequestBody ConcertHallWithSeatsReq req
+    ) {
+        return concertHallSv.createWithCustomSeats(
+                req.getConcertHall(),
+                req.getSeatAreas()
+        );
     }
 }

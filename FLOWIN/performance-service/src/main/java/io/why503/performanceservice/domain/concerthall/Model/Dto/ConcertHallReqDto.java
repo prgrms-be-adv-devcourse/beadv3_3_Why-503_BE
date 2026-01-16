@@ -14,7 +14,6 @@ package io.why503.performanceservice.domain.concerthall.Model.Dto;
 
 import java.math.BigDecimal;
 
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -67,10 +66,5 @@ public class ConcertHallReqDto {
      * 공연장 경도
      */
     private BigDecimal concertHallLongitude;
-
-    /**
-     * 생성자가 조건문에 필요하지 않아 삭제했습니다.
-     */
-
 
 }

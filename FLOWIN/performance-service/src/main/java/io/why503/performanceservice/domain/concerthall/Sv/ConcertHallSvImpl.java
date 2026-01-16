@@ -3,18 +3,22 @@
  * 공연장 관련 비즈니스 로직 구현체
  *
  * 처리 내용 :
- * - 공연장 등록 시 Entity 변환 및 저장
- * - 공연장 조회 시 Entity → DTO 변환
+ * - 공연장 등록
+ * - 공연장 조회
+ * - 공연장 등록 시 좌석 자동 생성
  *
  * 주의 사항 :
- * - 현재는 단순 CRUD 수준
- * - 추후 공연장 상태 관리, 권한 체크 로직 추가 가능
+ * - 좌석은 공영장에 종속된 고정 자원
+ * - 좌석 생성 실패 시 공연장 생성도 롤백 되어야 함
  */
 package io.why503.performanceservice.domain.concerthall.Sv;
 
+import java.util.List;
+
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +27,20 @@ import io.why503.performanceservice.domain.concerthall.Model.Dto.ConcertHallResD
 import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
 import io.why503.performanceservice.domain.concerthall.Model.Ett.ConcertHallEtt;
 import io.why503.performanceservice.domain.concerthall.Repo.ConcertHallRepo;
-
+import io.why503.performanceservice.domain.seat.Model.Dto.Cmd.SeatAreaCreateCmd;
+import io.why503.performanceservice.domain.seat.Sv.SeatSv;
 import java.math.BigDecimal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 @Transactional(readOnly = true)
 public class ConcertHallSvImpl implements ConcertHallSv {
 
     private final ConcertHallRepo concertHallRepo;
+    private final SeatSv seatSv;
 
     /**
      * 공연장 등록
@@ -151,5 +160,35 @@ public class ConcertHallSvImpl implements ConcertHallSv {
                 .concertHallLatitude(hall.getConcertHallLatitude())
                 .concertHallLongitude(hall.getConcertHallLongitude())
                 .build();
+    }
+    
+    /**
+     * 관리자 입력 기반 좌석 생성 공연장 등록
+     */
+    @Override
+    @Transactional
+    public Long createWithCustomSeats(
+            ConcertHallReqDto reqDto,
+            List<SeatAreaCreateCmd> seatAreaCmds
+    ) {
+
+        ConcertHallEtt hall = concertHallRepo.save(
+                ConcertHallEtt.builder()
+                        .concertHallName(reqDto.getConcertHallName())
+                        .concertHallPost(reqDto.getConcertHallPost())
+                        .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
+                        .concertHallDetailAddr(reqDto.getConcertHallDetailAddr())
+                        .concertHallStat(reqDto.getConcertHallStat())
+                        .concertHallSeatScale(reqDto.getConcertHallSeatScale())
+                        .concertHallStructure(reqDto.getConcertHallStructure())
+                        .concertHallLatitude(reqDto.getConcertHallLatitude())
+                        .concertHallLongitude(reqDto.getConcertHallLongitude())
+                        .build()
+        );
+
+        // 공연장 생성 후 관리자 입력 기반 좌석 생성
+        seatSv.createCustomSeats(hall, seatAreaCmds);
+
+        return hall.getConcertHallSq();
     }
 }

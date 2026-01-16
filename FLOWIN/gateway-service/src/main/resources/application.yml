@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: gateway-service
+    name: GATEWAY-SERVICE
 
   cloud:
 
@@ -12,12 +12,40 @@ spring:
       server:
         webflux:
           routes:
-#            #template#
-#            - id: service-a
-#              uri: lb://SERVICE-A
+#            - id: gateway 안에서 사용하는 이름
+#              uri: lb://유레카에서 인지한 서비스의 이름
 #              predicates:
-#                - Path=/service-a/**
-            - id:
-              uri: lb://
+#                - Path=/account/**
+#                - Method=POST, PATCH, PUT, DELETE
+#              filters:
+#                - JwtValidationFiller
+            ### 검증안하는 url
+
+            ## login
+            - id: account-login
+              uri: lb://ACCOUNT-SERVICE
               predicates:
-                - Path=//**
+                - Path=/login
+                - Method=Post
+            - id: account-sign-up
+              uri: lb://ACCOUNT-SERVICE
+              predicates:
+                - Path=/login/sign-up
+                - Method=Post
+
+            ### 검증하는 url
+
+            ## account
+            - id: account-service
+              uri: lb://ACCOUNT-SERVICE
+              predicates:
+                - Path=/accounts/**
+                - Method=GET, POST, PATCH, PUT, DELETE
+              filters:
+                - JwtValidationFiller
+
+custom:
+  jwt:
+    cookie-name: FLOWIN-TOKEN
+    secret:
+      jwt-public-path: /public-key.pem

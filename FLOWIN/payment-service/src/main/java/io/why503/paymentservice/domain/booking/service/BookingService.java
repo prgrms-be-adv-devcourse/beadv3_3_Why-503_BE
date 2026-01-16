@@ -34,11 +34,11 @@ public class BookingService {
      * 예매 생성
      */
     @Transactional
-    public BookingResponse createBooking(BookingRequest req) {
-        log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", req.getUserSq());
+    public BookingResponse createBooking(BookingRequest bookingRequest) {
+        log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", bookingRequest.getUserSq());
         // 1. [외부 연동] 회차좌석 서비스 좌석 선점
-        if (req.getTickets() != null) {
-            for (TicketRequest ticketRequest : req.getTickets()) {
+        if (bookingRequest.getTickets() != null) {
+            for (TicketRequest ticketRequest : bookingRequest.getTickets()) {
                 Long seatId = ticketRequest.getShowingSeatSq();
                 // TODO: [Feign Client] showingSeatClient.reserve(seatId);
                 log.info(">>> [MSA] 좌석 선점 요청 | SeatId={}", seatId);
@@ -46,7 +46,7 @@ public class BookingService {
         }
 
         // 2. [변환] 및 [연관관계 설정]
-        Booking booking = bookingMapper.toEntity(req);
+        Booking booking = bookingMapper.toEntity(bookingRequest);
         if (booking.getTickets() != null) {
             for (Ticket ticket : booking.getTickets()) {
                 ticket.setBooking(booking);

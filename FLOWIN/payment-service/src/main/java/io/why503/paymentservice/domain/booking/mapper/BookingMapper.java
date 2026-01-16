@@ -19,16 +19,16 @@ public class BookingMapper {
     private final TicketMapper ticketMapper;
 
     // 1. ReqDto -> Entity 변환
-    public Booking toEntity(BookingRequest req) {
+    public Booking toEntity(BookingRequest bookingRequest) {
         Booking booking = Booking.builder()
-                .userSq(req.getUserSq())
-                .bookingAmount(req.getTotalAmount())
-                .totalAmount(req.getTotalAmount())
+                .userSq(bookingRequest.getUserSq())
+                .bookingAmount(bookingRequest.getTotalAmount())
+                .totalAmount(bookingRequest.getTotalAmount())
                 .bookingStatus(BookingStatus.PENDING)
                 .build();
 
-        if (req.getTickets() != null) {
-            for (TicketRequest item : req.getTickets()) {
+        if (bookingRequest.getTickets() != null) {
+            for (TicketRequest item : bookingRequest.getTickets()) {
                 Ticket ticket = Ticket.builder()
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())

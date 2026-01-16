@@ -16,8 +16,8 @@ public class BookingController {
 
     // 예매 생성
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest req) {
-        return ResponseEntity.ok(bookingService.createBooking(req));
+    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest bookingRequest) {
+        return ResponseEntity.ok(bookingService.createBooking(bookingRequest));
     }
 
     // 예매 상세 조회

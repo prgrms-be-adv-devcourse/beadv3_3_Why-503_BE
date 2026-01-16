@@ -31,6 +31,7 @@ public class Booking {
     @Column(name = "booking_sq")
     private Long bookingSq;
 
+    @Setter
     @Column(name = "user_sq", nullable = false)
     private Long userSq;
 

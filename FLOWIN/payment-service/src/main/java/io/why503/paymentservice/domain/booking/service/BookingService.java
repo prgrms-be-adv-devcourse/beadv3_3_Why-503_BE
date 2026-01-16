@@ -38,14 +38,15 @@ public class BookingService {
      * 예매 생성
      */
     @Transactional
-    public BookingResponse createBooking(BookingRequest bookingRequest) {
-        log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", bookingRequest.getUserSq());
+    public BookingResponse createBooking(BookingRequest bookingRequest, Long userSq) {
+        log.info(">>> [Biz] 예매 프로세스 시작 | UserSq={}", userSq);
 
-        // 회원 정보 조회
-        AccountResponse accountResponse = accountClient.getAccount(bookingRequest.getUserSq());
+        // 1. [MSA] 회원 정보 조회
+        AccountResponse accountResponse = accountClient.getAccount(userSq);
         if (accountResponse == null) {
-            throw new IllegalArgumentException("존재하지 않는 회원입니다. (UserSq=" + bookingRequest.getUserSq() + ")");
+            throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
+        log.info(">>> [Step 1] 회원 확인 완료 | 성함: {}", accountResponse.getName());
 
         // 1. [외부 연동] 회차좌석 서비스 좌석 선점
         if (bookingRequest.getTickets() != null) {
@@ -56,21 +57,24 @@ public class BookingService {
             }
         }
 
-        int requestedPoint;
+        // 3. [포인트 조회 및 검증] - 선점된 상태에서 사용자가 선택한 포인트가 보유량 이내인지 확인
+        int requestedPoint= 0;
         if (bookingRequest.getUsedPoint() != null) {
             requestedPoint = bookingRequest.getUsedPoint();
-        } else {
-            requestedPoint = 0;
         }
 
-        // 1. 고객이 가진 포인트보다 더 쓰려고 하는지 확인
         if (accountResponse.getPoint() < requestedPoint) {
-            throw new IllegalArgumentException("보유 포인트가 부족합니다. (보유: " + accountResponse.getPoint() + ")");
+            throw new IllegalArgumentException("보유하신 포인트가 부족하여 사용할 수 없습니다. (현재 잔액: " + accountResponse.getPoint() + "원)");
         }
+        log.info(">>> [Step 3] 포인트 검증 완료 | 사용요청: {}, 보유: {}", requestedPoint, accountResponse.getPoint());
 
-        // 2. [변환] 및 [연관관계 설정]
+        // 4. [결제 및 저장] - 최종 예매 데이터 생성
         Booking booking = bookingMapper.requestToEntity(bookingRequest);
+        booking.setUserSq(userSq); // 헤더에서 획득한 userSq 주입
+
+        // 최종 결제 금액 계산 (Total - UsedPoint = pgAmount)
         booking.applyPoints(requestedPoint);
+
         if (booking.getTickets() != null) {
             for (Ticket ticket : booking.getTickets()) {
                 ticket.setBooking(booking);
@@ -79,7 +83,8 @@ public class BookingService {
 
         // 3. [저장]
         Booking savedBooking = bookingRepository.save(booking);
-        log.info(">>> [Biz] 예매 생성 완료 | BookingSq={}, TicketCount={}", savedBooking.getBookingSq(), savedBooking.getTickets().size());
+        log.info(">>> [Biz] 예매 생성 완료 | BookingSq={}, TicketCount={}",
+                savedBooking.getBookingSq(), savedBooking.getTickets().size());
 
         return bookingMapper.EntityToResponse(savedBooking);
     }

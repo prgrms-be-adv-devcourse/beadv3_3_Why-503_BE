@@ -84,3 +84,5 @@ public class Ticket {
         if (this.ticketUuid == null) this.ticketUuid = UUID.randomUUID().toString();
     }
 }
+
+//리퀘스트 헤더에서 빼와서 그거를

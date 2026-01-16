@@ -8,12 +8,15 @@ import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
+import io.why503.paymentservice.global.client.AccountClient;
+import io.why503.paymentservice.global.client.dto.AccountResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 // [MSA]: 외부 서비스(Account, ShowingSeat 등) 호출
@@ -29,6 +32,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+    private final AccountClient accountClient;
 
     /**
      * 예매 생성
@@ -36,6 +40,13 @@ public class BookingService {
     @Transactional
     public BookingResponse createBooking(BookingRequest bookingRequest) {
         log.info(">>> [MSA] 회원 검증 요청 | UserSq={}", bookingRequest.getUserSq());
+
+        // 회원 정보 조회
+        AccountResponse accountResponse = accountClient.getAccount(bookingRequest.getUserSq());
+        if (accountResponse == null) {
+            throw new IllegalArgumentException("존재하지 않는 회원입니다. (UserSq=" + bookingRequest.getUserSq() + ")");
+        }
+
         // 1. [외부 연동] 회차좌석 서비스 좌석 선점
         if (bookingRequest.getTickets() != null) {
             for (TicketRequest ticketRequest : bookingRequest.getTickets()) {
@@ -45,8 +56,21 @@ public class BookingService {
             }
         }
 
+        int requestedPoint;
+        if (bookingRequest.getUsedPoint() != null) {
+            requestedPoint = bookingRequest.getUsedPoint();
+        } else {
+            requestedPoint = 0;
+        }
+
+        // 1. 고객이 가진 포인트보다 더 쓰려고 하는지 확인
+        if (accountResponse.getPoint() < requestedPoint) {
+            throw new IllegalArgumentException("보유 포인트가 부족합니다. (보유: " + accountResponse.getPoint() + ")");
+        }
+
         // 2. [변환] 및 [연관관계 설정]
-        Booking booking = bookingMapper.toEntity(bookingRequest);
+        Booking booking = bookingMapper.requestToEntity(bookingRequest);
+        booking.applyPoints(requestedPoint);
         if (booking.getTickets() != null) {
             for (Ticket ticket : booking.getTickets()) {
                 ticket.setBooking(booking);
@@ -57,7 +81,7 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
         log.info(">>> [Biz] 예매 생성 완료 | BookingSq={}, TicketCount={}", savedBooking.getBookingSq(), savedBooking.getTickets().size());
 
-        return bookingMapper.toDto(savedBooking);
+        return bookingMapper.EntityToResponse(savedBooking);
     }
 
     /**
@@ -65,7 +89,7 @@ public class BookingService {
      */
     public BookingResponse getBooking(Long bookingSq) {
         Booking booking = findBookingThrow(bookingSq);
-        return bookingMapper.toDto(booking);
+        return bookingMapper.EntityToResponse(booking);
     }
 
     /**
@@ -156,5 +180,20 @@ public class BookingService {
     private Booking findBookingThrow(Long bookingSq) {
         return bookingRepository.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다. (BookingSq=" + bookingSq + ")"));
+    }
+
+
+    //추후 테스트 진행
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByUser(Long userSq) {
+        // 1. DB에서 해당 유저의 예매 리스트 조회
+        List<Booking> bookings = bookingRepository.findByUserSq(userSq);
+        // 2. 엔티티 리스트를 DTO 리스트로 변환 (아까 수정한 매퍼 사용)
+        List<BookingResponse> list = new ArrayList<>();
+        for (Booking booking : bookings) {
+            BookingResponse bookingResponse = bookingMapper.EntityToResponse(booking);
+            list.add(bookingResponse);
+        }
+        return list;
     }
 }

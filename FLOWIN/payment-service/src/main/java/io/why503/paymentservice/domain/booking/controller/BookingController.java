@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/bookings") // 복수형 URL 권장
 @RequiredArgsConstructor
@@ -52,5 +54,14 @@ public class BookingController {
     ) {
         bookingService.cancelTicket(bookingSq, ticketSq);
         return ResponseEntity.ok().build();
+    }
+
+    // [회원 서비스용] 특정 회원의 전체 예매 내역 조회
+    // 회원 서비스가 Feign으로 부를 때 사용: GET /bookings/account/{userSq}
+    @GetMapping("/account/{userSq}")
+    public ResponseEntity<List<BookingResponse>> getBookingsByUser(@PathVariable Long userSq) {
+        // Service에 해당 메서드를 만들어서 호출해야 합니다.
+        List<BookingResponse> responses = bookingService.getBookingsByUser(userSq);
+        return ResponseEntity.ok(responses);
     }
 }

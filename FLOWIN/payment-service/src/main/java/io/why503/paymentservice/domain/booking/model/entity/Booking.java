@@ -4,6 +4,7 @@ import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
 import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Entity
 @Getter
 @Builder
@@ -226,6 +228,21 @@ public class Booking {
                 .filter(t -> t.getTicketSq().equals(ticketSq))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 티켓입니다."));
+    }
+
+    // 포인트 적용 및 결제 금액 재계산
+    public void applyPoints(int pointsToUse) {
+        // 결제 총액보다 포인트를 더 많이 쓸 수는 없음
+        if (pointsToUse > this.totalAmount) {
+            pointsToUse = this.totalAmount;
+        }
+
+        this.usedPoint = pointsToUse;
+        // 실제 PG 결제 금액 = 전체 금액 - 사용 포인트
+        this.pgAmount = this.totalAmount - this.usedPoint;
+
+        log.info(">>> [Entity] 포인트 계산 완료 | 총액: {}, 포인트사용: {}, 최종결제금액: {}",
+                this.totalAmount, this.usedPoint, this.pgAmount);
     }
 
     // NULL 방어 로직 (JPA 저장 전 실행)

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class TicketMapper {
 
     // Entity -> ResDto 변환
-    public TicketResponse toDto(Ticket ticket) {
+    public TicketResponse EntityToResponse(Ticket ticket) {
         return TicketResponse.builder()
                 .ticketSq(ticket.getTicketSq())
                 .seatSq(ticket.getShowingSeatSq())

@@ -1,6 +1,6 @@
-package io.why503.paymentservice.domain.booking.model.ett;
+package io.why503.paymentservice.domain.booking.model.entity;
 
-import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -48,7 +48,7 @@ public class Ticket {
     @Column(name = "ticket_status", nullable = false)
     @Enumerated(EnumType.ORDINAL) // 숫자 저장 (0, 1, 2...)
     @Builder.Default
-    private TicketStat ticketStat = TicketStat.AVAILABLE;
+    private TicketStatus ticketStatus = TicketStatus.AVAILABLE;
 
     // =================================================================
     //  4. 연관 관계
@@ -64,12 +64,12 @@ public class Ticket {
 
     // 결제 완료 처리
     public void paid() {
-        this.ticketStat = TicketStat.PAID;
+        this.ticketStatus = TicketStatus.PAID;
     }
 
     // 취소 처리
     public void cancel() {
-        this.ticketStat = TicketStat.CANCELLED;
+        this.ticketStatus = TicketStatus.CANCELLED;
     }
 
     // =================================================================
@@ -80,7 +80,9 @@ public class Ticket {
         if (this.originalPrice == null) this.originalPrice = 0;
         if (this.discountAmount == null) this.discountAmount = 0;
         if (this.finalPrice == null) this.finalPrice = 0;
-        if (this.ticketStat == null) this.ticketStat = TicketStat.AVAILABLE;
+        if (this.ticketStatus == null) this.ticketStatus = TicketStatus.AVAILABLE;
         if (this.ticketUuid == null) this.ticketUuid = UUID.randomUUID().toString();
     }
 }
+
+//리퀘스트 헤더에서 빼와서 그거를

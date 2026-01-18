@@ -1,16 +1,18 @@
 package io.why503.paymentservice.domain.booking.mapper;
 
-import io.why503.paymentservice.domain.booking.model.dto.BookingReqDto;
-import io.why503.paymentservice.domain.booking.model.dto.BookingResDto;
-import io.why503.paymentservice.domain.booking.model.dto.TicketReqDto; // 독립한 DTO 임포트
-import io.why503.paymentservice.domain.booking.model.ett.Booking;
-import io.why503.paymentservice.domain.booking.model.ett.Ticket;
-import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
-import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
-import lombok.RequiredArgsConstructor; // ★ 추가
+import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
+import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+import io.why503.paymentservice.domain.booking.model.dto.TicketRequest;
+import io.why503.paymentservice.domain.booking.model.dto.TicketResponse;
+import io.why503.paymentservice.domain.booking.model.entity.Booking;
+import io.why503.paymentservice.domain.booking.model.entity.Ticket;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -19,22 +21,22 @@ public class BookingMapper {
     private final TicketMapper ticketMapper;
 
     // 1. ReqDto -> Entity 변환
-    public Booking toEntity(BookingReqDto req) {
+    public Booking requestToEntity(BookingRequest bookingRequest) {
         Booking booking = Booking.builder()
-                .userSq(req.getUserSq())
-                .bookingAmount(req.getTotalAmount())
-                .totalAmount(req.getTotalAmount())
-                .bookingStat(BookingStat.PENDING)
+                .userSq(bookingRequest.getUserSq()) //
+                .bookingAmount(bookingRequest.getTotalAmount())
+                .totalAmount(bookingRequest.getTotalAmount())
+                .usedPoint(bookingRequest.getUsedPoint())// 포인트 기록!
+                .bookingStatus(BookingStatus.PENDING)
                 .build();
 
-        if (req.getTickets() != null) {
-            // TicketReqDto가 이제 독립된 클래스이므로 바로 사용 가능
-            for (TicketReqDto item : req.getTickets()) {
+        if (bookingRequest.getTickets() != null) {
+            for (TicketRequest item : bookingRequest.getTickets()) {
                 Ticket ticket = Ticket.builder()
                         .showingSeatSq(item.getShowingSeatSq())
                         .originalPrice(item.getOriginalPrice())
                         .finalPrice(item.getFinalPrice())
-                        .ticketStat(TicketStat.RESERVED)
+                        .ticketStatus(TicketStatus.RESERVED)
                         .build();
                 booking.addTicket(ticket);
             }
@@ -43,17 +45,19 @@ public class BookingMapper {
     }
 
     // 2. Entity -> ResDto 변환
-    public BookingResDto toDto(Booking booking) {
-        return BookingResDto.builder()
+    public BookingResponse EntityToResponse(Booking booking) {
+        List<TicketResponse> list = new ArrayList<>();
+        for (Ticket ticket : booking.getTickets()) {
+            TicketResponse ticketResponse = ticketMapper.EntityToResponse(ticket);
+            list.add(ticketResponse);
+        }
+        return BookingResponse.builder()
                 .bookingSq(booking.getBookingSq())
                 .userSq(booking.getUserSq())
-                .bookingStat(booking.getBookingStat())
+                .bookingStatus(booking.getBookingStatus())
                 .bookingAmount(booking.getBookingAmount())
                 .bookingDt(booking.getBookingDt())
-                //  TicketResDto.from(...) 대신 ticketMapper.toDto(...) 사용
-                .tickets(booking.getTickets().stream()
-                        .map(ticketMapper::toDto)
-                        .collect(Collectors.toList()))
+                .tickets(list)
                 .build();
     }
 }

@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class TicketResDto {
+public class TicketResponse {
     private Long ticketSq;
     private Long seatSq;
     private String status;

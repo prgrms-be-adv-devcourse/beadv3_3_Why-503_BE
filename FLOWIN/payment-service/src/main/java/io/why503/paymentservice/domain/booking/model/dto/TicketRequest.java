@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TicketReqDto {
+public class TicketRequest {
     private Long showingSeatSq;
     private Integer originalPrice;
     private Integer finalPrice;

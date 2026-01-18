@@ -1,9 +1,10 @@
-package io.why503.paymentservice.domain.booking.model.ett;
+package io.why503.paymentservice.domain.booking.model.entity;
 
-import io.why503.paymentservice.domain.booking.model.vo.BookingStat;
-import io.why503.paymentservice.domain.booking.model.vo.TicketStat;
+import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
+import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Entity
 @Getter
 @Builder
@@ -29,13 +31,14 @@ public class Booking {
     @Column(name = "booking_sq")
     private Long bookingSq;
 
+    @Setter
     @Column(name = "user_sq", nullable = false)
     private Long userSq;
 
     @Column(name = "booking_status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
-    private BookingStat bookingStat = BookingStat.PENDING;
+    private BookingStatus bookingStatus = BookingStatus.PENDING;
 
     @Column(name = "order_id", nullable = false, unique = true)
     @Builder.Default
@@ -114,28 +117,32 @@ public class Booking {
      * [결제 확정] PG사 승인 완료 시 호출
      */
     public void confirm(String paymentKey, String method) {
-        if (this.bookingStat != BookingStat.PENDING) {
+        if (this.bookingStatus != BookingStatus.PENDING) {
             throw new IllegalStateException("결제 대기 상태에서만 승인이 가능합니다.");
         }
-        this.bookingStat = BookingStat.CONFIRMED;
+        this.bookingStatus = BookingStatus.CONFIRMED;
         this.paymentKey = paymentKey;
         this.paymentMethod = method;
         this.approvedAt = LocalDateTime.now();
 
         // 하위 티켓들도 모두 '결제됨' 처리
-        this.tickets.forEach(Ticket::paid);
+        for (Ticket ticket : this.tickets) {
+            ticket.paid();
+        }
     }
 
     /**
      * [전체 취소] 결제 후 환불
      */
     public void cancel(String reason) {
-        this.bookingStat = BookingStat.CANCELLED;
+        this.bookingStatus = BookingStatus.CANCELLED;
         this.cancelReason = reason;
 
-        this.tickets.stream()
-                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
-                .forEach(Ticket::cancel);
+        for (Ticket t : this.tickets) {
+            if (t.getTicketStatus() != TicketStatus.CANCELLED) {
+                t.cancel();
+            }
+        }
     }
 
     /**
@@ -144,7 +151,7 @@ public class Booking {
     public void cancelTicket(Long ticketSq, String reason) {
         Ticket targetTicket = findTicketOrThrow(ticketSq);
 
-        if (targetTicket.getTicketStat() == TicketStat.CANCELLED) {
+        if (targetTicket.getTicketStatus() == TicketStatus.CANCELLED) {
             throw new IllegalStateException("이미 취소된 티켓입니다.");
         }
 
@@ -152,14 +159,19 @@ public class Booking {
         targetTicket.cancel();
 
         // 남은 티켓이 하나도 없으면 '전체 취소'로 상태 변경
-        boolean hasActive = this.tickets.stream()
-                .anyMatch(t -> t.getTicketStat() != TicketStat.CANCELLED);
+        boolean hasActive = false;
+        for (Ticket t : this.tickets) {
+            if (t.getTicketStatus() != TicketStatus.CANCELLED) {
+                hasActive = true;
+                break;
+            }
+        }
 
         if (!hasActive) {
-            this.bookingStat = BookingStat.CANCELLED;
+            this.bookingStatus = BookingStatus.CANCELLED;
             this.cancelReason = reason;
         } else {
-            this.bookingStat = BookingStat.PARTIAL_CANCEL;
+            this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
         }
 
         // 금액 재계산이 필요하다면 여기서 호출 (PG사 부분 취소 로직에 따라 다름)
@@ -170,7 +182,7 @@ public class Booking {
      * [선점 취소] 결제 전(PENDING) 상태에서 티켓 삭제 (Hard Delete)
      */
     public void deleteTicket(Long ticketSq) {
-        if (this.bookingStat != BookingStat.PENDING) {
+        if (this.bookingStatus != BookingStatus.PENDING) {
             throw new IllegalStateException("선점 취소는 결제 대기 상태에서만 가능합니다.");
         }
 
@@ -198,10 +210,13 @@ public class Booking {
         }
 
         // 부분 취소 시에도 유효한 티켓들의 가격만 합산
-        int sum = this.tickets.stream()
-                .filter(t -> t.getTicketStat() != TicketStat.CANCELLED)
-                .mapToInt(Ticket::getFinalPrice)
-                .sum();
+        int sum = 0;
+        for (Ticket ticket : this.tickets) {
+            if (ticket.getTicketStatus() != TicketStatus.CANCELLED) {
+                int finalPrice = ticket.getFinalPrice();
+                sum += finalPrice;
+            }
+        }
 
         this.bookingAmount = sum;
         this.totalAmount = sum;
@@ -216,6 +231,21 @@ public class Booking {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 티켓입니다."));
     }
 
+    // 포인트 적용 및 결제 금액 재계산
+    public void applyPoints(int pointsToUse) {
+        // 결제 총액보다 포인트를 더 많이 쓸 수는 없음
+        if (pointsToUse > this.totalAmount) {
+            pointsToUse = this.totalAmount;
+        }
+
+        this.usedPoint = pointsToUse;
+        // 실제 PG 결제 금액 = 전체 금액 - 사용 포인트
+        this.pgAmount = this.totalAmount - this.usedPoint;
+
+        log.info(">>> [Entity] 포인트 계산 완료 | 총액: {}, 포인트사용: {}, 최종결제금액: {}",
+                this.totalAmount, this.usedPoint, this.pgAmount);
+    }
+
     // NULL 방어 로직 (JPA 저장 전 실행)
     @PrePersist
     public void prePersist() {
@@ -223,6 +253,6 @@ public class Booking {
         if (this.totalAmount == null) this.totalAmount = 0;
         if (this.usedPoint == null) this.usedPoint = 0;
         if (this.pgAmount == null) this.pgAmount = 0;
-        if (this.bookingStat == null) this.bookingStat = BookingStat.PENDING;
+        if (this.bookingStatus == null) this.bookingStatus = BookingStatus.PENDING;
     }
 }

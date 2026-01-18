@@ -41,14 +41,14 @@ public class BookingService {
     public BookingResponse createBooking(BookingRequest bookingRequest, Long userSq) {
         log.info(">>> [Biz] 예매 프로세스 시작 | UserSq={}", userSq);
 
-        // 1. [MSA] 회원 정보 조회
+        // [MSA] 회원 정보 조회
         AccountResponse accountResponse = accountClient.getAccount(userSq);
         if (accountResponse == null) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
         log.info(">>> [Step 1] 회원 확인 완료 | 성함: {}", accountResponse.getName());
 
-        // 1. [외부 연동] 회차좌석 서비스 좌석 선점
+        // [외부 연동] 회차좌석 서비스 좌석 선점
         if (bookingRequest.getTickets() != null) {
             for (TicketRequest ticketRequest : bookingRequest.getTickets()) {
                 Long seatId = ticketRequest.getShowingSeatSq();
@@ -57,7 +57,7 @@ public class BookingService {
             }
         }
 
-        // 3. [포인트 조회 및 검증] - 선점된 상태에서 사용자가 선택한 포인트가 보유량 이내인지 확인
+        // [포인트 조회 및 검증] - 선점된 상태에서 사용자가 선택한 포인트가 보유량 이내인지 확인
         int requestedPoint= 0;
         if (bookingRequest.getUsedPoint() != null) {
             requestedPoint = bookingRequest.getUsedPoint();
@@ -68,7 +68,7 @@ public class BookingService {
         }
         log.info(">>> [Step 3] 포인트 검증 완료 | 사용요청: {}, 보유: {}", requestedPoint, accountResponse.getPoint());
 
-        // 4. [결제 및 저장] - 최종 예매 데이터 생성
+        // [결제 및 저장] - 최종 예매 데이터 생성
         Booking booking = bookingMapper.requestToEntity(bookingRequest);
         booking.setUserSq(userSq); // 헤더에서 획득한 userSq 주입
 
@@ -81,7 +81,7 @@ public class BookingService {
             }
         }
 
-        // 3. [저장]
+        // [저장]
         Booking savedBooking = bookingRepository.save(booking);
         log.info(">>> [Biz] 예매 생성 완료 | BookingSq={}, TicketCount={}",
                 savedBooking.getBookingSq(), savedBooking.getTickets().size());

@@ -1,6 +1,8 @@
 package io.why503.performanceservice.domain.roundSeats.service;
 
 
+import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
+import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatStatus;
@@ -20,12 +22,18 @@ import java.util.List;
 public class RoundSeatService {
 
     private final RoundSeatRepository roundSeatRepository;
+    private final RoundRepository roundRepository; // 추가됨
     private final RoundSeatMapper roundSeatMapper;
 
     //회차 좌석 생성
     @Transactional
     public RoundSeatResponse createRoundSeat(RoundSeatRequest request){
-        RoundSeatEntity entity = roundSeatMapper.dtoToEntity(request);
+        // FK 연동을 위해 RoundEntity 조회
+        RoundEntity roundEntity = roundRepository.findById(request.roundSq())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회차입니다."));
+
+        // 조회한 roundEntity를 Mapper에 전달
+        RoundSeatEntity entity = roundSeatMapper.dtoToEntity(request, roundEntity);
         RoundSeatEntity savedEntity = roundSeatRepository.save(entity);
 
         return roundSeatMapper.entityToDto(savedEntity);
@@ -34,14 +42,17 @@ public class RoundSeatService {
 
     //전체 조회
     public List<RoundSeatResponse> getRoundSeatList(Long roundSq) {
-        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSq(roundSq);
+        // Repository 메서드명 변경
+        // RoundSeaEntity에서 roundSq를 찾고 RoundEntity에서 roundSq와 일치하는 것을 찾아라
+        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSq_RoundSq(roundSq);
         return convertToDtoList(entities);
     }
 
 
     //예매 가능 좌석 조회
     public List<RoundSeatResponse> getAvailableRoundSeatList(Long roundSq){
-        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSqAndRoundSeatStatus(
+        // Repository 메서드명 변경
+        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSq_RoundSqAndRoundSeatStatus(
                 roundSq, RoundSeatStatus.AVAILABLE
         );
         return convertToDtoList(entities);

@@ -1,6 +1,7 @@
 package io.why503.performanceservice.domain.roundSeats.model.entity;
 
 
+import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeats.model.dto.enumconverter.RoundSeatStatusConverter;
 import jakarta.persistence.*;
@@ -36,8 +37,10 @@ public class RoundSeatEntity {
     @Column(name = "round_seat_stat_time", nullable = false)
     private LocalDateTime roundSeatStatusTime;                   //상태변경일시
 
-    @Column(name = "round_sq", nullable = false)
-    private Long roundSq;                                        //회차시퀀스
+    // 변수명은 roundSq 유지, 타입은 RoundEntity로 변경하여 FK 연동
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "round_sq", nullable = false)
+    private RoundEntity roundSq;                                        //회차시퀀스
 
     @Column(name = "show_seat_sq",nullable = false)
     private Long showSeatSq;                                     //공연좌석시퀀스

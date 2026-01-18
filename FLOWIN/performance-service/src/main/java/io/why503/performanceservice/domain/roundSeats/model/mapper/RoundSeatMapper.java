@@ -1,6 +1,7 @@
 package io.why503.performanceservice.domain.roundSeats.model.mapper;
 
 
+import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
@@ -13,9 +14,10 @@ public class RoundSeatMapper {
 
 
     //Request -> Entity
-    public RoundSeatEntity dtoToEntity(RoundSeatRequest request){
+    // DB 저장을 위해 RoundEntity 객체를 받음
+    public RoundSeatEntity dtoToEntity(RoundSeatRequest request, RoundEntity roundEntity){
         return RoundSeatEntity.builder()
-                .roundSq(request.roundSq())
+                .roundSq(roundEntity)
                 .showSeatSq(request.showSeatSq())
                 .roundSeatStatus(request.roundSeatStatus())
                 .roundSeatStatusTime(LocalDateTime.now())
@@ -27,7 +29,7 @@ public class RoundSeatMapper {
     public RoundSeatResponse entityToDto(RoundSeatEntity entity){
         return RoundSeatResponse.builder()
                 .roundSeatSq(entity.getRoundSeatSq())
-                .roundSq(entity.getRoundSq())
+                .roundSq(entity.getRoundSq().getRoundSq())
                 .showSeatSq(entity.getShowSeatSq())
                 .roundSeatStatus(entity.getRoundSeatStatus())
                 .roundSeatStatusName(entity.getRoundSeatStatus().getDescription())

@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    # H2를 쓰지만 MySQL 문법을 알아듣도록(MODE=MySQL) 설정
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 시작할 때 테이블 생성 -> 끝나면 삭제
+    properties:
+      hibernate:
+        format_sql: true     # 실행되는 쿼리를 로그에 예쁘게 출력

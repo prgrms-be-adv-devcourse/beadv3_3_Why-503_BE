@@ -1,8 +1,8 @@
 package io.why503.performanceservice.domain.roundSeats.controller;
 
 
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequestDto;
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponseDto;
+import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequest;
+import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeats.service.RoundSeatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,40 +20,40 @@ public class RoundSeatController {
 
     //회차 좌석 생성
     @PostMapping
-    public ResponseEntity<RoundSeatResponseDto> createRoundSeat(
-                @Valid @RequestBody RoundSeatRequestDto request
+    public ResponseEntity<RoundSeatResponse> createRoundSeat(
+                @Valid @RequestBody RoundSeatRequest request
 
     ){
-        RoundSeatResponseDto response = roundSeatService.createRoundSeat(request);
+        RoundSeatResponse response = roundSeatService.createRoundSeat(request);
         return ResponseEntity.ok(response);
     }
 
 
     //전체 조회
     @GetMapping
-    public ResponseEntity<List<RoundSeatResponseDto>> getRoundSeatList(
+    public ResponseEntity<List<RoundSeatResponse>> getRoundSeatList(
             @RequestParam(name = "roundSq") Long roundSq
     ) {
-        List<RoundSeatResponseDto> response = roundSeatService.getRoundSeatList(roundSq);
+        List<RoundSeatResponse> response = roundSeatService.getRoundSeatList(roundSq);
         return ResponseEntity.ok(response);
     }
 
     //예매 가능 좌석 조회
     @GetMapping("/available")
-    public ResponseEntity<List<RoundSeatResponseDto>> getAvailableRoundSeatList(
+    public ResponseEntity<List<RoundSeatResponse>> getAvailableRoundSeatList(
             @RequestParam(name = "roundSq") Long roundSq
     ){
-        List<RoundSeatResponseDto> response = roundSeatService.getAvailableRoundSeatList(roundSq);
+        List<RoundSeatResponse> response = roundSeatService.getAvailableRoundSeatList(roundSq);
         return ResponseEntity.ok(response);
     }
 
     //상태변경
     @PatchMapping("/{roundSeatSq}/status")
-    public ResponseEntity<RoundSeatResponseDto> patchRoundSeatStatus(
+    public ResponseEntity<RoundSeatResponse> patchRoundSeatStatus(
             @PathVariable(name = "roundSeatSq") Long roundSeatSq,
-            @RequestBody RoundSeatRequestDto request
+            @RequestBody RoundSeatRequest request
     ){
-        RoundSeatResponseDto response = roundSeatService.patchRoundSeatStatus(roundSeatSq, request.roundSeatStatus());
+        RoundSeatResponse response = roundSeatService.patchRoundSeatStatus(roundSeatSq, request.roundSeatStatus());
         return ResponseEntity.ok(response);
     }
 

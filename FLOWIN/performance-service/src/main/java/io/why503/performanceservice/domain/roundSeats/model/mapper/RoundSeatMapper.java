@@ -1,8 +1,8 @@
 package io.why503.performanceservice.domain.roundSeats.model.mapper;
 
 
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequestDto;
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponseDto;
+import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequest;
+import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ public class RoundSeatMapper {
 
 
     //Request -> Entity
-    public RoundSeatEntity dtoToEntity(RoundSeatRequestDto request){
+    public RoundSeatEntity dtoToEntity(RoundSeatRequest request){
         return RoundSeatEntity.builder()
                 .roundSq(request.roundSq())
                 .showSeatSq(request.showSeatSq())
@@ -24,8 +24,8 @@ public class RoundSeatMapper {
     }
 
     //Entity -> Response
-    public RoundSeatResponseDto entityToDto(RoundSeatEntity entity){
-        return RoundSeatResponseDto.builder()
+    public RoundSeatResponse entityToDto(RoundSeatEntity entity){
+        return RoundSeatResponse.builder()
                 .roundSeatSq(entity.getRoundSeatSq())
                 .roundSq(entity.getRoundSq())
                 .showSeatSq(entity.getShowSeatSq())

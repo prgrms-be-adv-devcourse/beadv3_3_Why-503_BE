@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 
 @Builder
-public record RoundSeatResponseDto(
+public record RoundSeatResponse(
         Long roundSeatSq,                    //회차 좌석 시퀀스
         Long roundSq,                        //회차 시퀀스
         Long showSeatSq,                     //공연 좌석 시퀀스

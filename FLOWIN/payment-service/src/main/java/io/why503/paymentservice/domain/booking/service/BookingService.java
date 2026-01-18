@@ -46,7 +46,7 @@ public class BookingService {
         if (accountResponse == null) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
-        log.info(">>> [Step 1] 회원 확인 완료 | 성함: {}", accountResponse.getName());
+        log.info(">>> [MSA] 회원 확인 완료 | 성함: {}", accountResponse.getName());
 
         // [외부 연동] 회차좌석 서비스 좌석 선점
         if (bookingRequest.getTickets() != null) {
@@ -66,7 +66,7 @@ public class BookingService {
         if (accountResponse.getPoint() < requestedPoint) {
             throw new IllegalArgumentException("보유하신 포인트가 부족하여 사용할 수 없습니다. (현재 잔액: " + accountResponse.getPoint() + "원)");
         }
-        log.info(">>> [Step 3] 포인트 검증 완료 | 사용요청: {}, 보유: {}", requestedPoint, accountResponse.getPoint());
+        log.info(">>> [MSA] 포인트 검증 완료 | 사용요청: {}, 보유: {}", requestedPoint, accountResponse.getPoint());
 
         // [결제 및 저장] - 최종 예매 데이터 생성
         Booking booking = bookingMapper.requestToEntity(bookingRequest);

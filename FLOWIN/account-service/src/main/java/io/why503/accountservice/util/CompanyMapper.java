@@ -1,10 +1,10 @@
 package io.why503.accountservice.util;
 
 
-import io.why503.accountservice.domain.company.model.dto.cmd.CompanyCmd;
-import io.why503.accountservice.domain.company.model.dto.req.CompanyReqDto;
-import io.why503.accountservice.domain.company.model.dto.res.CompanyResDto;
-import io.why503.accountservice.domain.company.model.ett.Company;
+import io.why503.accountservice.domain.companies.model.dto.cmd.CompanyCmd;
+import io.why503.accountservice.domain.companies.model.dto.req.CompanyReqDto;
+import io.why503.accountservice.domain.companies.model.dto.res.CompanyResDto;
+import io.why503.accountservice.domain.companies.model.ett.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

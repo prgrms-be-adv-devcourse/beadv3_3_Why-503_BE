@@ -44,16 +44,27 @@ public class RoundService {
         LocalDateTime startOfDay = targetDate.atStartOfDay();
         LocalDateTime endOfDay = targetDate.atTime(LocalTime.MAX);
 
-        // 해당 날짜의 기존 회차 개수 조회 + 1 = 새로운 회차 번호
-        Integer count = roundRepository.countByShowSqAndRoundDtBetween(request.getShowSq(), startOfDay, endOfDay);
-        Integer nextNo = count + 1;
+        // 해당 날짜의 기존 회차 리스트 조회
+        List<RoundEntity> roundList = roundRepository.findAllByShowSqAndRoundDtBetween(request.getShowSq(), startOfDay, endOfDay);
 
-        //엔티티 생성
-        RoundEntity entity = roundMapper.dtoToEntity(request, nextNo);
+        // 새 회차 엔티티 생성 (번호는 0이나 임시값으로 생성)
+        RoundEntity newEntity = roundMapper.dtoToEntity(request, 0);
 
-        //저장 및 반환
-        RoundEntity savedEntity = roundRepository.save(entity);
-        return roundMapper.entityToDto(savedEntity);
+        // 리스트에 새 회차 추가
+        roundList.add(newEntity);
+
+        // 리스트 내부의 회차들을 시간(RoundDt) 순서대로 오름차순 정렬
+        roundList.sort((r1, r2) -> r1.getRoundDt().compareTo(r2.getRoundDt()));
+
+        // 정렬된 순서대로 회차 번호(roundNum) 다시 부여 (1번부터 시작)
+        for (int i = 0; i < roundList.size(); i++) {
+            roundList.get(i).updateRoundNum(i + 1);
+        }
+
+        //일괄 저장 (기존 엔티티는 Update, 새 엔티티는 Insert 됨)
+        roundRepository.saveAll(roundList);
+
+        return roundMapper.entityToDto(newEntity);
     }
 
     /**

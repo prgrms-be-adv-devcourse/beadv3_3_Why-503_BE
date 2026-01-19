@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 *.yml
 *.pem
+!**/src/test/**/resources/**
 
 
 ### STS ###

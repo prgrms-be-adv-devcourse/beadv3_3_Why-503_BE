@@ -1,6 +1,8 @@
 package io.why503.accountservice.domain.accounts.service;
 
 
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
@@ -22,4 +24,6 @@ public interface AccountService {
     UserSummaryResponse deleteBySq(Long sq);
     UserSummaryResponse deleteById(String id);
     boolean existId(String id);
+    UserPointResponse readPointBySq(Long sq);
+    UserCompanyResponse readCompanyBySq(Long sq);
 }

@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,10 @@ public class RoundService {
 
     private final RoundRepository roundRepository;
     private final RoundMapper roundMapper;
+    //출연진에 잘못된 의미으로 입력한 경우 방지
+    private final Set<String> INVALID_NAMES = Set.of(
+            "무명", "비공개", "출연진", "테스트", "없음", "미정"
+    );
 
     @Transactional
     public RoundResponse createRound(RoundRequest request) {
@@ -37,6 +42,51 @@ public class RoundService {
             // 이미 존재하면 409 Conflict 또는 400 Bad Request 에러 발생
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
         }
+        /**
+         * 공연시퀸스
+         */
+        if ( request.getShowSq() == null || request.getShowSq() >= 0L ) {
+            throw new IllegalArgumentException("공연시퀸스 필수입니다.");
+        }
+
+        //공연 시퀸스가 없으면 회차를 생성 할 수 없는 예외 문구
+        if ( !roundRepository.existsByshow(request.getShowSq())) {
+            throw new IllegalArgumentException("공연 시퀀스가 없어 회차를 생성할 수 없습니다.");
+        }
+
+        /**
+         * 공연 일시
+         */
+        if ( request.getRoundDt() == null ) {
+            throw new IllegalArgumentException("공연 일시 필수입니다.");
+        }
+        //같은 회차가 있을 시 존재하는 예외 문구
+        if (roundRepository.existsByShowAndNo(request.getShowSq(), request.getRoundNum())) {
+            throw new IllegalArgumentException("이미 존재하는 회차입니다.");
+        }
+        /**
+         * 출연진
+         */
+        if ( request.getRoundCast() == null || request.getRoundCast().isBlank() ) {
+            throw new IllegalArgumentException("출연진 필수입니다.");
+        }
+        // 1. 숫자만으로 구성
+        if (request.getRoundCast().matches("^[0-9]+$")) {
+            throw new IllegalArgumentException("숫자만으로 된 출연진 이름은 허용되지 않습니다.");
+        }
+        // 2. 문자 정보가 전혀 없음 (특수문자/숫자만)
+        if (request.getRoundCast().matches("^[^가-힣a-zA-Z]+$")) {
+            throw new IllegalArgumentException("출연진 이름은 문자 정보를 포함해야 합니다.");
+        }
+        // 3. 의미 없는 반복 문자
+        if (request.getRoundCast().matches("^\\.+$") || request.getRoundCast().length() <= 2 && request.getRoundCast().contains(".")) {
+            throw new IllegalArgumentException("의미 없는 출연진 이름입니다.");
+        }
+        //금지어 추가
+        if (INVALID_NAMES.contains(request.getRoundCast().trim())) {
+            throw new IllegalArgumentException("출연진 이름으로 사용할 수 없는 값입니다.");
+        }
+
 
         // 날짜 범위 계산
         LocalDateTime targetDateTime = request.getRoundDt();
@@ -87,6 +137,10 @@ public class RoundService {
         // DB에서 예매가능 상태인 것만 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(showSq, RoundStatus.AVAILABLE);
 
+        if (entities.isEmpty()){
+            throw new IllegalArgumentException("예매 가능한 공연이 없습니다.");
+        }
+
         return roundMapper.entityListToDtoList(entities);
     }
 
@@ -99,6 +153,7 @@ public class RoundService {
     public RoundResponse getRoundDetail(Long roundSq) {
         RoundEntity entity = roundRepository.findById(roundSq)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
+
 
         return roundMapper.entityToDto(entity);
     }

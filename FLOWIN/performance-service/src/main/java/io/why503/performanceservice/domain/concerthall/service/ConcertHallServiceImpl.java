@@ -92,7 +92,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
         /**
          * 공연장 총 좌석 수
          */
-        if ( reqDto.getConcertHallSeatScale() == null || reqDto.getConcertHallSeatScale() <= 50) {
+        if ( reqDto.getConcertHallSeatScale() == null || reqDto.getConcertHallSeatScale() < 50) {
             throw new IllegalArgumentException("좌석 수가  50이상이어야 합니다");
         }
         /**

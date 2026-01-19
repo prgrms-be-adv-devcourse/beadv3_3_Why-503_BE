@@ -20,6 +20,12 @@ public interface RoundRepository extends JpaRepository<RoundEntity,Long> {
 
     //특정 공연이 해당 시간에 이미 존재하는지 확인
     boolean existsByShowSqAndRoundDt(Long showSq, LocalDateTime roundDt);
+
+    //같은 회차 존재하는지 확인
+    boolean existsByShowAndNo(Long showSq, Integer no);
+
+    //공연 시퀸스 존재하는지 확인
+    boolean existsByshow(Long showSq);
 }
 
 

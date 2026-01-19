@@ -1,9 +1,8 @@
-package io.why503.performanceservice.domain.seat.Model.Dto;
+package io.why503.performanceservice.domain.seat.model.dto;
 
+import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
 import lombok.Builder;
 import lombok.Getter;
-
-import io.why503.performanceservice.domain.seat.Model.Ett.SeatEtt;
 
 @Getter
 @Builder

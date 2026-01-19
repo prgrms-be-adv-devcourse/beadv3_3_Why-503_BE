@@ -6,15 +6,15 @@
  * - 공연 등록 후 결과 반환
  * - 공연 단건 조회 결과 반환
  */
-package io.why503.performanceservice.domain.show.Model.Dto;
+package io.why503.performanceservice.domain.show.model.dto;
 
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-import io.why503.performanceservice.domain.show.Model.Enum.ShowCategory;
-import io.why503.performanceservice.domain.show.Model.Enum.ShowStatus;
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
+import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 @Getter
 @Builder

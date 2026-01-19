@@ -10,7 +10,7 @@
  * - 공연장 상태는 초기 등록 시 기본값으로 처리 가능
  * - 좌석 정보는 별도 도메인에서 관리
  */
-package io.why503.performanceservice.domain.concerthall.Model.Dto;
+package io.why503.performanceservice.domain.concerthall.model.dto;
 
 import java.math.BigDecimal;
 

@@ -5,7 +5,7 @@
  * 사용 목적 :
  * - 공연 등록 API에서 클라이언트 요청 데이터 수신
  */
-package io.why503.performanceservice.domain.show.Model.Dto;
+package io.why503.performanceservice.domain.show.model.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

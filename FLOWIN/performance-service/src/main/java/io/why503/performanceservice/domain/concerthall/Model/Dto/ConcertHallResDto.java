@@ -10,11 +10,11 @@
  * - Entity 직접 노출 방지
  * - API 응답 구조 통일 목적
  */
-package io.why503.performanceservice.domain.concerthall.Model.Dto;
+package io.why503.performanceservice.domain.concerthall.model.dto;
 
 import java.math.BigDecimal;
 
-import io.why503.performanceservice.domain.concerthall.Model.Dto.Enum.ConcertHallStatus;
+import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
 import lombok.Builder;
 import lombok.Getter;
 

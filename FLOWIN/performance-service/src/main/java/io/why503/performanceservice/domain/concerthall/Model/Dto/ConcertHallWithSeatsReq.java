@@ -1,10 +1,9 @@
-package io.why503.performanceservice.domain.concerthall.Model.Dto;
+package io.why503.performanceservice.domain.concerthall.model.dto;
 
 import java.util.List;
 
+import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 import lombok.Getter;
-
-import io.why503.performanceservice.domain.seat.Model.Dto.Cmd.SeatAreaCreateCmd;
 
 /**
  * 공연장 + 좌석 구역 정보를 함께 받기 위한 요청 DTO

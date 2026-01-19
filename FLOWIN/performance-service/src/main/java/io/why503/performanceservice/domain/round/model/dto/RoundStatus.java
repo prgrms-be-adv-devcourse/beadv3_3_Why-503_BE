@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.showing.model.dto;
+package io.why503.performanceservice.domain.round.model.dto;
 
 
 import lombok.AllArgsConstructor;
@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter //dbCode를 꺼낼 수 있게 해줌, getDbCode 자동 생성
 @AllArgsConstructor // 생성자를 자동으로 만들어줌
-public enum ShowingStat {
+public enum RoundStatus {
     //0: 예매가능, 1: 예매종료, 2: 회차취소
 
     AVAILABLE(0,"예매가능"),

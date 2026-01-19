@@ -2,7 +2,7 @@ package io.why503.performanceservice.domain.roundSeats.model.dto;
 
 import jakarta.validation.constraints.NotNull;
 
-public record RoundSeatRequestDto (
+public record RoundSeatRequest(
 
         @NotNull(message = "회차 정보는 필수입니다.")
         Long roundSq,                      //회차 시퀀스

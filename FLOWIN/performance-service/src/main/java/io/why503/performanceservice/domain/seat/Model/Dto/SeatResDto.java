@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.seat.model.dto;
 
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,7 +16,7 @@ public class SeatResDto {
     /**
      * Entity → DTO 변환
      */
-    public static SeatResDto from(SeatEtt seat) {
+    public static SeatResDto from(SeatEntity seat) {
         return SeatResDto.builder()
                 .seatSq(seat.getSeatSq())
                 .seatArea(seat.getSeatArea())

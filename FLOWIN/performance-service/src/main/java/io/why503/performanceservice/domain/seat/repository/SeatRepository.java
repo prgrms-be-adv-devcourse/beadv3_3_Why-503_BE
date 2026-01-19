@@ -25,17 +25,17 @@ package io.why503.performanceservice.domain.seat.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 
 import java.util.List;
 
-public interface SeatRepo extends JpaRepository<SeatEtt, Long> {
+public interface SeatRepository extends JpaRepository<SeatEntity, Long> {
 
     /**
      * 공연장 기준 좌석 전체 조회
      * - 정렬 기준: 구역(seat_area) → 구역 내 좌석번호(area_seat_no)
      */
-    List<SeatEtt> findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
+    List<SeatEntity> findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
             Long concertHallSq
     );
 
@@ -55,7 +55,7 @@ public interface SeatRepo extends JpaRepository<SeatEtt, Long> {
      */
     long countByConcertHall_ConcertHallSq(Long concertHallSq);
     
-    List<SeatEtt> findByConcertHall_ConcertHallSqAndSeatArea(
+    List<SeatEntity> findByConcertHall_ConcertHallSqAndSeatArea(
         Long concertHallSq,
         String seatArea
         );

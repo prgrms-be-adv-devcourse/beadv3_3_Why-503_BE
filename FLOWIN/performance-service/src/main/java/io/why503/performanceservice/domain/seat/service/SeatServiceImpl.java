@@ -1,9 +1,9 @@
 package io.why503.performanceservice.domain.seat.service;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEtt;
-import io.why503.performanceservice.domain.seat.repository.SeatRepo;
+import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +18,12 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
-public class SeatSvImpl implements SeatSv {
+public class SeatServiceImpl implements SeatService {
 
-    private final SeatRepo seatRepo;
+    private final SeatRepository seatRepo;
 
     @Override
-    public List<SeatEtt> findByConcertHall(Long concertHallSq) {
+    public List<SeatEntity> findByConcertHall(Long concertHallSq) {
         return seatRepo
                 .findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
                         concertHallSq
@@ -36,10 +36,10 @@ public class SeatSvImpl implements SeatSv {
     @Override
     @Transactional
     public void createCustomSeats(
-            ConcertHallEtt concertHall,
+            ConcertHallEntity concertHall,
             List<SeatAreaCreateCmd> areaCreateCmds
     ) {
-        List<SeatEtt> seats = new ArrayList<>();
+        List<SeatEntity> seats = new ArrayList<>();
         int globalSeatNo = 1;
 
         for (SeatAreaCreateCmd cmd : areaCreateCmds) {
@@ -47,7 +47,7 @@ public class SeatSvImpl implements SeatSv {
             validateAreaCmd(cmd);
 
             for (int num = 1; num <= cmd.getSeatCount(); num++) {
-                seats.add(new SeatEtt(
+                seats.add(new SeatEntity(
                         concertHall,
                         cmd.getSeatArea(),
                         num,

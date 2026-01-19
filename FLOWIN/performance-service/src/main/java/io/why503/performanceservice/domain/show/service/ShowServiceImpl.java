@@ -9,13 +9,13 @@ import java.util.List;
 import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
-import io.why503.performanceservice.domain.show.model.entity.ShowEtt;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
-import io.why503.performanceservice.domain.show.repository.ShowRepo;
+import io.why503.performanceservice.domain.show.repository.ShowRepository;
 
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
-import io.why503.performanceservice.domain.seat.repository.SeatRepo;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
+import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 
 import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyReqDto;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
@@ -25,10 +25,10 @@ import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ShowSvImpl implements ShowSv {
+public class ShowServiceImpl implements ShowService {
 
-    private final ShowRepo showRepo;
-    private final SeatRepo seatRepo;
+    private final ShowRepository showRepo;
+    private final SeatRepository seatRepo;
     private final ShowSeatService showSeatService;
 
     /**
@@ -45,7 +45,7 @@ public class ShowSvImpl implements ShowSv {
 
         ShowCategory category = ShowCategory.fromCode(showReq.getCategory());
 
-        ShowEtt show = ShowEtt.builder()
+        ShowEntity show = ShowEntity.builder()
                 .showName(showReq.getShowName())
                 .startDate(showReq.getStartDate())
                 .endDate(showReq.getEndDate())
@@ -59,7 +59,7 @@ public class ShowSvImpl implements ShowSv {
         show.setCategory(category);
         show.setShowStatus(ShowStatus.SCHEDULED);
 
-        ShowEtt savedShow = showRepo.save(show);
+        ShowEntity savedShow = showRepo.save(show);
 
         /* =======================
          * 2. show_seat 생성 (seatArea 기준)
@@ -84,7 +84,7 @@ public class ShowSvImpl implements ShowSv {
 
         ShowCategory category = ShowCategory.fromCode(reqDto.getCategory());
 
-        ShowEtt show = ShowEtt.builder()
+        ShowEntity show = ShowEntity.builder()
                 .showName(reqDto.getShowName())
                 .startDate(reqDto.getStartDate())
                 .endDate(reqDto.getEndDate())
@@ -98,7 +98,7 @@ public class ShowSvImpl implements ShowSv {
         show.setCategory(category);
         show.setShowStatus(ShowStatus.SCHEDULED);
 
-        ShowEtt saved = showRepo.save(show);
+        ShowEntity saved = showRepo.save(show);
 
         return ShowResDto.builder()
                 .showSq(saved.getShowSq())
@@ -121,7 +121,7 @@ public class ShowSvImpl implements ShowSv {
     @Override
     public ShowResDto getShow(Long showSq) {
 
-        ShowEtt show = showRepo.findById(showSq)
+        ShowEntity show = showRepo.findById(showSq)
                 .orElseThrow(() -> new IllegalArgumentException("show not found"));
 
         return ShowResDto.builder()
@@ -143,10 +143,10 @@ public class ShowSvImpl implements ShowSv {
      * seatArea 기반 show_seat 생성
      */
     private List<ShowSeatEntity> toShowSeatsByArea(
-            ShowEtt show,
+            ShowEntity show,
             SeatPolicyReqDto policy
     ) {
-        List<SeatEtt> seats = seatRepo.findByConcertHall_ConcertHallSqAndSeatArea(
+        List<SeatEntity> seats = seatRepo.findByConcertHall_ConcertHallSqAndSeatArea(
                 show.getConcertHallSq(),
                 policy.getSeatArea()
         );

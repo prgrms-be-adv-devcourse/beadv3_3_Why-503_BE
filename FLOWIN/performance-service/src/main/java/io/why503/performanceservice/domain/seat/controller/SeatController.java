@@ -24,15 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.why503.performanceservice.domain.seat.model.dto.SeatResDto;
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
-import io.why503.performanceservice.domain.seat.service.SeatSv;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
+import io.why503.performanceservice.domain.seat.service.SeatService;
 
 @RestController
 @RequestMapping("/concert-halls")
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
-public class SeatCtrl {
+public class SeatController {
 
-    private final SeatSv seatSv;
+    private final SeatService seatSv;
 
     /**
      * 공연장 기준 좌석 목록 조회
@@ -52,7 +52,7 @@ public class SeatCtrl {
             @PathVariable Long concertHallSq
     ) {
 
-        List<SeatEtt> seats = seatSv.findByConcertHall(concertHallSq);
+        List<SeatEntity> seats = seatSv.findByConcertHall(concertHallSq);
 
         return seats.stream()
                 .map(SeatResDto::from)

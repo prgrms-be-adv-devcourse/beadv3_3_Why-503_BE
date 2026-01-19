@@ -24,7 +24,7 @@
 
 package io.why503.performanceservice.domain.seat.model.entity;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEtt;
+import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -45,7 +45,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SeatEtt {
+public class SeatEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,14 +63,14 @@ public class SeatEtt {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "concert_hall_sq", nullable = false)
-    private ConcertHallEtt concertHall;
+    private ConcertHallEntity concertHall;
 
     /* =======================
        생성자 (비즈니스용)
        ======================= */
 
-    public SeatEtt(
-            ConcertHallEtt concertHall,
+    public SeatEntity(
+            ConcertHallEntity concertHall,
             String seatArea,
             Integer areaSeatNo,
             Integer seatNo

@@ -18,7 +18,7 @@ import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPoli
 import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
 
-public interface ShowSv {
+public interface ShowService {
 
     /**
      * 공연 + 좌석 정책(show_seat) 동시 생성

@@ -19,7 +19,7 @@ import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqD
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
 import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 
-public interface ConcertHallSv {
+public interface ConcertHallService {
 
     /**
      * 공연장 등록

@@ -15,8 +15,8 @@ package io.why503.performanceservice.domain.show.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import io.why503.performanceservice.domain.show.model.entity.ShowEtt;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 
 @Repository
-public interface ShowRepo extends JpaRepository<ShowEtt, Long> {
+public interface ShowRepository extends JpaRepository<ShowEntity, Long> {
 }

@@ -18,8 +18,8 @@ package io.why503.performanceservice.domain.concerthall.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEtt;
+import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 
 @Repository
-public interface ConcertHallRepo extends JpaRepository<ConcertHallEtt, Long> {
+public interface ConcertHallRepository extends JpaRepository<ConcertHallEntity, Long> {
 }

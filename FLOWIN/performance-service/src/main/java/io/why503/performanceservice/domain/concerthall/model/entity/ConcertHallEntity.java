@@ -24,7 +24,7 @@ import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHa
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ConcertHallEtt {
+public class ConcertHallEntity {
 
     // 공연장 식별자 (PK)
     @Id

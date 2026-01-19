@@ -3,7 +3,7 @@ package io.why503.performanceservice.domain.show.controller;
 import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
-import io.why503.performanceservice.domain.show.service.ShowSv;
+import io.why503.performanceservice.domain.show.service.ShowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +23,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/shows")
-public class ShowCtrl {
+public class ShowController {
 
     /**
      * 공연 도메인 서비스
      * - 공연 생성 및 조회 로직 처리
      */
-    private final ShowSv showSv;
+    private final ShowService showSv;
 
     /**
      * 공연 등록 API

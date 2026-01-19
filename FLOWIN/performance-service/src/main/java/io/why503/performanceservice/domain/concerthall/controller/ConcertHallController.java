@@ -19,15 +19,15 @@ import org.springframework.web.bind.annotation.*;
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallWithSeatsReq;
-import io.why503.performanceservice.domain.concerthall.service.ConcertHallSv;
+import io.why503.performanceservice.domain.concerthall.service.ConcertHallService;
 
 
 @RestController
 @RequiredArgsConstructor // Service 의존성 생성자 주입
 @RequestMapping("/concert-halls")
-public class ConcertHallCtrl {
+public class ConcertHallController {
 
-    private final ConcertHallSv concertHallSv;
+    private final ConcertHallService concertHallSv;
 
     /**
      * 공연장 등록

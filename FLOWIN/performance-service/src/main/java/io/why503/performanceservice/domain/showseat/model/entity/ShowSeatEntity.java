@@ -1,7 +1,7 @@
 package io.why503.performanceservice.domain.showseat.model.entity;
 
-import io.why503.performanceservice.domain.seat.model.entity.SeatEtt;
-import io.why503.performanceservice.domain.show.model.entity.ShowEtt;
+import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,16 +34,16 @@ public class ShowSeatEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seat_sq", nullable = false)
-    private SeatEtt seat;
+    private SeatEntity seat;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "show_sq", nullable = false)
-    private ShowEtt show;
+    private ShowEntity show;
 
     /* 생성자 */
     public ShowSeatEntity(
-            ShowEtt show,
-            SeatEtt seat,
+            ShowEntity show,
+            SeatEntity seat,
             ShowSeatGrade grade,
             int price
     ) {

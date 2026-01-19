@@ -26,7 +26,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ShowEtt {
+public class ShowEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

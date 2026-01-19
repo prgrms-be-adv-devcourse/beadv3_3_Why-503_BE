@@ -25,10 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqDto;
 import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
 import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEtt;
-import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepo;
+import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
 import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
-import io.why503.performanceservice.domain.seat.service.SeatSv;
+import io.why503.performanceservice.domain.seat.service.SeatService;
 
 import java.math.BigDecimal;
 import org.springframework.security.core.Authentication;
@@ -38,10 +38,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Service
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 @Transactional(readOnly = true)
-public class ConcertHallSvImpl implements ConcertHallSv {
+public class ConcertHallServiceImpl implements ConcertHallService {
 
-    private final ConcertHallRepo concertHallRepo;
-    private final SeatSv seatSv;
+    private final ConcertHallRepository concertHallRepo;
+    private final SeatService seatSv;
 
     /**
      * 공연장 등록
@@ -116,7 +116,7 @@ public class ConcertHallSvImpl implements ConcertHallSv {
             throw new IllegalArgumentException("경도는 -180 ~ 180 사이여야 합니다.");
         }
 
-        ConcertHallEtt hall = ConcertHallEtt.builder()
+        ConcertHallEntity hall = ConcertHallEntity.builder()
                 .concertHallName(reqDto.getConcertHallName())
                 .concertHallPost(reqDto.getConcertHallPost())
                 .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())
@@ -146,7 +146,7 @@ public class ConcertHallSvImpl implements ConcertHallSv {
     @Override
     public ConcertHallResDto getConcertHall(Long concertHallSq) {
 
-        ConcertHallEtt hall = concertHallRepo.findById(concertHallSq)
+        ConcertHallEntity hall = concertHallRepo.findById(concertHallSq)
                 .orElseThrow(() -> new IllegalArgumentException("concert hall not found"));
 
         return ConcertHallResDto.builder()
@@ -173,8 +173,8 @@ public class ConcertHallSvImpl implements ConcertHallSv {
             List<SeatAreaCreateCmd> seatAreaCmds
     ) {
 
-        ConcertHallEtt hall = concertHallRepo.save(
-                ConcertHallEtt.builder()
+        ConcertHallEntity hall = concertHallRepo.save(
+                ConcertHallEntity.builder()
                         .concertHallName(reqDto.getConcertHallName())
                         .concertHallPost(reqDto.getConcertHallPost())
                         .concertHallBasicAddr(reqDto.getConcertHallBasicAddr())

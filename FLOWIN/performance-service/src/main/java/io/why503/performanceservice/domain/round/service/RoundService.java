@@ -54,7 +54,19 @@ public class RoundService {
         roundList.add(newEntity);
 
         // 시간순(roundDt)으로 정렬
-        roundList.sort((r1, r2) -> r1.getRoundDt().compareTo(r2.getRoundDt()));
+        for (int i = 0; i < roundList.size() - 1; i++) {
+            for (int j = 0; j < roundList.size() - 1 - i; j++) {
+
+                RoundEntity r1 = roundList.get(j);
+                RoundEntity r2 = roundList.get(j + 1);
+
+                // 앞의 회차(r1) 시간이 뒤의 회차(r2) 시간보다 늦으면(크면) 서로 자리를 바꿈
+                if (r1.getRoundDt().isAfter(r2.getRoundDt())) {
+                    roundList.set(j, r2);
+                    roundList.set(j + 1, r1);
+                }
+            }
+        }
 
         // 정렬된 순서대로 회차 번호(roundNum) 다시 부여 (1번부터 시작)
         for (int i = 0; i < roundList.size(); i++) {

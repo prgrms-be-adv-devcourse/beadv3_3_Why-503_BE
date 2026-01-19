@@ -43,4 +43,9 @@ public class RoundEntity {
     public void updateStat(RoundStatus newStatus) {
         this.roundStatus = newStatus;
     }
+
+    // 회차 번호 변경 메서드 (재정렬 로직용)
+    public void updateRoundNum(Integer newRoundNum) {
+        this.roundNum = newRoundNum;
+    }
 }

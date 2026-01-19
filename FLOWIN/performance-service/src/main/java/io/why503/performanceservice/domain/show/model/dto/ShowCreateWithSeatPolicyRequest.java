@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyReqDto;
+import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyRequest;
 
 /**
  * Show Create With Seat Policy Request DTO
@@ -20,15 +20,15 @@ import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyReqDto;
  */
 @Getter
 @NoArgsConstructor
-public class ShowCreateWithSeatPolicyReqDto {
+public class ShowCreateWithSeatPolicyRequest {
 
     /**
      * 공연 기본 정보
      */
-    private ShowReqDto show;
+    private ShowRequest show;
 
     /**
      * 좌석 판매 정책 목록
      */
-    private List<SeatPolicyReqDto> seatPolicies;
+    private List<SeatPolicyRequest> seatPolicies;
 }

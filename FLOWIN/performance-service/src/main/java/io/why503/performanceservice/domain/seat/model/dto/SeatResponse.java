@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class SeatResDto {
+public class SeatResponse {
 
     private Long seatSq;
     private String seatArea;
@@ -16,8 +16,8 @@ public class SeatResDto {
     /**
      * Entity → DTO 변환
      */
-    public static SeatResDto from(SeatEntity seat) {
-        return SeatResDto.builder()
+    public static SeatResponse from(SeatEntity seat) {
+        return SeatResponse.builder()
                 .seatSq(seat.getSeatSq())
                 .seatArea(seat.getSeatArea())
                 .areaSeatNo(seat.getAreaSeatNo())

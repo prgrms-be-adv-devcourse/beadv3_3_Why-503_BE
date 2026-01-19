@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
-public class ShowReqDto {
+public class ShowRequest {
 
     private String showName;          // 공연명
     private LocalDateTime startDate;  // 공연 시작일

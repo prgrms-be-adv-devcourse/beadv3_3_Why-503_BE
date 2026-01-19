@@ -9,12 +9,12 @@ import lombok.Getter;
  * 공연장 + 좌석 구역 정보를 함께 받기 위한 요청 DTO
  */
 @Getter
-public class ConcertHallWithSeatsReq {
+public class ConcertHallWithSeatsRequest {
 
     /**
      * 공연장 등록 정보
      */
-    private ConcertHallReqDto concertHall;
+    private ConcertHallRequest concertHall;
 
     /**
      * 좌석 구역 생성 정보

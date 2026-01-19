@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class ConcertHallReqDto {
+public class ConcertHallRequest {
 
     /**
      * 공연장명

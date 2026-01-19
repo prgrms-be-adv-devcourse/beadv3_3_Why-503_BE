@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class ShowSeatPriceChangeReqDto {
+public class ShowSeatGradeChangeRequest {
 
-    private int price;
+    private String grade; // VIP, R, S, A ...
 }

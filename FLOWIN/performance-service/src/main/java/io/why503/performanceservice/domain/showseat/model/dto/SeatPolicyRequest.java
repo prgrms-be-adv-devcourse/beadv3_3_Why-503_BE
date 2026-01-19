@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class SeatPolicyReqDto {
+public class SeatPolicyRequest {
 
     /**
      * 좌석 구역

@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
+import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
@@ -19,7 +19,7 @@ import io.why503.performanceservice.domain.show.repository.ShowRepository;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 
-import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyReqDto;
+import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
@@ -38,12 +38,12 @@ public class ShowServiceImpl implements ShowService {
      */
     @Override
     @Transactional
-    public Long createShowWithSeats(ShowCreateWithSeatPolicyReqDto req) {
+    public Long createShowWithSeats(ShowCreateWithSeatPolicyRequest req) {
 
         /* =======================
          * 1. 공연 생성
          * ======================= */
-        ShowReqDto showReq = req.getShow();
+        ShowRequest showReq = req.getShow();
 
         ShowCategory category = ShowCategory.fromCode(showReq.getCategory());
 
@@ -104,7 +104,7 @@ public class ShowServiceImpl implements ShowService {
      */
     @Override
     @Transactional
-    public ShowResDto createShow(ShowReqDto reqDto) {
+    public ShowResponse createShow(ShowRequest reqDto) {
 
         ShowCategory category = ShowCategory.fromCode(reqDto.getCategory());
 
@@ -124,7 +124,7 @@ public class ShowServiceImpl implements ShowService {
 
         ShowEntity saved = showRepo.save(show);
 
-        return ShowResDto.builder()
+        return ShowResponse.builder()
                 .showSq(saved.getShowSq())
                 .showName(saved.getShowName())
                 .startDate(saved.getStartDate())
@@ -143,12 +143,12 @@ public class ShowServiceImpl implements ShowService {
      * 공연 단건 조회
      */
     @Override
-    public ShowResDto getShow(Long showSq) {
+    public ShowResponse getShow(Long showSq) {
 
         ShowEntity show = showRepo.findById(showSq)
                 .orElseThrow(() -> new IllegalArgumentException("show not found"));
 
-        return ShowResDto.builder()
+        return ShowResponse.builder()
                 .showSq(show.getShowSq())
                 .showName(show.getShowName())
                 .startDate(show.getStartDate())
@@ -169,7 +169,7 @@ public class ShowServiceImpl implements ShowService {
 
     private List<ShowSeatEntity> createShowSeatsByPolicy(
             ShowEntity show,
-            SeatPolicyReqDto policy,
+            SeatPolicyRequest policy,
             Map<String, List<SeatEntity>> seatsByArea
     ) {
         List<SeatEntity> seats = seatsByArea.get(policy.getSeatArea());

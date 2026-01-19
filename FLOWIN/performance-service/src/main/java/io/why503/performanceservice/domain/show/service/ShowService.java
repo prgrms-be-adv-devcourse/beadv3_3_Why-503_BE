@@ -14,9 +14,9 @@
  */
 package io.why503.performanceservice.domain.show.service;
 
-import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
+import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
 
 public interface ShowService {
 
@@ -26,7 +26,7 @@ public interface ShowService {
      * @param req 공연 정보 + 좌석 정책 요청 DTO
      * @return 생성된 공연 식별자
      */
-    Long createShowWithSeats(ShowCreateWithSeatPolicyReqDto req);
+    Long createShowWithSeats(ShowCreateWithSeatPolicyRequest req);
 
     /**
      * 공연 등록
@@ -34,7 +34,7 @@ public interface ShowService {
      * @param reqDto 공연 등록에 필요한 요청 데이터
      * @return 등록된 공연 정보
      */
-    ShowResDto createShow(ShowReqDto reqDto);
+    ShowResponse createShow(ShowRequest reqDto);
 
     /**
      * 공연 단건 조회
@@ -42,5 +42,5 @@ public interface ShowService {
      * @param showSq 조회할 공연 식별자
      * @return 공연 상세 정보
      */
-    ShowResDto getShow(Long showSq);
+    ShowResponse getShow(Long showSq);
 }

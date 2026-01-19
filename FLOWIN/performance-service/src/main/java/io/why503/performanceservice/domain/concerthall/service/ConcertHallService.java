@@ -15,8 +15,8 @@ package io.why503.performanceservice.domain.concerthall.service;
 
 import java.util.List;
 
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqDto;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallRequest;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResponse;
 import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 
 public interface ConcertHallService {
@@ -26,7 +26,7 @@ public interface ConcertHallService {
      *
      * @param reqDto 공연장 등록 요청 DTO
      */
-    void createConcertHall(ConcertHallReqDto reqDto);
+    void createConcertHall(ConcertHallRequest reqDto);
 
     /**
      * 공연장 단건 조회
@@ -34,7 +34,7 @@ public interface ConcertHallService {
      * @param concertHallSq 공연장 식별자
      * @return 공연장 응답 DTO
      */
-    ConcertHallResDto getConcertHall(Long concertHallSq);
+    ConcertHallResponse getConcertHall(Long concertHallSq);
 
     /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
@@ -48,7 +48,7 @@ public interface ConcertHallService {
      * @return 생성된 공연장 식별자
      */
     Long createWithCustomSeats(
-            ConcertHallReqDto reqDto,
+            ConcertHallRequest reqDto,
             List<SeatAreaCreateCmd> seatAreaCmds
     );
 }

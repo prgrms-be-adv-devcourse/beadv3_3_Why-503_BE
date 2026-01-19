@@ -22,8 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqDto;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallRequest;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResponse;
 import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
 import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
@@ -54,7 +54,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
      */
     @Override
     @Transactional
-    public void createConcertHall(ConcertHallReqDto reqDto) {
+    public void createConcertHall(ConcertHallRequest reqDto) {
 
         //기업 회원이 아닌 경우 예외처리
 //        boolean isUserRole = auth.getAuthorities().stream()
@@ -144,12 +144,12 @@ public class ConcertHallServiceImpl implements ConcertHallService {
      * @return 공연장 응답 DTO
      */
     @Override
-    public ConcertHallResDto getConcertHall(Long concertHallSq) {
+    public ConcertHallResponse getConcertHall(Long concertHallSq) {
 
         ConcertHallEntity hall = concertHallRepo.findById(concertHallSq)
                 .orElseThrow(() -> new IllegalArgumentException("concert hall not found"));
 
-        return ConcertHallResDto.builder()
+        return ConcertHallResponse.builder()
                 .concertHallSq(hall.getConcertHallSq())
                 .concertHallName(hall.getConcertHallName())
                 .concertHallPost(hall.getConcertHallPost())
@@ -169,7 +169,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     @Override
     @Transactional
     public Long createWithCustomSeats(
-            ConcertHallReqDto reqDto,
+            ConcertHallRequest reqDto,
             List<SeatAreaCreateCmd> seatAreaCmds
     ) {
 

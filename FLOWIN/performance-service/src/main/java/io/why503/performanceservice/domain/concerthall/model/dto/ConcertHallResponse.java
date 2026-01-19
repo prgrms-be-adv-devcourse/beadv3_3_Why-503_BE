@@ -20,7 +20,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ConcertHallResDto {
+public class ConcertHallResponse {
 
     /**
      * 공연장 식별자

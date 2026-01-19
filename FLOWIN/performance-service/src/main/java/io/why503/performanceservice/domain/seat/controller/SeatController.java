@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.why503.performanceservice.domain.seat.model.dto.SeatResDto;
+import io.why503.performanceservice.domain.seat.model.dto.SeatResponse;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.service.SeatService;
 
@@ -48,14 +48,14 @@ public class SeatController {
      * @return 좌석 목록
      */
     @GetMapping("/{concertHallSq}/seats")
-    public List<SeatResDto> getSeatsByConcertHall(
+    public List<SeatResponse> getSeatsByConcertHall(
             @PathVariable Long concertHallSq
     ) {
 
         List<SeatEntity> seats = seatSv.findByConcertHall(concertHallSq);
 
         return seats.stream()
-                .map(SeatResDto::from)
+                .map(SeatResponse::from)
                 .collect(Collectors.toList());
     }
 }

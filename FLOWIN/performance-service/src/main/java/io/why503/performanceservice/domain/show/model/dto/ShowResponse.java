@@ -18,7 +18,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 @Getter
 @Builder
-public class ShowResDto {
+public class ShowResponse {
 
     private Long showSq;              // 공연 시퀀스
     private String showName;           // 공연명

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatGradeChangeReqDto;
-import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatPriceChangeReqDto;
+import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatGradeChangeRequest;
+import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatPriceChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
@@ -46,7 +46,7 @@ public class ShowSeatController {
     @PatchMapping("/{showSeatSq}/grade")
     public ResponseEntity<Void> changeGrade(
             @PathVariable Long showSeatSq,
-            @RequestBody ShowSeatGradeChangeReqDto req
+            @RequestBody ShowSeatGradeChangeRequest req
     ) {
         ShowSeatGrade grade = ShowSeatGrade.valueOf(req.getGrade());
         showSeatService.changeGrade(showSeatSq, grade);
@@ -59,7 +59,7 @@ public class ShowSeatController {
     @PatchMapping("/{showSeatSq}/price")
     public ResponseEntity<Void> changePrice(
             @PathVariable Long showSeatSq,
-            @RequestBody ShowSeatPriceChangeReqDto req
+            @RequestBody ShowSeatPriceChangeRequest req
     ) {
         showSeatService.changePrice(showSeatSq, req.getPrice());
         return ResponseEntity.ok().build();

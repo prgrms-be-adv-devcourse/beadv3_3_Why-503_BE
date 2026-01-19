@@ -16,9 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallReqDto;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResDto;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallWithSeatsReq;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallRequest;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResponse;
+import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallWithSeatsRequest;
 import io.why503.performanceservice.domain.concerthall.service.ConcertHallService;
 
 
@@ -41,7 +41,7 @@ public class ConcertHallController {
      */
     @PostMapping
     public ResponseEntity<Void> createConcertHall(
-            @RequestBody ConcertHallReqDto reqDto
+            @RequestBody ConcertHallRequest reqDto
     ) {
         try {
             concertHallSv.createConcertHall(reqDto);
@@ -63,10 +63,10 @@ public class ConcertHallController {
      * @return 공연장 응답 DTO
      */
     @GetMapping("/{concertHallSq}")
-    public ResponseEntity<ConcertHallResDto> getConcertHall(
+    public ResponseEntity<ConcertHallResponse> getConcertHall(
             @PathVariable Long concertHallSq
     ) {
-        ConcertHallResDto res = concertHallSv.getConcertHall(concertHallSq);
+        ConcertHallResponse res = concertHallSv.getConcertHall(concertHallSq);
         return ResponseEntity.ok(res);
     }
 
@@ -86,7 +86,7 @@ public class ConcertHallController {
      */
     @PostMapping("/custom-seats")
     public Long createConcertHallWithCustomSeats(
-            @RequestBody ConcertHallWithSeatsReq req
+            @RequestBody ConcertHallWithSeatsRequest req
     ) {
         return concertHallSv.createWithCustomSeats(
                 req.getConcertHall(),

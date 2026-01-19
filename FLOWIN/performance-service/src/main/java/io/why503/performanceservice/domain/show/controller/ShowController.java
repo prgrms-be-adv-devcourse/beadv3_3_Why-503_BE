@@ -1,8 +1,8 @@
 package io.why503.performanceservice.domain.show.controller;
 
-import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
-import io.why503.performanceservice.domain.show.model.dto.ShowResDto;
+import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
+import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,17 +48,17 @@ public class ShowController {
      * - ResponseBody: ShowResDto
      */
     @PostMapping
-    public ResponseEntity<ShowResDto> createShow(
-            @RequestBody ShowReqDto reqDto
+    public ResponseEntity<ShowResponse> createShow(
+            @RequestBody ShowRequest reqDto
     ) {
-        ShowResDto res = showSv.createShow(reqDto);
+        ShowResponse res = showSv.createShow(reqDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
     // show + show_seat 생성
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(
-            @RequestBody ShowCreateWithSeatPolicyReqDto req
+            @RequestBody ShowCreateWithSeatPolicyRequest req
     ) {
         Long showSq = showSv.createShowWithSeats(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(showSq);
@@ -80,10 +80,10 @@ public class ShowController {
      * - ResponseBody: ShowResDto
      */
     @GetMapping("/{showSq}")
-    public ResponseEntity<ShowResDto> getShow(
+    public ResponseEntity<ShowResponse> getShow(
             @PathVariable Long showSq
     ) {
-        ShowResDto res = showSv.getShow(showSq);
+        ShowResponse res = showSv.getShow(showSq);
         return ResponseEntity.ok(res);
     }
 }

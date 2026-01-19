@@ -64,7 +64,7 @@ public class RoundService {
         //DB에서 리스트를 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSq(showSq);
 
-        return roundMapper.entityToDtoList(entities);
+        return roundMapper.entityListToDtoList(entities);
     }
 
     /**
@@ -76,7 +76,7 @@ public class RoundService {
         // DB에서 예매가능 상태인 것만 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(showSq, RoundStatus.AVAILABLE);
 
-        return roundMapper.entityToDtoList(entities);
+        return roundMapper.entityListToDtoList(entities);
     }
 
     /**

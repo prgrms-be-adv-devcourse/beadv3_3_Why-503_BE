@@ -35,7 +35,7 @@ public class RoundMapper {
                 .build();
     }
     //Entity -> Dto
-    public List<RoundResponse> entityToDtoList(List<RoundEntity> entities) {
+    public List<RoundResponse> entityListToDtoList(List<RoundEntity> entities) {
         List<RoundResponse> dtoList = new ArrayList<>();
 
         for (RoundEntity entity : entities) {

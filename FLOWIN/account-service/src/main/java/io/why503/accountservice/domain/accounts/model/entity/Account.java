@@ -8,7 +8,7 @@ import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
 import io.why503.accountservice.domain.accounts.utils.converter.GenderConverter;
 import io.why503.accountservice.domain.accounts.utils.converter.UserRoleConverter;
 import io.why503.accountservice.domain.accounts.utils.converter.UserStatusConverter;
-import io.why503.accountservice.domain.companies.model.ett.Company;
+import io.why503.accountservice.domain.companies.model.entitys.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,21 +25,21 @@ ddl-auto = validate, 즉 검증만 하고 테이블을 만들거나 건들지 �
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_sq")
+    @Column(name = "sq")
     private Long sq;
 
-    @Column(name = "user_id")
+    @Column(name = "id")
     private String id;          //유니크함 = 비공식 식별자
 
-    @Column(name = "user_password")
+    @Column(name = "password")
     private String password;
 
     @Setter
-    @Column(name = "user_name")
+    @Column(name = "name")
     private String name;
 
     @Setter
-    @Column(name = "user_birthday")
+    @Column(name = "birthday")
     private LocalDateTime birthday;
 
     @Setter
@@ -48,29 +48,29 @@ public class Account {
     private Gender gender;
 
     @Setter
-    @Column(name = "user_phone")
+    @Column(name = "phone")
     private String phone;
 
     @Setter
-    @Column(name = "user_email")
+    @Column(name = "email")
     private String email;
 
     @Setter
-    @Column(name = "user_basic_addr")
+    @Column(name = "basic_addr")
     private String basicAddr;
 
     @Setter
-    @Column(name = "user_detail_addr")
+    @Column(name = "detail_addr")
     private String detailAddr;
 
     @Setter
-    @Column(name = "user_post")
+    @Column(name = "post")
     private String post;
 
-    @Column(name = "user_join_date")
+    @Column(name = "join_date")
     private final LocalDateTime joinDate = LocalDateTime.now();
 
-    @Column(name = "user_withdrawal_date")
+    @Column(name = "withdrawal_date")
     private LocalDateTime withdrawDate; //dbDefault = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
 
     @Setter
@@ -78,45 +78,45 @@ public class Account {
     private LocalDateTime agreeDate = LocalDateTime.now();
 
     @Setter
-    @Column(name = "user_role")
+    @Column(name = "role")
     @Convert(converter = UserRoleConverter.class)
     private UserRole role = UserRole.USER;
 
-    @Column(name = "user_stat")
+    @Column(name = "status")
     @Convert(converter = UserStatusConverter.class)
     private UserStatus stat = UserStatus.NORMAL;
 
     @OneToOne(mappedBy = "owner", fetch = FetchType.LAZY)
     private Company company;
 
-    @Column(name = "user_point")
+    @Column(name = "point")
     private Long point = 0L;
     //생성자, 암호화는 이미 cmd에서 완료
     public Account(UpsertAccountVo vo){
-        this.id = vo.id();
-        this.password = vo.password();
-        this.name = vo.name();
+        this.id = vo.userId();
+        this.password = vo.userPassword();
+        this.name = vo.userName();
         this.birthday = vo.birthday();
         this.gender = vo.gender();
-        this.phone = vo.phone();
-        this.email = vo.email();
-        this.basicAddr = vo.basicAddr();
-        this.detailAddr = vo.detailAddr();
-        this.post = vo.post();
+        this.phone = vo.userPhone();
+        this.email = vo.userEmail();
+        this.basicAddr = vo.userBasicAddr();
+        this.detailAddr = vo.userDetailAddr();
+        this.post = vo.userPost();
         withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
     }
     //수정
     public void update(UpsertAccountVo vo){
-        this.id = vo.id();
-        this.password = vo.password();
-        this.name = vo.name();
+        this.id = vo.userId();
+        this.password = vo.userPassword();
+        this.name = vo.userName();
         this.birthday = vo.birthday();
         this.gender = vo.gender();
-        this.phone = vo.phone();
-        this.email = vo.email();
-        this.basicAddr = vo.basicAddr();
-        this.detailAddr = vo.detailAddr();
-        this.post = vo.post();
+        this.phone = vo.userPhone();
+        this.email = vo.userEmail();
+        this.basicAddr = vo.userBasicAddr();
+        this.detailAddr = vo.userDetailAddr();
+        this.post = vo.userPost();
     }
     //포인트 증가, 후에 포인트(예치금) 계산을 위해 생성
     public void increasePoint(Long increase){

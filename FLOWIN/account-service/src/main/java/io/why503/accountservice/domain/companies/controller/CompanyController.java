@@ -9,9 +9,9 @@ package io.why503.accountservice.domain.companies.controller;
 
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
-import io.why503.accountservice.domain.companies.model.dto.req.CompanyReqDto;
-import io.why503.accountservice.domain.companies.model.dto.res.CompanyResDto;
-import io.why503.accountservice.domain.companies.sv.CompanySv;
+import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
+import io.why503.accountservice.domain.companies.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -23,27 +23,27 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor // Service 의존성 생성자 주입
 @RequestMapping("/company")
-public class CompanyCtrl {
+public class CompanyController {
 
-    private final CompanySv companyService; // 회사 비즈니스 로직 처리 Service
+    private final CompanyService companyService; // 회사 비즈니스 로직 처리 Service
     private final AccountService accountService;
     @PostMapping // 회사 등록 API
     public ResponseEntity<Void> registerCompany(
-            @RequestBody CompanyReqDto requestDto, // 회사 등록에 필요한 요청 데이터
-            @RequestHeader("X-USER-SQ") Long sq
+            @RequestBody CompanyRequest requestDto, // 회사 등록에 필요한 요청 데이터
+            @RequestHeader("X-USER-SQ") Long userSq
     ) {
         //권한이 COMPANY가 아니면 거부
-        if(accountService.readUserRoleBySq(sq) != UserRole.COMPANY){
+        if(accountService.readUserRoleBySq(userSq) != UserRole.COMPANY){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         // 회사 등록 비즈니스 로직
-        companyService.registerCompany(sq, requestDto);
+        companyService.registerCompany(userSq, requestDto);
 
         return ResponseEntity.ok().build(); // 등록 성공 시 200 OK 반환
     }
 
     @GetMapping("/{companySq}") // 회사 조회 API
-    public ResponseEntity<CompanyResDto> getCompany(
+    public ResponseEntity<CompanyResponse> getCompany(
             @PathVariable Long companySq // 조회할 회사 식별자
     ) {
         return ResponseEntity.ok(

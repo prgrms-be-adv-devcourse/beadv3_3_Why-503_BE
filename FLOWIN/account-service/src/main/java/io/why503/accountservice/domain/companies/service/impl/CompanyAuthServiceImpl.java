@@ -4,11 +4,11 @@
  * - 회사 이메일로 인증 코드 발송
  * - 인증 코드 Redis 저장 및 유효시간 관리
  */
-package io.why503.accountservice.domain.companies.sv.impl;
+package io.why503.accountservice.domain.companies.service.impl;
 
 import java.util.concurrent.TimeUnit;
 
-import io.why503.accountservice.domain.companies.sv.CompanyEmailAuthSv;
+import io.why503.accountservice.domain.companies.service.CompanyAuthService;
 import io.why503.accountservice.util.AuthCodeGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CompanyEmailAuthSvImpl implements CompanyEmailAuthSv {
+public class CompanyAuthServiceImpl implements CompanyAuthService {
 
     private final JavaMailSender mailSender;            // 이메일 발송 처리 컴포넌트
     private final StringRedisTemplate redisTemplate;    // 인증 코드 Redis 저장/조회용 Template

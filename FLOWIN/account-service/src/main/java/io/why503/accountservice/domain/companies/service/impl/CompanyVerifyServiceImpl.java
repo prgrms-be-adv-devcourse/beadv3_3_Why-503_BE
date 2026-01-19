@@ -4,9 +4,9 @@
  * - Redis에 저장된 이메일 인증 코드 검증
  * - 인증 성공 시 인증 코드 즉시 제거
  */
-package io.why503.accountservice.domain.companies.sv.impl;
+package io.why503.accountservice.domain.companies.service.impl;
 
-import io.why503.accountservice.domain.companies.sv.CompanyEmailVerifySv;
+import io.why503.accountservice.domain.companies.service.CompanyVerifyService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class CompanyEmailVerifySvImpl implements CompanyEmailVerifySv {
+public class CompanyVerifyServiceImpl implements CompanyVerifyService {
 
     private final StringRedisTemplate redisTemplate; // 인증 코드 Redis 조회/삭제용 Template
 

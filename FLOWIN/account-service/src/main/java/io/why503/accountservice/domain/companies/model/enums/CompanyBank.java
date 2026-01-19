@@ -5,7 +5,7 @@
  * - 회사 등록 시 은행 값을 고정된 코드로 관리
  * - 잘못된 은행 값 입력 방지
  */
-package io.why503.accountservice.domain.companies.model.dto;
+package io.why503.accountservice.domain.companies.model.enums;
 
 import lombok.Getter;
 

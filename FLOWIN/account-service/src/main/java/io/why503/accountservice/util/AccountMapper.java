@@ -24,16 +24,16 @@ public class AccountMapper {
     //받은 dto의 password를 bcrypt해서 엔티티를 생성, 수정할 때 쓰는 cmd클래스로 만들기 위한 함수
     public UpsertAccountVo upsertDtoToUpsertVo(UpsertAccountRequest dto) {
         return new UpsertAccountVo(
-                dto.id(),
-                dto.password(),
-                dto.name(),
+                dto.userId(),
+                dto.userPassword(),
+                dto.userName(),
                 dto.birthday(),
                 Gender.getGender(dto.gender()),
-                dto.phone(),
-                dto.email(),
-                dto.basicAddr(),
-                dto.detailAddr(),
-                dto.post()
+                dto.userPhone(),
+                dto.userEmail(),
+                dto.userBasicAddr(),
+                dto.userDetailAddr(),
+                dto.userPost()
         );
     }
     //엔티티를 찾아서 Detail로 만들기 위한 함수, payload에 사용함
@@ -63,7 +63,7 @@ public class AccountMapper {
     //엔티티를 찾아서 CompanyResponse로 만들기 위한 함수
     public UserCompanyResponse entityToCompanyResponse(Account account){
         return new UserCompanyResponse(
-                account.getCompany().getCompanySq()
+                account.getCompany().getSq()
         );
     }
 

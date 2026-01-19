@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyReqDto;
 import io.why503.performanceservice.domain.show.model.dto.ShowReqDto;
@@ -39,7 +41,7 @@ public class ShowServiceImpl implements ShowService {
     public Long createShowWithSeats(ShowCreateWithSeatPolicyReqDto req) {
 
         /* =======================
-         * 1. 공연(Show) 생성
+         * 1. 공연 생성
          * ======================= */
         ShowReqDto showReq = req.getShow();
 
@@ -62,13 +64,35 @@ public class ShowServiceImpl implements ShowService {
         ShowEntity savedShow = showRepo.save(show);
 
         /* =======================
-         * 2. show_seat 생성 (seatArea 기준)
+         * 2. 공연장 좌석 전체 조회 (1회)
          * ======================= */
-        List<ShowSeatEntity> showSeats = req.getSeatPolicies().stream()
-                .flatMap(policy ->
-                        toShowSeatsByArea(savedShow, policy).stream()
-                )
-                .toList();
+        List<SeatEntity> allSeats =
+                seatRepo.findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
+                        savedShow.getConcertHallSq()
+                );
+
+        if (allSeats.isEmpty()) {
+            throw new IllegalStateException("no seats found for concert hall");
+        }
+
+        /* =======================
+         * 3. seatArea 기준 그룹핑
+         * ======================= */
+        Map<String, List<SeatEntity>> seatsByArea =
+                allSeats.stream()
+                        .collect(Collectors.groupingBy(SeatEntity::getSeatArea));
+
+        /* =======================
+         * 4. show_seat 생성
+         * ======================= */
+        List<ShowSeatEntity> showSeats =
+                req.getSeatPolicies().stream()
+                        .flatMap(policy -> createShowSeatsByPolicy(
+                                savedShow,
+                                policy,
+                                seatsByArea
+                        ).stream())
+                        .toList();
 
         showSeatService.saveAll(showSeats);
 
@@ -139,19 +163,18 @@ public class ShowServiceImpl implements ShowService {
                 .build();
     }
 
-    /**
-     * seatArea 기반 show_seat 생성
-     */
-    private List<ShowSeatEntity> toShowSeatsByArea(
-            ShowEntity show,
-            SeatPolicyReqDto policy
-    ) {
-        List<SeatEntity> seats = seatRepo.findByConcertHall_ConcertHallSqAndSeatArea(
-                show.getConcertHallSq(),
-                policy.getSeatArea()
-        );
+    /* =====================================================
+     * 내부 전용 메서드
+     * ===================================================== */
 
-        if (seats.isEmpty()) {
+    private List<ShowSeatEntity> createShowSeatsByPolicy(
+            ShowEntity show,
+            SeatPolicyReqDto policy,
+            Map<String, List<SeatEntity>> seatsByArea
+    ) {
+        List<SeatEntity> seats = seatsByArea.get(policy.getSeatArea());
+
+        if (seats == null || seats.isEmpty()) {
             throw new IllegalArgumentException(
                     "seat area not found: " + policy.getSeatArea()
             );

@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.seat.Model.Dto.Cmd;
+package io.why503.performanceservice.domain.seat.model.dto.cmd;
 
 import lombok.Getter;
 

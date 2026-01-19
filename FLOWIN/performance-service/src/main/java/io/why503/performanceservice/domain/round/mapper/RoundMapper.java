@@ -5,10 +5,13 @@ import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class RoundMapper {
 
-    //Req -> Ett
+    //Request -> Entity
     public RoundEntity dtoToEntity(RoundRequest request, Integer calculatedNo) {
         return RoundEntity.builder()
                 .showSq(request.getShowSq())
@@ -19,7 +22,7 @@ public class RoundMapper {
                 .build();
     }
 
-    //Ett -> Res
+    //Entity -> Response
     public RoundResponse entityToDto(RoundEntity entity) {
         return RoundResponse.builder()
                 .roundSq(entity.getRoundSq())
@@ -31,7 +34,13 @@ public class RoundMapper {
                 .roundStatusName(entity.getRoundStatus().getDescription())
                 .build();
     }
+    //Entity -> Dto
+    public List<RoundResponse> entityToDtoList(List<RoundEntity> entities) {
+        List<RoundResponse> dtoList = new ArrayList<>();
 
-
-
+        for (RoundEntity entity : entities) {
+            dtoList.add(entityToDto(entity));
+        }
+        return dtoList;
+    }
 }

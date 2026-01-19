@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -64,8 +63,10 @@ public class RoundService {
     public List<RoundResponse> getRoundListByShow(Long showSq) {
         //DB에서 리스트를 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSq(showSq);
-        return convertToDtoList(entities);
+
+        return roundMapper.entityToDtoList(entities);
     }
+
     /**
      * 특정 공연의 예매 가능한 회차만 조회 (User 용)
      * - 사용자가 예매를 위해 날짜/회차를 선택할 때 사용
@@ -74,7 +75,8 @@ public class RoundService {
     public List<RoundResponse> getAvailableRoundList(Long showSq) {
         // DB에서 예매가능 상태인 것만 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(showSq, RoundStatus.AVAILABLE);
-        return convertToDtoList(entities);
+
+        return roundMapper.entityToDtoList(entities);
     }
 
     /**
@@ -101,16 +103,5 @@ public class RoundService {
         entity.updateStat(newStatus);
 
         return roundMapper.entityToDto(entity);
-    }
-
-    //Entity 리스트 -> DTO 리스트 변환기
-    private List<RoundResponse> convertToDtoList(List<RoundEntity> entities) {
-        List<RoundResponse> dtoList = new ArrayList<>();
-
-        for (RoundEntity entity : entities) {
-            dtoList.add(roundMapper.entityToDto(entity));
-        }
-
-        return dtoList;
     }
 }

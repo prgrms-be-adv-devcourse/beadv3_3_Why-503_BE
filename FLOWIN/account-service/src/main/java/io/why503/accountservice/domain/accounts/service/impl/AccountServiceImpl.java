@@ -1,6 +1,8 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
 
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.util.AccountMapper;
@@ -122,6 +124,27 @@ public class AccountServiceImpl implements AccountService {
             return true;
         }
     }
+    //포인트 이름 반환
+    @Override
+    @Transactional(readOnly = true)
+    public UserPointResponse readPointBySq(Long sq) {
+        Account account = findBySq(sq);
+        return accountMapper.entityToPointResponse(account);
+    }
+
+    //유저에 연결된 회사 시퀸스 넘버 반환
+    @Override
+    @Transactional(readOnly = true)
+    public UserCompanyResponse readCompanyBySq(Long sq) {
+        Account account = findBySq(sq);
+        if(account.getRole() == UserRole.COMPANY) {
+            return accountMapper.entityToCompanyResponse(account);
+        }
+        else{
+            return null;
+        }
+    }
+
     //sq로 UserRole 수정
     @Override
     @Transactional
@@ -130,4 +153,5 @@ public class AccountServiceImpl implements AccountService {
         account.setRole(role);
         return accountMapper.entityToSummaryResponse(account);
     }
+
 }

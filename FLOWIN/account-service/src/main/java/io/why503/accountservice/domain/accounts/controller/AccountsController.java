@@ -2,6 +2,8 @@ package io.why503.accountservice.domain.accounts.controller;
 
 
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.accounts.service.AccountService;
@@ -53,6 +55,29 @@ public class AccountsController {
         UserSummaryResponse foundAccount = accountService.readById(id);
         return ResponseEntity.ok(foundAccount);
     }
+
+    //sq기준 포인트 조회
+    @GetMapping("/point/{sq}")
+    public ResponseEntity<UserPointResponse> readPointBySq(
+            @PathVariable Long sq
+    ){
+        UserPointResponse foundPoint = accountService.readPointBySq(sq);
+        return ResponseEntity.ok(foundPoint);
+    }
+
+    //sq기준 회사 시퀸스 넘버 조회
+    @GetMapping("/company/{sq}")
+    public ResponseEntity<UserCompanyResponse> readCompanySqBySq(
+            @PathVariable Long sq
+    ){
+        UserCompanyResponse foundCompanySq = accountService.readCompanyBySq(sq);
+        if(foundCompanySq == null){
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(foundCompanySq);
+    }
+
+
     //sq기준 수정
     @PatchMapping("/sq/{sq}")
     public ResponseEntity<UserSummaryResponse> updateBySq(
@@ -71,6 +96,8 @@ public class AccountsController {
         UserSummaryResponse updatedAccount = accountService.updateById(id, request);
         return ResponseEntity.ok(updatedAccount);
     }
+
+
     //sq기준 삭제
     @DeleteMapping("/sq/{sq}")
     public ResponseEntity<UserSummaryResponse> delete(
@@ -79,6 +106,8 @@ public class AccountsController {
         UserSummaryResponse deletedAccount = accountService.deleteBySq(sq);
         return ResponseEntity.ok(deletedAccount);
     }
+
+
     //id기준 삭제
     @DeleteMapping("/id/{id}")
     public ResponseEntity<UserSummaryResponse> delete(

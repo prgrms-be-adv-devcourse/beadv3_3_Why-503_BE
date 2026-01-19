@@ -1,6 +1,8 @@
 package io.why503.accountservice.util;
 
 
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
 import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
@@ -40,13 +42,29 @@ public class AccountMapper {
                 account.getId(),
                 account.getPassword(),
                 account.getSq(),
-                account.getRole());
+                account.getRole()
+        );
     }
     //엔티티를 찾아서 summaryResponse로 만들기 위한 함수
     public UserSummaryResponse entityToSummaryResponse(Account account){
         return new UserSummaryResponse(
                 account.getSq(),
                 account.getName(),
-                account.getRole());
+                account.getRole().getCode()
+        );
     }
+    //엔티티를 찾아서 PointResponse로 만들기 위한 함수
+    public UserPointResponse entityToPointResponse(Account account){
+        return new UserPointResponse(
+                account.getName(),
+                account.getPoint()
+        );
+    }
+    //엔티티를 찾아서 CompanyResponse로 만들기 위한 함수
+    public UserCompanyResponse entityToCompanyResponse(Account account){
+        return new UserCompanyResponse(
+                account.getCompany().getCompanySq()
+        );
+    }
+
 }

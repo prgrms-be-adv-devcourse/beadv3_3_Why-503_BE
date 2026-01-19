@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+
+custom:
+  jwt:
+    valid-time-ms: 1000
+    cookie-name: abcdefg
+
+    secret:
+      jwt-private-path: /private-key-test.pem
+
+  mail:
+    auth_code_ttl: 300
+    from: abc@def.com

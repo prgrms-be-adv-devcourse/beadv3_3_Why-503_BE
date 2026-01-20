@@ -28,5 +28,10 @@ public class ShowRequest {
     private Integer category;
 
     private Long concertHallSq;       // 공연장 식별자
-    private Long companySq;            // 회사 식별자
+    
+    /**
+     * companySq는 로그인 사용자 기준으로
+     * user-service에서 조회하여 내부에서 자동 매핑
+    */  
+    
 }

@@ -21,26 +21,25 @@ import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
 public interface ShowService {
 
     /**
-     * 공연 + 좌석 정책(show_seat) 동시 생성
-     *
-     * @param req 공연 정보 + 좌석 정책 요청 DTO
-     * @return 생성된 공연 식별자
+     * 공연 + 좌석 정책 생성
+     * (COMPANY 권한 필수)
      */
-    Long createShowWithSeats(ShowCreateWithSeatPolicyRequest req);
+    Long createShowWithSeats(
+            ShowCreateWithSeatPolicyRequest req,
+            String authorization
+    );
 
     /**
-     * 공연 등록
-     *
-     * @param reqDto 공연 등록에 필요한 요청 데이터
-     * @return 등록된 공연 정보
+     * 공연 단독 생성
+     * (COMPANY 권한 필수)
      */
-    ShowResponse createShow(ShowRequest reqDto);
+    ShowResponse createShow(
+            ShowRequest req,
+            String authorization
+    );
 
     /**
      * 공연 단건 조회
-     *
-     * @param showSq 조회할 공연 식별자
-     * @return 공연 상세 정보
      */
     ShowResponse getShow(Long showSq);
 }

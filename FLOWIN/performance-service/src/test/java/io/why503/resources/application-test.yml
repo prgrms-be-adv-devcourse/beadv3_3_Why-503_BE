@@ -10,6 +10,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+ # 빈 이름 충돌 시 덮어쓰기 허용
+  main:
+    allow-bean-definition-overriding: true
 
 jobs:
   build:

@@ -4,86 +4,78 @@ import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPoli
 import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
 import io.why503.performanceservice.domain.show.service.ShowService;
+import io.why503.performanceservice.global.error.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 공연(Show) 관련 API Controller
+ * Show Controller
  *
  * 역할:
  * - 공연 등록
+ * - 공연 + 좌석 정책 등록
  * - 공연 단건 조회
  *
- * 특징:
- * - 비즈니스 로직은 Service 계층에 위임
- * - Controller는 요청/응답 매핑만 담당
+ * 책임:
+ * - 요청/응답 매핑
+ * - Authorization 헤더 존재 여부 검증
+ *
+ * 비즈니스 로직은 Service 계층에 위임
  */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/shows")
 public class ShowController {
 
-    /**
-     * 공연 도메인 서비스
-     * - 공연 생성 및 조회 로직 처리
-     */
-    private final ShowService showSv;
+    private final ShowService showService;
 
     /**
-     * 공연 등록 API
-     *
-     * 요청:
-     * - POST /shows
-     * - RequestBody: ShowReqDto
-     *
-     * 처리 흐름:
-     * 1. 클라이언트로부터 공연 등록 정보 수신
-     * 2. Service(createShow) 호출
-     * 3. 생성된 공연 정보를 Response DTO로 반환
-     *
-     * 응답:
-     * - HTTP 201 Created
-     * - ResponseBody: ShowResDto
+     * 공연 단독 생성
+     * (COMPANY 권한 필수)
      */
     @PostMapping
     public ResponseEntity<ShowResponse> createShow(
-            @RequestBody ShowRequest reqDto
+            @RequestBody ShowRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        ShowResponse res = showSv.createShow(reqDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        requireAuthorization(authorization);
+        ShowResponse response = showService.createShow(request, authorization);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // show + show_seat 생성
+    /**
+     * 공연 + 좌석 정책 동시 생성
+     * (COMPANY 권한 필수)
+     */
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(
-            @RequestBody ShowCreateWithSeatPolicyRequest req
+            @RequestBody ShowCreateWithSeatPolicyRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        Long showSq = showSv.createShowWithSeats(req);
+        requireAuthorization(authorization);
+        Long showSq = showService.createShowWithSeats(request, authorization);
         return ResponseEntity.status(HttpStatus.CREATED).body(showSq);
     }
 
     /**
-     * 공연 단건 조회 API
-     *
-     * 요청:
-     * - GET /shows/{showSq}
-     *
-     * 처리 흐름:
-     * 1. PathVariable로 공연 시퀀스(showSq) 수신
-     * 2. Service(getShow) 호출
-     * 3. 조회된 공연 정보를 Response DTO로 반환
-     *
-     * 응답:
-     * - HTTP 200 OK
-     * - ResponseBody: ShowResDto
+     * 공연 단건 조회
      */
     @GetMapping("/{showSq}")
     public ResponseEntity<ShowResponse> getShow(
             @PathVariable Long showSq
     ) {
-        ShowResponse res = showSv.getShow(showSq);
-        return ResponseEntity.ok(res);
+        ShowResponse response = showService.getShow(showSq);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Authorization 헤더 필수 검증
+     */
+    private void requireAuthorization(String authorization) {
+        if (authorization == null || authorization.isBlank()) {
+            throw new UnauthorizedException("missing Authorization header");
+        }
     }
 }

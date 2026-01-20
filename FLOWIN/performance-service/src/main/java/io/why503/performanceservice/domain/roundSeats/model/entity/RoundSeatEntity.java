@@ -45,6 +45,8 @@ public class RoundSeatEntity {
     @Column(name = "show_seat_sq",nullable = false)
     private Long showSeatSq;                                     //공연좌석시퀀스
 
+    @Version
+    private Long version;                                        //낙관적 락을 위한 버전 관리
 
     //상태 변경 메서드
     public void updateStatus(RoundSeatStatus newStatus) {
@@ -52,4 +54,30 @@ public class RoundSeatEntity {
         this.roundSeatStatusTime = LocalDateTime.now();
     }
 
+    //좌석 선점
+    public void reserve() {
+        if (this.roundSeatStatus != RoundSeatStatus.AVAILABLE) {
+            throw new IllegalStateException("이미 판매되었거나 선점된 좌석입니다.");
+        }
+        this.roundSeatStatus = RoundSeatStatus.RESERVED;
+        this.roundSeatStatusTime = LocalDateTime.now();
+    }
+
+    //선점 해제 (취소/실패 시)
+    public void release() {
+        if (this.roundSeatStatus == RoundSeatStatus.SOLD) {
+            throw new IllegalStateException("이미 결제 완료된 좌석 입니다.");
+        }
+        this.roundSeatStatus = RoundSeatStatus.AVAILABLE;
+        this.roundSeatStatusTime = LocalDateTime.now();
+    }
+
+    // 판매 확정
+    public void confirm() {
+        if (this.roundSeatStatus != RoundSeatStatus.RESERVED) {
+            throw new IllegalStateException("선점된 좌석만 판매 확정할 수 있습니다.");
+        }
+        this.roundSeatStatus = RoundSeatStatus.SOLD; // 상태를 판매완료로 변경
+        this.roundSeatStatusTime = LocalDateTime.now();
+    }
 }

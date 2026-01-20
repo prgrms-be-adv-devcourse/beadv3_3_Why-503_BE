@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.payment.controller;
 
+import io.why503.paymentservice.domain.payment.dto.PaymentCancelRequest;
 import io.why503.paymentservice.domain.payment.dto.PaymentConfirmRequest;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,15 @@ public class PaymentController {
             @RequestBody PaymentConfirmRequest request
     ) {
         paymentService.confirmPayment(request);
+        return ResponseEntity.ok().build();
+    }
+
+    // [추가] 결제 취소 (전체/부분)
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelPayment(
+            @RequestBody PaymentCancelRequest request
+    ) {
+        paymentService.cancelPayment(request);
         return ResponseEntity.ok().build();
     }
 

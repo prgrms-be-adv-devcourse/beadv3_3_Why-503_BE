@@ -39,13 +39,15 @@ public class BookingController {
     }
 
     // 예매 확정 API
-    // 요청 예시: PATCH /bookings/1/confirm?paymentKey=toss_1234
+    // 요청 예시: PATCH /bookings/1/confirm?paymentKey=toss_1234&paymentMethod=CARD
     @PatchMapping("/{bookingSq}/confirm")
     public ResponseEntity<Void> confirmBooking(
             @PathVariable Long bookingSq,
-            @RequestParam String paymentKey
+            @RequestParam String paymentKey,
+            @RequestParam String paymentMethod // 결제 수단 파라미터 추가
     ) {
-        bookingService.confirmBooking(bookingSq, paymentKey);
+        // 서비스의 변경된 시그니처에 맞춰 3개의 인수를 전달합니다.
+        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod);
         return ResponseEntity.ok().build();
     }
 

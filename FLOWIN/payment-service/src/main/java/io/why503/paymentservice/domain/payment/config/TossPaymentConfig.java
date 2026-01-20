@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class TossPaymentConfig {
 
-    @Value("toss_test_key")
+    @Value("${toss.secret-key}") // application.yml의 값을 읽어오도록 수정
     private String tossSecretKey;
 
     @Bean

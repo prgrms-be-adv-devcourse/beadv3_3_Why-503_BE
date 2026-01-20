@@ -49,7 +49,6 @@
 </div>
 
 <script>
-
     document.getElementById('loading').style.display = 'block';
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -57,27 +56,34 @@
     var requestData = {
         paymentKey: urlParams.get("paymentKey"),
         orderId: urlParams.get("orderId"),
-        amount: urlParams.get("amount"),
+        amount: Number(urlParams.get("amount")), // 숫자로 변환 권장
     };
 
-    fetch('/confirm', {
+    // [수정] 백엔드 Controller의 경로와 일치시킴 (/internal/payments/confirm)
+    fetch('/internal/payments/confirm', {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
         body: JSON.stringify(requestData)
-    }).then(response => response.text())
-    .then(
-        t => {
-            if ( t === "success" ) {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('success-content').style.display = 'block';
+    })
+        .then(response => {
+            // [수정] 백엔드 응답이 200 OK이면 성공으로 간주
+            if (response.ok) {
+                return response;
             } else {
-                location.href = "/fail";
+                throw new Error("Payment Confirm Failed");
             }
-        }
-    )
-
+        })
+        .then(() => {
+            // 성공 UI 노출
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success-content').style.display = 'block';
+        })
+        .catch(err => {
+            // 실패 시 실패 페이지로 이동 (메시지 포함)
+            location.href = "/fail?message=PaymentConfirmFailed&code=CONFIRM_ERROR";
+        });
 
 </script>
 </body>

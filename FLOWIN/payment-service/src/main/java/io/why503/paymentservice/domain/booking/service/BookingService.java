@@ -124,30 +124,27 @@ public class BookingService {
     }
 
     /**
-     * [2] 예매 확정 (결제 승인 완료)
-     * - PG사 결제가 성공하면 호출됩니다.
-     * - 내 DB 상태를 변경하고, 공연 서비스에 '판매 완료'를 통보합니다.
+     * [2] 예매 확정
+     * - 인수를 3개(bookingSq, paymentKey, paymentMethod)로 변경합니다.
      */
     @Transactional
-    public void confirmBooking(Long bookingSq, String paymentKey) {
+    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod) { // 인수 3개로 수정
         Booking booking = findBookingThrow(bookingSq);
-        log.info(">>> [Biz] 예매 확정(승인) 처리 시작 | BookingSq={}, PaymentKey={}", bookingSq, paymentKey);
+        log.info(">>> [Biz] 예매 확정 처리 시작 | BookingSq={}, Method={}", bookingSq, paymentMethod);
 
-        // 1. 내부 상태 변경 (PENDING -> CONFIRMED)
-        booking.confirm(paymentKey, "CARD");
+        // 1. 내부 상태 변경 (전달받은 결제 수단 사용)
+        booking.confirm(paymentKey, paymentMethod);
 
         // 2. 공연 서비스에 "판매 완료(SOLD)" 알림 전송
         List<Long> seatIds = booking.getTickets().stream()
-                .map(ticket -> ticket.getRoundSeatSq()) // 람다식 사용
+                .map(ticket -> ticket.getRoundSeatSq()) // 람다식 사용 규칙 준수
                 .collect(Collectors.toList());
 
         try {
             performanceClient.confirmRoundSeats(seatIds);
-            log.info(">>> [ShowService] 좌석 판매 확정(SOLD) 요청 완료 | IDs={}", seatIds);
         } catch (Exception e) {
-            // 공연 서비스 업데이트 실패 시, 데이터 불일치를 막기 위해 롤백합니다.
-            log.error(">>> [ShowService] 좌석 확정 요청 실패 (롤백 수행) | Reason={}", e.getMessage());
-            throw new IllegalStateException("좌석 확정 처리에 실패했습니다. 잠시 후 다시 시도해주세요.");
+            log.error(">>> [ShowService] 좌석 확정 실패 | Reason={}", e.getMessage());
+            throw new IllegalStateException("좌석 확정 처리에 실패했습니다.");
         }
     }
 
@@ -196,7 +193,14 @@ public class BookingService {
         // 2. 외부 서비스 좌석 해제 (단건)
         List<Long> seatIdList = new ArrayList<>();
         seatIdList.add(targetTicket.getRoundSeatSq());
-        performanceClient.cancelRoundSeats(seatIdList);
+
+        try {
+            performanceClient.cancelRoundSeats(seatIdList);
+        } catch (Exception e) {
+            log.error(">>> [ShowService] 부분 좌석 해제 실패 | ID={}", targetTicket.getRoundSeatSq());
+            // 실패해도 내부 상태는 취소 처리 진행 (필요시 주석 해제하여 예외 던짐)
+            // throw new IllegalStateException("외부 서비스 연동 실패");
+        }
 
         // 3. 상태별 처리
         if (status == BookingStatus.PENDING) {
@@ -283,3 +287,162 @@ public class BookingService {
         }
     }
 }
+
+
+// 테스트 코드
+//package io.why503.paymentservice.domain.booking.service;
+//
+//import io.why503.paymentservice.domain.booking.mapper.BookingMapper;
+//import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
+//import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+//import io.why503.paymentservice.domain.booking.model.entity.Booking;
+//import io.why503.paymentservice.domain.booking.model.entity.Ticket;
+//import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
+//import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
+//import io.why503.paymentservice.domain.booking.repository.BookingRepository;
+//import io.why503.paymentservice.domain.booking.repository.TicketRepository;
+//import lombok.RequiredArgsConstructor;
+//import lombok.extern.slf4j.Slf4j;
+//import org.springframework.stereotype.Service;
+//import org.springframework.transaction.annotation.Transactional;
+//
+//import java.time.LocalDateTime;
+//import java.util.List;
+//
+//@Slf4j
+//@Service
+//@RequiredArgsConstructor
+//@Transactional(readOnly = true)
+//public class BookingService {
+//
+//    private final BookingRepository bookingRepository;
+//    private final TicketRepository ticketRepository;
+//    private final BookingMapper bookingMapper;
+//
+//    // Client들은 없으므로 사용하지 않음
+//    // private final AccountClient accountClient;
+//    // private final PerformanceClient performanceClient;
+//
+//    /**
+//     * [1] 예매 생성 (테스트용 - 외부 통신 제거)
+//     */
+//    @Transactional
+//    public BookingResponse createBooking(BookingRequest bookingRequest, Long userSq) {
+//        log.info(">>> [TEST MODE] 예매 생성 시작 | UserSq={}", userSq);
+//
+//        // 1. 회원 정보 조회 -> (가짜 통과)
+//        log.info(">>> [TEST MODE] 회원 검증 패스");
+//
+//        // 2. 공연 서비스 호출 -> (가짜 데이터 생성)
+//        log.info(">>> [TEST MODE] 좌석 선점 패스 (가짜 데이터 생성)");
+//
+//        // 요청한 티켓 수만큼 가짜 좌석 정보 생성
+//        int requestCount = bookingRequest.getTickets().size();
+//        int ticketPrice = 10000; // 테스트 가격 고정
+//
+//        // 3. 엔티티 생성
+//        Booking booking = Booking.builder()
+//                .userSq(userSq)
+//                .bookingStatus(BookingStatus.PENDING)
+//                .build();
+//
+//        int totalTicketPrice = 0;
+//
+//        // 4. 가짜 티켓 생성
+//        for (int i = 0; i < requestCount; i++) {
+//            Long seatId = bookingRequest.getTickets().get(i).getRoundSeatSq();
+//
+//            Ticket ticket = Ticket.builder()
+//                    .roundSeatSq(seatId)
+//                    .showName("테스트 뮤지컬")
+//                    .concertHallName("서울 예술의전당")
+//                    .roundDate(LocalDateTime.now().plusDays(7))
+//                    .grade("VIP")
+//                    .seatArea("A구역")
+//                    .areaSeatNumber(10 + i)
+//                    .originalPrice(ticketPrice)
+//                    .finalPrice(ticketPrice)
+//                    .ticketStatus(TicketStatus.RESERVED)
+//                    .build();
+//
+//            booking.addTicket(ticket);
+//            totalTicketPrice += ticketPrice;
+//        }
+//
+//        // 5. 금액 설정
+//        booking.setBookingAmount(totalTicketPrice);
+//        booking.setTotalAmount(totalTicketPrice);
+//
+//        // 포인트 사용 (있으면 차감)
+//        int requestedPoint = bookingRequest.getUsedPoint() != null ? bookingRequest.getUsedPoint() : 0;
+//        booking.applyPoints(requestedPoint);
+//
+//        // 6. 저장
+//        Booking savedBooking = bookingRepository.save(booking);
+//        log.info(">>> [TEST MODE] 예매 저장 완료 | BookingSq={}, PG결제액={}", savedBooking.getBookingSq(), savedBooking.getPgAmount());
+//
+//        return bookingMapper.EntityToResponse(savedBooking);
+//    }
+//
+//    /**
+//     * [2] 예매 확정 (테스트용 - 외부 통신 제거)
+//     */
+//    @Transactional
+//    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod) {
+//        Booking booking = findBookingThrow(bookingSq);
+//        log.info(">>> [TEST MODE] 예매 확정 처리 | BookingSq={}, Method={}", bookingSq, paymentMethod);
+//
+//        // 1. 내부 상태 변경
+//        booking.confirm(paymentKey, paymentMethod);
+//
+//        // 2. 공연 서비스 통보 -> (생략)
+//        log.info(">>> [TEST MODE] 공연 서비스 통보 생략 (성공 처리)");
+//    }
+//
+//    /**
+//     * [3] 예매 취소 (테스트용)
+//     */
+//    @Transactional
+//    public void cancelBooking(Long bookingSq) {
+//        Booking booking = findBookingThrow(bookingSq);
+//        log.info(">>> [TEST MODE] 예매 취소 요청");
+//
+//        // 외부 서비스 통신 생략하고 상태만 변경
+//        if (booking.getBookingStatus() == BookingStatus.PENDING) {
+//            bookingRepository.delete(booking);
+//        } else {
+//            booking.cancel("테스트 취소");
+//        }
+//    }
+//
+//    /**
+//     * [4] 티켓 개별 취소 (테스트용)
+//     */
+//    @Transactional
+//    public void cancelTicket(Long bookingSq, Long ticketSq) {
+//        Booking booking = findBookingThrow(bookingSq);
+//        // 로직 생략하고 상태만 변경
+//        booking.cancelTicket(ticketSq, "테스트 개별 취소");
+//    }
+//
+//    // [기타 조회 메서드는 그대로 사용 가능]
+//    public BookingResponse getBooking(Long bookingSq) {
+//        return bookingMapper.EntityToResponse(findBookingThrow(bookingSq));
+//    }
+//
+//    public List<BookingResponse> getBookingsByUser(Long userSq) {
+//        return bookingRepository.findByUserSq(userSq).stream()
+//                .map(bookingMapper::EntityToResponse)
+//                .toList();
+//    }
+//
+//    // 헬퍼 메서드
+//    private Booking findBookingThrow(Long bookingSq) {
+//        return bookingRepository.findByBookingSq(bookingSq)
+//                .orElseThrow(() -> new IllegalArgumentException("예매 정보 없음: " + bookingSq));
+//    }
+//
+//    // 사용하지 않는 메서드 임시 더미 처리
+//    public int cancelExpiredBookings() { return 0; }
+//    public void enterTicket(String uuid) {}
+//}

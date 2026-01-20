@@ -79,6 +79,7 @@ public class Booking {
     private String paymentKey; // PG사 승인 키
 
     @Column(name = "receipt_url")
+    @Setter
     private String receiptUrl; // 영수증 URL
 
     @Column(name = "cancel_reason")

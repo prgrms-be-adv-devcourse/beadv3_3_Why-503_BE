@@ -1,62 +1,55 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>결제 확인</title>
+    <title>공연 예매 결제</title>
     <link rel="stylesheet" href="/modal-page.css"/>
     <script src="https://js.tosspayments.com/v2/standard"></script>
 </head>
 
 <body>
-<div class="wrapper" th:with="originPrice = ${amount} + 149900">
+<div class="wrapper">
 
     <div class="product-section">
-
         <div class="product-info">
             <div class="product-details">
-                <h2>프리미엄 무선 이어폰</h2>
-                <p>최신 노이즈 캔슬링 기술과 프리미엄 사운드 품질</p>
+                <h2 th:text="${productName}">공연 이름</h2>
+
+                <p>일시: <span th:text="${showDate}">2026-01-01</span></p>
+
+                <p>좌석: <span th:text="${seatGrade}">VIP</span>석 <span th:text="${seatArea}">B구역</span></p>
             </div>
             <div class="product-price">
-                <p class="price-original">₩ [[ ${originPrice} ]] </p>
                 <p class="price-final">
                     <span class="currency">₩ </span>
-                    [[ ${amount} ]]
+                    <span th:text="${amount}">10000</span>
                 </p>
             </div>
-
         </div>
 
         <div class="product-summary">
-
             <div class="summary-row">
-                <span class="summary-label">상품금액</span>
-                <span class="summary-value">₩ [[ ${originPrice} ]]</span>
+                <span class="summary-label">티켓 금액</span>
+                <span class="summary-value">₩ <span th:text="${amount}">10000</span></span>
             </div>
 
             <div class="summary-row">
-                <span class="summary-label">할인금액</span>
-                <span class="summary-value">-₩ 149900 </span>
+                <span class="summary-label">예매 수수료</span>
+                <span class="summary-value">₩ 0</span>
             </div>
 
-            <div class="summary-row">
-                <span class="summary-label">배송비</span>
-                <span class="summary-value">무료</span>
+            <div class="summary-row" style="margin-top: 10px; border-top: 1px solid #dee2e6; padding-top: 10px;">
+                <span class="summary-label" style="font-weight: bold;">총 결제금액</span>
+                <span class="summary-value" style="font-weight: bold; color: #3182f6;">
+                    ₩ <span th:text="${amount}">10000</span>
+                </span>
             </div>
-
-            <div class="summary-row">
-                <span class="summary-label">총 결제금액</span>
-                <span class="summary-value">₩ [[ ${amount} ]] </span>
-            </div>
-
         </div>
-
     </div>
 
     <div class="box_section">
-
         <div id="payment-method"></div>
         <div id="agreement"></div>
 
@@ -65,46 +58,73 @@
                 결제하기
             </button>
         </div>
-
     </div>
 
 </div>
 
-<script>
+<script th:inline="javascript">
     main();
 
     async function main() {
         const button = document.getElementById("payment-button");
-        const amount = {
-            currency: "KRW",
-            value: 100,
-        };
 
-        const clientKey = "[[ ${@environment.getProperty("payment.clientKey")} ]]";
+        // 1. 서버 데이터를 자바스크립트 변수로 안전하게 가져오기
+        // /*[[...]]*/ 문법을 쓰면 IDE가 에러로 인식하지 않습니다.
+        const amountVal = /*[[${amount}]]*/ 10000;
+        const clientKey = /*[[${clientKey}]]*/ 'test_client_key';
+        const orderId = /*[[${orderId}]]*/ 'order_id_1234';
+        const productName = /*[[${productName}]]*/ '공연 이름';
+
+        // 2. 토스 페이먼츠 초기화
         const tossPayments = TossPayments(clientKey);
 
-        const widgets = tossPayments.widgets({customerKey: TossPayments.ANONYMOUS});
-        await widgets.setAmount(amount);
+        // 3. 결제 위젯 생성 (비회원 모드)
+        const widgets = tossPayments.widgets({
+            customerKey: TossPayments.ANONYMOUS
+        });
 
+        // 4. 금액 설정
+        await widgets.setAmount({
+            currency: "KRW",
+            value: amountVal
+        });
+
+        // 5. 결제 UI 렌더링
         await widgets.renderPaymentMethods({
             selector: "#payment-method",
-            variantKey: "DEFAULT",
+            variantKey: "DEFAULT"
         });
 
-        await widgets.renderAgreement({selector: "#agreement", variantKey: "AGREEMENT"});
+        // 6. 약관 UI 렌더링
+        await widgets.renderAgreement({
+            selector: "#agreement",
+            variantKey: "AGREEMENT"
+        });
 
+        // 7. 결제하기 버튼 클릭 시
         button.addEventListener("click", async function () {
-            await widgets.requestPayment({
-                orderId: "[[ ${orderId} ]]",
-                orderName: `[[ ${productName} ]]`,
-                successUrl: window.location.origin + "/success",
-                failUrl: window.location.origin + "/fail",
-                customerEmail: "email@email.com",
-                customerName: "익명",
-            });
+            try {
+                await widgets.requestPayment({
+                    orderId: orderId,
+                    orderName: productName,
+                    successUrl: window.location.origin + "/success",
+                    failUrl: window.location.origin + "/fail",
+                    customerEmail: "customer@flowin.io",
+                    customerName: "관람객",
+                });
+            } catch (err) {
+                console.error(err);
+                if (err.code === "PAYMENT_WINDOW_OPEN_ERROR") {
+                    alert("팝업 차단을 해제해주세요.");
+                } else if (err.code === "INVALID_ORDER_ID") {
+                    alert("주문 번호 오류입니다.");
+                } else {
+                    // 결제 수단 미선택 등 안내
+                    alert(err.message);
+                }
+            }
         });
     }
-
 </script>
 </body>
 </html>

@@ -12,26 +12,24 @@ Req -> Ett로 갈 때, password암호화를 위해서 사용,
 사용은 mapper에서 사용
  */
 public record UpsertAccountVo(
-    @NotBlank(message = "id값은 반드시 포함되어야합니다.")
-    String id,
     @NotBlank
-    String password,
+    String userId,
     @NotBlank
-    String name,
+    String userPassword,
+    @NotBlank
+    String userName,
     @NotNull
     LocalDateTime birthday,
     @NotNull
     Gender gender,
     @NotBlank
-    String phone,
+    String userPhone,
     @NotBlank
-    String email,
+    String userEmail,
     @NotBlank
-    String basicAddr,
+    String userBasicAddr,
     @NotBlank
-    String detailAddr,
+    String userDetailAddr,
     @NotBlank
-    String post
-) {
-
-}
+    String userPost
+) { }

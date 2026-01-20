@@ -1,10 +1,10 @@
 package io.why503.accountservice.util;
 
 
-import io.why503.accountservice.domain.companies.model.dto.cmd.CompanyCmd;
-import io.why503.accountservice.domain.companies.model.dto.req.CompanyReqDto;
-import io.why503.accountservice.domain.companies.model.dto.res.CompanyResDto;
-import io.why503.accountservice.domain.companies.model.ett.Company;
+import io.why503.accountservice.domain.companies.model.dto.vo.CompanyVo;
+import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,22 +15,33 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CompanyMapper {
-    public CompanyCmd ReqDtoToCmd(CompanyReqDto request){
-        return CompanyCmd.builder()
-                .companyBank(request.getCompanyBank())      .accountNumber(request.getAccountNumber())
-                .companyName(request.getCompanyName())      .ownerName(request.getOwnerName())
-                .companyPhone(request.getCompanyPhone())    .companyEmail(request.getCompanyEmail())
-                .companyAddr(request.getCompanyAddr())      .companyPost(request.getCompanyPost())
-                .build();
+    public CompanyVo ReqDtoToCmd(CompanyRequest request){
+        return new CompanyVo(
+                request.companyBank(),
+                request.accountNumber(),
+                request.companyName(),
+                request.ownerName(),
+                request.companyPhone(),
+                request.companyEmail(),
+                request.companyBasicAddr(),
+                request.companyDetailAddr(),
+                request.companyPost()
+        );
     }
-    public CompanyResDto EttToResDto(Company company){
-        return CompanyResDto.builder()
-                .companySq(company.getCompanySq())          .companyBank(company.getCompanyBank())
-                .accountNumber(company.getAccountNumber())  .companyName(company.getCompanyName())
-                .ownerName(company.getOwnerName())          .companyPhone(company.getCompanyPhone())
-                .companyEmail(company.getCompanyEmail())    .companyAddr(company.getCompanyAddr())
-                .companyPost(company.getCompanyPost())      .amount(company.getAmount())
-                .amountDate(company.getAmountDate())
-                .build();
+    public CompanyResponse EttToResDto(Company company){
+        return new CompanyResponse(
+                company.getSq(),
+                company.getBank(),
+                company.getAccountNumber(),
+                company.getName(),
+                company.getOwnerName(),
+                company.getPhone(),
+                company.getEmail(),
+                company.getBasicAddr(),
+                company.getDetailAddr(),
+                company.getPost(),
+                company.getAmount(),
+                company.getAmountDate()
+        );
     }
 }

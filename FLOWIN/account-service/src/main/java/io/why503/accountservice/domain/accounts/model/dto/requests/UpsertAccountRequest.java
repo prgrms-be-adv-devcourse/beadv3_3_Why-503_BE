@@ -9,15 +9,15 @@ import java.time.LocalDateTime;
 http에서 받아오는 역할
  */
 public record UpsertAccountRequest(
-        @NotBlank String id,
-        @NotBlank String password,
-        @NotBlank String name,
+        @NotBlank String userId,
+        @NotBlank String userPassword,
+        @NotBlank String userName,
         @NotNull LocalDateTime birthday,
         @NotNull int gender,
-        @NotBlank String phone,
-        @NotBlank String email,
-        @NotBlank String basicAddr,
-        @NotBlank String detailAddr,
-        @NotBlank String post
+        @NotBlank String userPhone,
+        @NotBlank String userEmail,
+        @NotBlank String userBasicAddr,
+        @NotBlank String userDetailAddr,
+        @NotBlank String userPost
 ) {
 }

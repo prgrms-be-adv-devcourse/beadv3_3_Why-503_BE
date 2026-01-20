@@ -35,8 +35,11 @@ public class ShowServiceImpl implements ShowService {
     private final ShowRepository showRepository;
     private final SeatRepository seatRepository;
     private final ShowSeatService showSeatService;
-    private final AccountServiceClient userServiceClient;
+    private final AccountServiceClient accountServiceClient;
 
+    /**
+     * 공연 + 좌석 정책 생성
+     */
     @Override
     @Transactional
     public Long createShowWithSeats(
@@ -90,6 +93,9 @@ public class ShowServiceImpl implements ShowService {
         return savedShow.getShowSq();
     }
 
+    /**
+     * 공연 단독 생성
+     */
     @Override
     @Transactional
     public ShowResponse createShow(
@@ -130,9 +136,11 @@ public class ShowServiceImpl implements ShowService {
                 .build();
     }
 
+    /**
+     * 공연 단건 조회
+     */
     @Override
     public ShowResponse getShow(Long showSq) {
-
         ShowEntity show = showRepository.findById(showSq)
                 .orElseThrow(() -> new IllegalArgumentException("show not found"));
 
@@ -151,6 +159,9 @@ public class ShowServiceImpl implements ShowService {
                 .build();
     }
 
+    /**
+     * 좌석 정책 기반 show_seat 생성
+     */
     private List<ShowSeatEntity> createShowSeatsByPolicy(
             ShowEntity show,
             SeatPolicyRequest policy,
@@ -173,10 +184,15 @@ public class ShowServiceImpl implements ShowService {
                 .toList();
     }
 
+    /**
+     * account-service 호출
+     * - COMPANY 권한 검증
+     * - companySq 조회
+     */
     private Long resolveCompanySq(String authorization) {
         try {
             CompanyInfoResponse res =
-                    userServiceClient.getMyCompanyInfo(authorization);
+                    accountServiceClient.getMyCompanyInfo(authorization);
 
             if (res == null || res.getCompanySq() == null) {
                 throw new PerformanceForbiddenException(
@@ -196,7 +212,7 @@ public class ShowServiceImpl implements ShowService {
             );
         } catch (FeignException e) {
             throw new UserServiceUnavailableException(
-                    "user-service call failed",
+                    "account-service call failed",
                     e
             );
         }

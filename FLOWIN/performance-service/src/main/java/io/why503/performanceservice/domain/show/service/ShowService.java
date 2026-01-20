@@ -9,7 +9,7 @@
  *
  * 설계 의도 :
  * - Controller는 요청/응답만 처리
- * - 실제 비즈니스 로직은 구현체(ShowSvImpl)에서 담당
+ * - 실제 비즈니스 로직은 구현체(ShowServiceImpl)에서 담당
  * - 인터페이스 기반 설계로 테스트 및 확장성 확보
  */
 package io.why503.performanceservice.domain.show.service;

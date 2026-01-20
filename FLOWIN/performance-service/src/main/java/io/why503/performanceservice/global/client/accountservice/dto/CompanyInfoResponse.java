@@ -7,5 +7,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CompanyInfoResponse {
     private Long companySq;
-    private String userRole;
 }

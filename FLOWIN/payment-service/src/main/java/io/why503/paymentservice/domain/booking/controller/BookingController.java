@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/bookings") // 복수형 URL 권장
 @RequiredArgsConstructor
@@ -55,6 +57,14 @@ public class BookingController {
     ) {
         bookingService.cancelTicket(bookingSq, ticketSq);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getMyBookings(
+            @RequestHeader("X-USER-SQ") Long userSq
+    ) {
+        // 여기서 서비스의 getBookingsByUser를 호출하면 경고가 사라집니다!
+        return ResponseEntity.ok(bookingService.getBookingsByUser(userSq));
     }
 
 }

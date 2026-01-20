@@ -8,7 +8,5 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketRequest {
-    private Long showingSeatSq;
-    private Integer originalPrice;
-    private Integer finalPrice;
+    private Long roundSeatSq;
 }

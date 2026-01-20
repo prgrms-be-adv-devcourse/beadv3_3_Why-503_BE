@@ -23,7 +23,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findExpired(@Param("status") BookingStatus status,
                               @Param("dateTime") LocalDateTime dateTime);
 
-
     //추후 테스트 진행
-    List<Booking> findByUserSq(Long userSq);
+    @Query("SELECT DISTINCT b FROM Booking b JOIN FETCH b.tickets " +
+            "WHERE b.userSq = :userSq ORDER BY b.bookingDt DESC")
+    List<Booking> findByUserSq(@Param("userSq") Long userSq);
 }

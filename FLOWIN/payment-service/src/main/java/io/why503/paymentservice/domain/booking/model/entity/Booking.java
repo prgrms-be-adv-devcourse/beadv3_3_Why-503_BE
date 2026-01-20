@@ -24,7 +24,7 @@ import java.util.UUID;
 public class Booking {
 
     // =================================================================
-    //  1. 기본 식별자 및 상태
+    //  1. 식별자 및 기본 정보
     // =================================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,14 +42,23 @@ public class Booking {
 
     @Column(name = "order_id", nullable = false, unique = true)
     @Builder.Default
-    private String orderId = UUID.randomUUID().toString(); // 결제용 고유 ID
+    private String orderId = UUID.randomUUID().toString(); // PG사 결제용 고유 ID
 
     // =================================================================
-    //  2. 결제 금액 및 수단
+    //  2. 금액 정보 (가장 중요!)
+    //  - bookingAmount: 티켓 가격의 합 (순수 상품 금액)
+    //  - totalAmount: 할인/부가세 적용 후 결제 대상 금액 (포인트 적용 전)
+    //  - usedPoint: 사용한 포인트
+    //  - pgAmount: 실제 PG사 결제 금액 (totalAmount - usedPoint)
     // =================================================================
+    @Setter
     @Column(name = "booking_amount", nullable = false)
     @Builder.Default
-    private Integer bookingAmount = 0; // 순수 예매 금액
+    private Integer bookingAmount = 0;
+
+    @Column(name = "total_amount", nullable = false)
+    @Builder.Default
+    private Integer totalAmount = 0;
 
     @Column(name = "used_point", nullable = false)
     @Builder.Default
@@ -57,12 +66,11 @@ public class Booking {
 
     @Column(name = "pg_amount", nullable = false)
     @Builder.Default
-    private Integer pgAmount = 0; // 실제 결제 금액 (총액 - 포인트)
+    private Integer pgAmount = 0;
 
-    @Column(name = "total_amount", nullable = false)
-    @Builder.Default
-    private Integer totalAmount = 0;
-
+    // =================================================================
+    //  3. 결제 수단 및 취소 정보
+    // =================================================================
     @Column(name = "payment_method", nullable = false)
     @Builder.Default
     private String paymentMethod = "PENDING";
@@ -77,24 +85,24 @@ public class Booking {
     private String cancelReason;
 
     // =================================================================
-    //  3. 시간 정보 (Auditing)
+    //  4. 시간 정보 (Auditing)
     // =================================================================
     @CreationTimestamp
     @Column(name = "booking_dt", nullable = false, updatable = false)
-    private LocalDateTime bookingDt; // 예매 일시
+    private LocalDateTime bookingDt; // 예매 시도 일시
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 데이터 생성 일시
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt; // 수정 일시
+    private LocalDateTime updatedAt;
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt; // 결제 승인 일시
 
     // =================================================================
-    //  4. 연관 관계 (중요!)
+    //  5. 연관 관계
     // =================================================================
     @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -102,7 +110,7 @@ public class Booking {
 
     /**
      * [연관관계 편의 메서드]
-     * 티켓을 추가할 때 부모(Booking) 정보도 자동으로 주입
+     * 티켓 추가 시 부모(Booking) 정보도 자동으로 주입
      */
     public void addTicket(Ticket ticket) {
         this.tickets.add(ticket);
@@ -110,7 +118,47 @@ public class Booking {
     }
 
     // =================================================================
-    //  5. 비즈니스 로직 (상태 변경)
+    //  6. 핵심 비즈니스 로직 (금액 계산)
+    // =================================================================
+
+    /**
+     * 최종 결제 대상 금액 설정
+     * - 할인이나 부가세가 적용된 후의 금액입니다.
+     * - 설정 즉시 PG 결제액(pgAmount)을 재계산합니다.
+     */
+    public void setTotalAmount(Integer amount) {
+        this.totalAmount = amount;
+        calculatePgAmount(); // 자동 재계산
+    }
+
+
+    /**
+     * 포인트 적용
+     * - 사용할 포인트를 설정하고 PG 결제액을 재계산합니다.
+     */
+    public void applyPoints(int pointsToUse) {
+        // 결제 총액보다 많은 포인트를 사용할 수는 없음
+        if (pointsToUse > this.totalAmount) {
+            pointsToUse = this.totalAmount;
+        }
+        this.usedPoint = pointsToUse;
+        calculatePgAmount(); // 자동 재계산
+
+        log.info(">>> [Entity] 포인트 적용 완료 | 총액: {}, 포인트: {}, 최종결제액: {}",
+                this.totalAmount, this.usedPoint, this.pgAmount);
+    }
+
+    /**
+     * [내부 로직] PG 결제 금액 계산기
+     * - 공식: TotalAmount(총액) - UsedPoint(포인트) = PgAmount(실결제액)
+     * - 마이너스 금액이 나오지 않도록 방어합니다.
+     */
+    private void calculatePgAmount() {
+        this.pgAmount = Math.max(0, this.totalAmount - this.usedPoint);
+    }
+
+    // =================================================================
+    //  7. 상태 변경 로직 (결제/취소)
     // =================================================================
 
     /**
@@ -132,7 +180,7 @@ public class Booking {
     }
 
     /**
-     * [전체 취소] 결제 후 환불
+     * [전체 취소]
      */
     public void cancel(String reason) {
         this.bookingStatus = BookingStatus.CANCELLED;
@@ -155,17 +203,12 @@ public class Booking {
             throw new IllegalStateException("이미 취소된 티켓입니다.");
         }
 
-        // 티켓 취소
+        // 티켓 취소 처리
         targetTicket.cancel();
 
-        // 남은 티켓이 하나도 없으면 '전체 취소'로 상태 변경
-        boolean hasActive = false;
-        for (Ticket t : this.tickets) {
-            if (t.getTicketStatus() != TicketStatus.CANCELLED) {
-                hasActive = true;
-                break;
-            }
-        }
+        // 남은 티켓이 없으면 '전체 취소'로 상태 변경
+        boolean hasActive = this.tickets.stream()
+                .anyMatch(t -> t.getTicketStatus() != TicketStatus.CANCELLED);
 
         if (!hasActive) {
             this.bookingStatus = BookingStatus.CANCELLED;
@@ -174,7 +217,7 @@ public class Booking {
             this.bookingStatus = BookingStatus.PARTIAL_CANCEL;
         }
 
-        // 금액 재계산이 필요하다면 여기서 호출 (PG사 부분 취소 로직에 따라 다름)
+        // 취소 후 금액 재계산
         recalculateAmounts();
     }
 
@@ -188,11 +231,11 @@ public class Booking {
 
         Ticket targetTicket = findTicketOrThrow(ticketSq);
 
-        // 리스트에서 제거 -> OrphanRemoval 동작으로 DB 삭제됨
+        // 리스트에서 제거 -> OrphanRemoval로 인해 DB 삭제
         this.tickets.remove(targetTicket);
         targetTicket.setBooking(null);
 
-        // 티켓이 줄었으니 금액 재계산
+        // 금액 재계산
         recalculateAmounts();
     }
 
@@ -200,27 +243,29 @@ public class Booking {
     //  6. 내부 로직 (Private Helpers)
     // =================================================================
 
-    // 금액 재계산 (티켓 삭제/취소 시 호출)
+    /**
+     * 금액 재계산 (티켓 삭제/취소 시 호출)
+     */
     private void recalculateAmounts() {
         if (this.tickets.isEmpty()) {
             this.bookingAmount = 0;
             this.totalAmount = 0;
+            this.usedPoint = 0; // 티켓이 없으면 포인트 사용도 취소
             this.pgAmount = 0;
             return;
         }
 
-        // 부분 취소 시에도 유효한 티켓들의 가격만 합산
-        int sum = 0;
-        for (Ticket ticket : this.tickets) {
-            if (ticket.getTicketStatus() != TicketStatus.CANCELLED) {
-                int finalPrice = ticket.getFinalPrice();
-                sum += finalPrice;
-            }
-        }
+        // 유효한 티켓들의 가격 합산
+        int sum = this.tickets.stream()
+                .filter(t -> t.getTicketStatus() != TicketStatus.CANCELLED)
+                .mapToInt(Ticket::getFinalPrice)
+                .sum();
 
         this.bookingAmount = sum;
-        this.totalAmount = sum;
-        this.pgAmount = Math.max(0, sum - this.usedPoint);
+        this.totalAmount = sum; // 현재는 추가 할인 로직이 없으므로 동일하게 설정
+
+        // 포인트가 총액보다 많아졌을 경우를 대비해 다시 적용
+        applyPoints(this.usedPoint);
     }
 
     // 티켓 찾기 (중복 코드 제거)
@@ -231,22 +276,6 @@ public class Booking {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 티켓입니다."));
     }
 
-    // 포인트 적용 및 결제 금액 재계산
-    public void applyPoints(int pointsToUse) {
-        // 결제 총액보다 포인트를 더 많이 쓸 수는 없음
-        if (pointsToUse > this.totalAmount) {
-            pointsToUse = this.totalAmount;
-        }
-
-        this.usedPoint = pointsToUse;
-        // 실제 PG 결제 금액 = 전체 금액 - 사용 포인트
-        this.pgAmount = this.totalAmount - this.usedPoint;
-
-        log.info(">>> [Entity] 포인트 계산 완료 | 총액: {}, 포인트사용: {}, 최종결제금액: {}",
-                this.totalAmount, this.usedPoint, this.pgAmount);
-    }
-
-    // NULL 방어 로직 (JPA 저장 전 실행)
     @PrePersist
     public void prePersist() {
         if (this.bookingAmount == null) this.bookingAmount = 0;

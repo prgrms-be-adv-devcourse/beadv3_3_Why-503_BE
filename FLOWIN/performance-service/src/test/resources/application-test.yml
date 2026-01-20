@@ -17,8 +17,15 @@ spring:
       enabled: false
 
   main:
-    allow-bean-definition-overriding: false
+    allow-bean-definition-overriding: ture
 
 eureka:
   client:
     enabled: false
+jwt:
+  secret: "test-secret-key-1234-test-secret-key-1234" # 테스트용 임의 값
+cloud:
+  aws:
+    credentials:
+      access-key: "test-key"
+      secret-key: "test-secret"

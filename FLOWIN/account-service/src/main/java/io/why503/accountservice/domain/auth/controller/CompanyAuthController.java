@@ -30,13 +30,13 @@ public class CompanyAuthController {
 
     @PostMapping("/email") // 회사 이메일 인증 요청 API
     public ResponseEntity<CompanyEmailResponse> inputCompanyEMail(
-            @Valid @RequestBody CompanyEmailRequest reqDto // 회사 이메일 검증을 위한 요청 데이터
+            @Valid @RequestBody CompanyEmailRequest request // 회사 이메일 검증을 위한 요청 데이터
     ) {
-        companyAuthService.sendAuthCode(reqDto.companyEmail()); // 회사 이메일로 인증 코드 발송
+        companyAuthService.sendAuthCode(request.companyEmail()); // 회사 이메일로 인증 코드 발송
 
         return ResponseEntity.ok(
                 new CompanyEmailResponse(
-                        reqDto.companyEmail(), // 요청된 회사 이메일
+                        request.companyEmail(), // 요청된 회사 이메일
                         "company complete received it by email"
                 )
         );
@@ -44,12 +44,12 @@ public class CompanyAuthController {
 
     @PostMapping("/verify") // 회사 이메일 인증 코드 검증 API
     public ResponseEntity<CompanyVerifyResponse> verifyEmail(
-            @Valid @RequestBody CompanyVerifyRequest reqDto, // 이메일 및 인증 코드 검증 요청 데이터
+            @Valid @RequestBody CompanyVerifyRequest request, // 이메일 및 인증 코드 검증 요청 데이터
             @RequestHeader("X-USER-SQ") Long userSq
     ) {
         boolean result = companyAuthService.verify(
-                reqDto.companyEmail(), // 인증 대상 회사 이메일
-                reqDto.authCode()      // 사용자가 입력한 인증 코드
+                request.companyEmail(), // 인증 대상 회사 이메일
+                request.authCode()      // 사용자가 입력한 인증 코드
         );
 
         if (!result) {

@@ -32,9 +32,9 @@ public class CompanyServiceImpl implements CompanyService {
     생성할 때 무조건 어차피 개인이 생성하니까 그대로 개인과 연결
      */
     @Override
-    public void registerCompany(Long userSq, CompanyRequest requestDto) {
+    public void registerCompany(Long userSq, CompanyRequest request) {
         // 회사 Entity 생성
-        Company company = new Company(em.getReference(Account.class, userSq), companyMapper.ReqDtoToCmd(requestDto));
+        Company company = new Company(em.getReference(Account.class, userSq), companyMapper.ReqDtoToCmd(request));
         companyRepository.save(company);// 회사 정보 DB 저장
     }
 

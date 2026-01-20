@@ -29,7 +29,7 @@ public class CompanyController {
     private final AccountService accountService;
     @PostMapping // 회사 등록 API
     public ResponseEntity<Void> registerCompany(
-            @RequestBody CompanyRequest requestDto, // 회사 등록에 필요한 요청 데이터
+            @RequestBody CompanyRequest request, // 회사 등록에 필요한 요청 데이터
             @RequestHeader("X-USER-SQ") Long userSq
     ) {
         //권한이 COMPANY가 아니면 거부
@@ -37,7 +37,7 @@ public class CompanyController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         // 회사 등록 비즈니스 로직
-        companyService.registerCompany(userSq, requestDto);
+        companyService.registerCompany(userSq, request);
 
         return ResponseEntity.ok().build(); // 등록 성공 시 200 OK 반환
     }

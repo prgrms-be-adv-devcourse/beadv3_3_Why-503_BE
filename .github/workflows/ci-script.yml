@@ -29,8 +29,8 @@ jobs:
         if: ${{ inputs.service-type == 'account' }}
         run: |
           mkdir -p ./FLOWIN/account-service/src/main/resources
-          echo '${{ secrets.ACCOUNT_YML }}' > ./FLOWIN/account-service/src/main/resources/application.yml
-          echo '${{ secrets.PRIAVTE_KEY_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key.pem
+          echo '${{ secrets.ACCOUNT_TEST_YML }}' > ./FLOWIN/account-service/src/main/resources/application.yml
+          echo '${{ secrets.PRIAVTE_KEY_TEST_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key-test.pem
 
 #      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.
 #      - name: gradlew 권한 세팅

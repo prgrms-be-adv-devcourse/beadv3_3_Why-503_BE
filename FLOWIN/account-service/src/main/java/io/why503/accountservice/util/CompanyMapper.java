@@ -4,7 +4,7 @@ package io.why503.accountservice.util;
 import io.why503.accountservice.domain.companies.model.dto.vo.CompanyVo;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
-import io.why503.accountservice.domain.companies.model.entitys.Company;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -6,7 +6,7 @@
  */
 package io.why503.accountservice.domain.companies.repository;
 
-import io.why503.accountservice.domain.companies.model.entitys.Company;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CompanyRepository extends JpaRepository<Company, Long> {

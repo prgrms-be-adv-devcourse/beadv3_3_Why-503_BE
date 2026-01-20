@@ -4,7 +4,7 @@
  * - 회사 이메일 인증 요청 결과 응답
  * - 요청된 이메일과 처리 결과 메시지 전달
  */
-package io.why503.accountservice.domain.companies.model.dto.response;
+package io.why503.accountservice.domain.auth.model.response;
 
 import jakarta.validation.constraints.NotBlank;
 

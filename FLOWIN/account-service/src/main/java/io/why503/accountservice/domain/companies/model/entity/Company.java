@@ -4,8 +4,9 @@
  * - 회사 기본 정보 및 정산 정보를 DB에 영속화
  */
 
-package io.why503.accountservice.domain.companies.model.entitys;
+package io.why503.accountservice.domain.companies.model.entity;
 
+import io.why503.accountservice.common.model.entity.BasicEntity;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.companies.model.enums.CompanyBank;
 import io.why503.accountservice.domain.companies.model.dto.vo.CompanyVo;
@@ -19,12 +20,7 @@ import java.time.LocalDateTime;
 @Table(name = "company")
 @Getter
 @NoArgsConstructor
-public class Company {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "sq")
-    private Long sq;
-
+public class Company extends BasicEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_sq",
@@ -40,26 +36,8 @@ public class Company {
     @Column(name = "account_number", nullable = false)
     private String accountNumber;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
     @Column(name = "owner_name", nullable = false)
     private String ownerName;
-
-    @Column(name = "phone", nullable = false)
-    private String phone;
-
-    @Column(name = "email", nullable = false)
-    private String email;
-
-    @Column(name = "basic_addr", nullable = false)
-    private String basicAddr;
-
-    @Column(name = "detail_addr", nullable = false)
-    private String detailAddr;
-
-    @Column(name = "post", nullable = false)
-    private String post;
 
     @Column(name = "amount", nullable = false)
     private Long amount = 0L;

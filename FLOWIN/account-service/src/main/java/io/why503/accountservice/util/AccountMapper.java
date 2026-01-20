@@ -25,7 +25,7 @@ public class AccountMapper {
     public UpsertAccountVo upsertDtoToUpsertVo(UpsertAccountRequest dto) {
         return new UpsertAccountVo(
                 dto.userId(),
-                dto.userPassword(),
+                passwordEncoder.encode(dto.userPassword()),
                 dto.userName(),
                 dto.birthday(),
                 Gender.getGender(dto.gender()),

@@ -9,7 +9,7 @@ package io.why503.accountservice.domain.companies.service.impl;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
-import io.why503.accountservice.domain.companies.model.entitys.Company;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.repository.CompanyRepository;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import io.why503.accountservice.util.CompanyMapper;

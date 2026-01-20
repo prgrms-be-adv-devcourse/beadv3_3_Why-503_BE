@@ -4,11 +4,11 @@
  * - 회사 이메일로 인증 코드 발송
  * - 인증 코드 Redis 저장 및 유효시간 관리
  */
-package io.why503.accountservice.domain.companies.service.impl;
+package io.why503.accountservice.domain.auth.service.impl;
 
 import java.util.concurrent.TimeUnit;
 
-import io.why503.accountservice.domain.companies.service.CompanyAuthService;
+import io.why503.accountservice.domain.auth.service.CompanyAuthService;
 import io.why503.accountservice.util.AuthCodeGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -59,5 +59,23 @@ public class CompanyAuthServiceImpl implements CompanyAuthService {
     }
     private String buildKey(String email) {
         return "company:email:auth:" + email;
+    }
+
+    public boolean verify(String email, String inputCode) {
+
+        String key = "company:email:auth:" + email; // 이메일 기준 Redis Key 생성
+        String savedCode = redisTemplate.opsForValue().get(key); // Redis에 저장된 인증 코드 조회
+
+        if (savedCode == null) {
+            return false; // 인증 코드 만료 또는 존재하지 않음
+        }
+
+        if (!savedCode.equals(inputCode)) {
+            return false; // 입력된 인증 코드 불일치
+        }
+
+        // 인증 성공 처리
+        redisTemplate.delete(key); // 재사용 방지를 위해 인증 코드 즉시 삭제
+        return true;
     }
 }

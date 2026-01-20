@@ -1,14 +1,15 @@
 package io.why503.accountservice.domain.accounts.model.entity;
 
 
+import io.why503.accountservice.common.model.entity.BasicEntity;
 import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
 import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
-import io.why503.accountservice.domain.accounts.utils.converter.GenderConverter;
-import io.why503.accountservice.domain.accounts.utils.converter.UserRoleConverter;
-import io.why503.accountservice.domain.accounts.utils.converter.UserStatusConverter;
-import io.why503.accountservice.domain.companies.model.entitys.Company;
+import io.why503.accountservice.util.converter.GenderConverter;
+import io.why503.accountservice.util.converter.UserRoleConverter;
+import io.why503.accountservice.util.converter.UserStatusConverter;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,21 +23,12 @@ ddl-auto = validate, 즉 검증만 하고 테이블을 만들거나 건들지 �
 @Getter
 @Table(name = "users")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Account {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "sq")
-    private Long sq;
-
+public class Account extends BasicEntity {
     @Column(name = "id")
     private String id;          //유니크함 = 비공식 식별자
 
     @Column(name = "password")
     private String password;
-
-    @Setter
-    @Column(name = "name")
-    private String name;
 
     @Setter
     @Column(name = "birthday")
@@ -46,26 +38,6 @@ public class Account {
     @Column(name = "gender")
     @Convert(converter = GenderConverter.class)
     private Gender gender;
-
-    @Setter
-    @Column(name = "phone")
-    private String phone;
-
-    @Setter
-    @Column(name = "email")
-    private String email;
-
-    @Setter
-    @Column(name = "basic_addr")
-    private String basicAddr;
-
-    @Setter
-    @Column(name = "detail_addr")
-    private String detailAddr;
-
-    @Setter
-    @Column(name = "post")
-    private String post;
 
     @Column(name = "join_date")
     private final LocalDateTime joinDate = LocalDateTime.now();

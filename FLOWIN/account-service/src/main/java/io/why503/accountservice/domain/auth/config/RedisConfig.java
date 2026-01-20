@@ -7,7 +7,7 @@
  * - 인증 유효시간(TTL) 관리
  */
 
-package io.why503.accountservice.domain.companies.config;
+package io.why503.accountservice.domain.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

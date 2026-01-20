@@ -4,7 +4,7 @@
  * - 회사 이메일과 인증 코드 전달
  * - 이메일 인증 여부 검증 요청
  */
-package io.why503.accountservice.domain.companies.model.dto.requset;
+package io.why503.accountservice.domain.auth.model.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

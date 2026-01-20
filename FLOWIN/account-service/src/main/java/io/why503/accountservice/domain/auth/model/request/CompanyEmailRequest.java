@@ -5,7 +5,7 @@
  * - 이메일 형식 및 길이 사전 검증
  */
 
-package io.why503.accountservice.domain.companies.model.dto.requset;
+package io.why503.accountservice.domain.auth.model.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

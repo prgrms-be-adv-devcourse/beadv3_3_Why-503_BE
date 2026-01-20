@@ -1,4 +1,4 @@
-package io.why503.accountservice.domain.accounts.utils.converter;
+package io.why503.accountservice.util.converter;
 
 import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
 import jakarta.persistence.AttributeConverter;

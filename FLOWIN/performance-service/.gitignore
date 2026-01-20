@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 *.yml
 *.pem
+!**/application-test.yml
 
 ### STS ###
 .apt_generated

@@ -21,19 +21,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class ShowMapper {
 
-    public ShowEntity toEntity(ShowRequest req, Long companySq) {
+    public ShowEntity toEntity(ShowRequest request, Long companySq) {
         ShowEntity entity = ShowEntity.builder()
-                .showName(req.getShowName())
-                .startDate(req.getStartDate())
-                .endDate(req.getEndDate())
-                .openDt(req.getOpenDt())
-                .showTime(req.getShowTime())
-                .viewingAge(req.getViewingAge())
-                .concertHallSq(req.getConcertHallSq())
+                .showName(request.getShowName())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .openDt(request.getOpenDt())
+                .showTime(request.getShowTime())
+                .viewingAge(request.getViewingAge())
+                .concertHallSq(request.getConcertHallSq())
                 .companySq(companySq)
                 .build();
 
-        entity.setCategory(ShowCategory.fromCode(req.getCategory()));
+        entity.setCategory(ShowCategory.fromCode(request.getCategory()));
         entity.setShowStatus(ShowStatus.SCHEDULED);
 
         return entity;

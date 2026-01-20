@@ -25,7 +25,7 @@ public interface ShowService {
      * (COMPANY 권한 필수)
      */
     Long createShowWithSeats(
-            ShowCreateWithSeatPolicyRequest req,
+            ShowCreateWithSeatPolicyRequest request,
             String authorization
     );
 
@@ -34,7 +34,7 @@ public interface ShowService {
      * (COMPANY 권한 필수)
      */
     ShowResponse createShow(
-            ShowRequest req,
+            ShowRequest request,
             String authorization
     );
 

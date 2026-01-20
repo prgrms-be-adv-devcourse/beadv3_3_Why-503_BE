@@ -43,10 +43,10 @@ public class ShowServiceImpl implements ShowService {
     @Override
     @Transactional
     public Long createShowWithSeats(
-            ShowCreateWithSeatPolicyRequest req,
+            ShowCreateWithSeatPolicyRequest request,
             String authorization
     ) {
-        ShowRequest showReq = req.getShow();
+        ShowRequest showReq = request.getShow();
 
         Long companySq = resolveCompanySq(authorization);
         ShowCategory category = ShowCategory.fromCode(showReq.getCategory());
@@ -82,7 +82,7 @@ public class ShowServiceImpl implements ShowService {
                         .collect(Collectors.groupingBy(SeatEntity::getSeatArea));
 
         List<ShowSeatEntity> showSeats =
-                req.getSeatPolicies().stream()
+                request.getSeatPolicies().stream()
                         .flatMap(policy ->
                                 createShowSeatsByPolicy(savedShow, policy, seatsByArea).stream()
                         )
@@ -99,20 +99,20 @@ public class ShowServiceImpl implements ShowService {
     @Override
     @Transactional
     public ShowResponse createShow(
-            ShowRequest req,
+            ShowRequest request,
             String authorization
     ) {
         Long companySq = resolveCompanySq(authorization);
-        ShowCategory category = ShowCategory.fromCode(req.getCategory());
+        ShowCategory category = ShowCategory.fromCode(request.getCategory());
 
         ShowEntity show = ShowEntity.builder()
-                .showName(req.getShowName())
-                .startDate(req.getStartDate())
-                .endDate(req.getEndDate())
-                .openDt(req.getOpenDt())
-                .showTime(req.getShowTime())
-                .viewingAge(req.getViewingAge())
-                .concertHallSq(req.getConcertHallSq())
+                .showName(request.getShowName())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .openDt(request.getOpenDt())
+                .showTime(request.getShowTime())
+                .viewingAge(request.getViewingAge())
+                .concertHallSq(request.getConcertHallSq())
                 .companySq(companySq)
                 .build();
 
@@ -191,16 +191,16 @@ public class ShowServiceImpl implements ShowService {
      */
     private Long resolveCompanySq(String authorization) {
         try {
-            CompanyInfoResponse res =
+            CompanyInfoResponse response =
                     accountServiceClient.getMyCompanyInfo(authorization);
 
-            if (res == null || res.getCompanySq() == null) {
+            if (response == null || response.getCompanySq() == null) {
                 throw new PerformanceForbiddenException(
                         "company info not found for current user"
                 );
             }
 
-            return res.getCompanySq();
+            return response.getCompanySq();
 
         } catch (FeignException.Forbidden e) {
             throw new PerformanceForbiddenException(

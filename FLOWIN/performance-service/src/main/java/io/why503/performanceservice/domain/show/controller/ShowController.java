@@ -37,12 +37,12 @@ public class ShowController {
      */
     @PostMapping
     public ResponseEntity<ShowResponse> createShow(
-            @RequestBody ShowRequest req,
+            @RequestBody ShowRequest request,
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
         requireAuthorization(authorization);
-        ShowResponse res = showService.createShow(req, authorization);
-        return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        ShowResponse response = showService.createShow(request, authorization);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -51,11 +51,11 @@ public class ShowController {
      */
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(
-            @RequestBody ShowCreateWithSeatPolicyRequest req,
+            @RequestBody ShowCreateWithSeatPolicyRequest request,
             @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
         requireAuthorization(authorization);
-        Long showSq = showService.createShowWithSeats(req, authorization);
+        Long showSq = showService.createShowWithSeats(request, authorization);
         return ResponseEntity.status(HttpStatus.CREATED).body(showSq);
     }
 
@@ -66,8 +66,8 @@ public class ShowController {
     public ResponseEntity<ShowResponse> getShow(
             @PathVariable Long showSq
     ) {
-        ShowResponse res = showService.getShow(showSq);
-        return ResponseEntity.ok(res);
+        ShowResponse response = showService.getShow(showSq);
+        return ResponseEntity.ok(response);
     }
 
     /**

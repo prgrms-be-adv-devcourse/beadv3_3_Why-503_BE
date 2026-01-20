@@ -13,7 +13,7 @@ public interface AccountServiceClient {
      * - COMPANY 권한 검증은 account-service 책임
      * - 성공 시 companySq 반환
      */
-    @GetMapping("/internal/users/me/company-info")
+    @GetMapping("/internal/account/company")
     CompanyInfoResponse getMyCompanyInfo(
             @RequestHeader("Authorization") String authorization
     );

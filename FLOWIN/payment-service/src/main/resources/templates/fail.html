@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/fail-page.css">
+    <title>결제 실패</title>
+</head>
+<body>
+    <div class="failure-container">
+
+    <div class="failure-icon">✕</div>
+
+    <h1 class="failure-title">결제에 실패했습니다</h1>
+    <p class="failure-subtitle">결제 과정에서 문제가 발생했습니다.</p>
+
+    <div class="order-summary">
+        <h3>주문 정보</h3>
+        <div class="summary-row">
+            <span class="summary-label">주문번호</span>
+            <span class="summary-value" id="orderId">[[ ${orderId} ]]</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">상품명</span>
+            <span class="summary-value" id="orderName">[[ ${productName} ]]</span>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">결제금액</span>
+            <span class="summary-value" id="amount"> [[ ${amount} ]]</span>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="/" class="btn btn-primary">다시 시도</a>
+        <a href="/" class="btn btn-secondary">홈으로</a>
+    </div>
+
+</div>
+</body>
+</html>

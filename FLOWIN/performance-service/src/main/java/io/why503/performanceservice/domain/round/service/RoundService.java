@@ -50,7 +50,7 @@ public class RoundService {
         }
 
         //공연 시퀸스가 없으면 회차를 생성 할 수 없는 예외 문구
-        if ( !roundRepository.existsByshow(request.getShowSq())) {
+        if ( !roundRepository.existsByShowSq(request.getShowSq())) {
             throw new IllegalArgumentException("공연 시퀀스가 없어 회차를 생성할 수 없습니다.");
         }
 
@@ -61,7 +61,7 @@ public class RoundService {
             throw new IllegalArgumentException("공연 일시 필수입니다.");
         }
         //같은 회차가 있을 시 존재하는 예외 문구
-        if (roundRepository.existsByShowAndNo(request.getShowSq(), request.getRoundNum())) {
+        if (roundRepository.existsByShowSqAndRoundNum(request.getShowSq(), request.getRoundNum())) {
             throw new IllegalArgumentException("이미 존재하는 회차입니다.");
         }
         /**

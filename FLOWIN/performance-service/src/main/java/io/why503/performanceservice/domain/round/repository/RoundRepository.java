@@ -22,10 +22,10 @@ public interface RoundRepository extends JpaRepository<RoundEntity,Long> {
     boolean existsByShowSqAndRoundDt(Long showSq, LocalDateTime roundDt);
 
     //같은 회차 존재하는지 확인
-    boolean existsByShowAndNo(Long showSq, Integer no);
+    boolean existsByShowSqAndRoundNum(Long showSq, Integer roundNum);
 
     //공연 시퀸스 존재하는지 확인
-    boolean existsByshow(Long showSq);
+    boolean existsByShowSq(Long showSq);
 }
 
 

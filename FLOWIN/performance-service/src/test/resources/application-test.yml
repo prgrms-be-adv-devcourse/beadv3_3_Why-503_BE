@@ -17,7 +17,7 @@ spring:
       enabled: false
 
   main:
-    allow-bean-definition-overriding: ture
+    allow-bean-definition-overriding: true
 
 eureka:
   client:

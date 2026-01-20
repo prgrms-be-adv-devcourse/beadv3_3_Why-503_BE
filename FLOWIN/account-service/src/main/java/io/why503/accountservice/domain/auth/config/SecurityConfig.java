@@ -36,12 +36,12 @@ public class SecurityConfig {
                         .successHandler(authenticationSuccessHandler)   //성공핸들러
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/auth/logout")
-                        .deleteCookies(cookieName)
-                        .logoutSuccessHandler(
+                        .logoutUrl("/auth/logout") //로그아웃 url
+                        .deleteCookies(cookieName) //삭제할 쿠키
+                        .logoutSuccessHandler( //로그아웃 성공시 핸들러
                                 (request, response, authentication) -> {
-                                    expireCookie(response, cookieName);
-                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    expireCookie(response, cookieName); //하단 참조
+                                    response.setStatus(HttpServletResponse.SC_OK); //성공 시 반환할 Http 코드
                                 }
                         )
                 )

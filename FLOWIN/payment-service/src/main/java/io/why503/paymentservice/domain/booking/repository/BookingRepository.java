@@ -27,4 +27,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT DISTINCT b FROM Booking b JOIN FETCH b.tickets " +
             "WHERE b.userSq = :userSq ORDER BY b.bookingDt DESC")
     List<Booking> findByUserSq(@Param("userSq") Long userSq);
+
+    Optional<Booking> findByOrderId(String orderId);
+
 }

@@ -1,12 +1,10 @@
 package io.why503.paymentservice.global.client.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 //추후 테스트 진행
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

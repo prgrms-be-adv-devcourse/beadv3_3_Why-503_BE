@@ -29,7 +29,6 @@ import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallE
 import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
 import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 import io.why503.performanceservice.domain.seat.service.SeatService;
-
 import java.math.BigDecimal;
 
 @Slf4j

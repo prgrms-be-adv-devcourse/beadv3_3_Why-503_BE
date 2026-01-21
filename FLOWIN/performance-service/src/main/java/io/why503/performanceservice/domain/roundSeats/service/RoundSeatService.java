@@ -29,8 +29,8 @@ public class RoundSeatService {
     private final RoundSeatMapper roundSeatMapper;
     private final ShowSeatRepository showSeatRepository; //공연 좌석 정보 조회
 
-    // [추가] Redis 작업을 위한 템플릿 주입
-    private final RedisTemplate<String, String> redisTemplate;
+    //Redis 작업을 위한 템플릿 주입
+    private final RedisTemplate<String, Object> redisTemplate;
 
     //회차 좌석 생성
     @Transactional
@@ -79,7 +79,7 @@ public class RoundSeatService {
     }
 
     //좌석 선점
-    // [변경] 유저 식별자(userSq) 파라미터 추가 (Redis 저장을 위함)
+    // 유저 식별자(userSq) 파라미터 추가 (Redis 저장을 위함)
     @Transactional
     public List<SeatReserveResponse> reserveSeats(Long userSq, List<Long> roundSeatSqs) {
         List<SeatReserveResponse> responseList = new ArrayList<>();
@@ -155,16 +155,18 @@ public class RoundSeatService {
     // 유저 식별자(userSq) 파라미터 추가 (본인 확인을 위함)
     @Transactional
     public void confirmSeats(Long userSq, List<Long> roundSeatSqs) {
-        // [추가] Redis 검증 로직 (DB 변경 전에 먼저 수행)
+        // Redis 검증 로직 (DB 변경 전에 먼저 수행)
         for (Long seatId : roundSeatSqs) {
             String key = "seat_owner:" + seatId;
-            String savedUserSq = redisTemplate.opsForValue().get(key);
+            Object savedValue = redisTemplate.opsForValue().get(key);
 
-            // Redis에 데이터가 없으면 (선점이 풀렸거나 없는 좌석)
-            if (savedUserSq == null) {
+            // Redis에 데이터가 없으면 (선점이 풀렸거나 없는 좌석) null반환
+            if (savedValue == null) {
                 throw new IllegalArgumentException("선점 정보가 존재하지 않습니다. 다시 예매해주세요.");
             }
 
+            //Object를 String으로 변환해서 비교
+            String savedUserSq = String.valueOf(savedValue);
             // 저장된 주인과 요청한 사람이 다르면
             if (!savedUserSq.equals(String.valueOf(userSq))) {
                 throw new IllegalArgumentException("본인이 선점한 좌석만 결제할 수 있습니다.");

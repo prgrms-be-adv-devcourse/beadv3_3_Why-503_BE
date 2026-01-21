@@ -1,35 +1,23 @@
 package io.why503.paymentservice.global.client.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
-/**
- * 회차 좌석 정보 응답 DTO
- * - Performance Service로부터 받아온 공연 및 좌석 상세 정보입니다.
- */
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class RoundSeatResponse {
+public record RoundSeatResponse(
+        Long roundSeatSq, // 회차별 좌석 ID
+        Integer price,    // 티켓 가격
 
-    private Long roundSeatSq; // 회차별 좌석 ID
-    private Integer price;    // 티켓 가격
+        // 공연 정보
+        String showName,
+        String concertHallName,
+        LocalDateTime roundDate,
 
-    // 공연 정보
-    private String showName;
-    private String concertHallName;
-    private LocalDateTime roundDate;
-
-    // 좌석 정보
-    private String grade;
-    private String seatArea;
-    private Integer areaSeatNumber;
-
+        // 좌석 정보
+        String grade,
+        String seatArea,
+        Integer areaSeatNumber
+) {
+    // 레코드에서도 메서드를 추가할 수 있습니다.
+    // 접근자 호출 시 'get'을 떼고 호출하도록 내부 로직을 수정했습니다.
     public String getFormattedSeatNo() {
         return this.seatArea + "-" + this.areaSeatNumber;
     }

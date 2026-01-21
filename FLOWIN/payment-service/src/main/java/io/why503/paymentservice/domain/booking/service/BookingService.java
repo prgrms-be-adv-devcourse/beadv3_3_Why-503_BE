@@ -78,20 +78,20 @@ public class BookingService {
         // 5. 티켓 스냅샷 생성
         for (RoundSeatResponse seatInfo : reservedSeats) {
             Ticket ticket = Ticket.builder()
-                    .roundSeatSq(seatInfo.getRoundSeatSq())
-                    .showName(seatInfo.getShowName())
-                    .concertHallName(seatInfo.getConcertHallName())
-                    .roundDate(seatInfo.getRoundDate())
-                    .grade(seatInfo.getGrade())
-                    .seatArea(seatInfo.getSeatArea())
-                    .areaSeatNumber(seatInfo.getAreaSeatNumber())
-                    .originalPrice(seatInfo.getPrice())
-                    .finalPrice(seatInfo.getPrice())
+                    .roundSeatSq(seatInfo.roundSeatSq())
+                    .showName(seatInfo.showName())
+                    .concertHallName(seatInfo.concertHallName())
+                    .roundDate(seatInfo.roundDate())
+                    .grade(seatInfo.grade())
+                    .seatArea(seatInfo.seatArea())
+                    .areaSeatNumber(seatInfo.areaSeatNumber())
+                    .originalPrice(seatInfo.price())
+                    .finalPrice(seatInfo.price())
                     .ticketStatus(TicketStatus.RESERVED)
                     .build();
 
             booking.addTicket(ticket);
-            totalTicketPrice += seatInfo.getPrice();
+            totalTicketPrice += seatInfo.price();
         }
 
         // 6. 금액 및 포인트 설정
@@ -127,8 +127,8 @@ public class BookingService {
         AccountResponse account = accountClient.getAccount(userSq);
         int requestPoint = (pointToUse != null) ? pointToUse : 0;
 
-        if (account.getPoint() < requestPoint) {
-            throw new IllegalArgumentException(String.format("포인트 부족 (보유: %d / 요청: %d)", account.getPoint(), requestPoint));
+        if (account.point() < requestPoint) {
+            throw new IllegalArgumentException(String.format("포인트 부족 (보유: %d / 요청: %d)", account.point(), requestPoint));
         }
 
         // 2. 포인트 적용 (Entity 내부에서 pgAmount 재계산됨)
@@ -153,11 +153,8 @@ public class BookingService {
         // 2. 포인트 사용 처리 (사용한 포인트가 있을 경우에만)
         if (booking.getUsedPoint() > 0) {
             log.info(">>> [Booking] 포인트 차감 요청 | UserSq={}, Amount={}", booking.getUserSq(), booking.getUsedPoint());
-            try {
-                accountClient.usePoint(PointUseRequest.builder()
-                        .userSq(booking.getUserSq())
-                        .amount(booking.getUsedPoint())
-                        .build());
+            try {// 빌더 대신 new PointUseRequest(...) 사용
+                accountClient.usePoint(new PointUseRequest(booking.getUserSq(), booking.getUsedPoint()));
             } catch (Exception e) {
                 log.error(">>> [Compensate] 포인트 차감 실패: {}", e.getMessage());
                 throw new IllegalStateException("포인트 차감 실패로 인해 결제를 취소합니다.");
@@ -178,10 +175,7 @@ public class BookingService {
             if (booking.getUsedPoint() > 0) {
                 try {
                     // 아까 깎았던 포인트 다시 돌려주기
-                    accountClient.refundPoint(PointUseRequest.builder()
-                            .userSq(booking.getUserSq())
-                            .amount(booking.getUsedPoint())
-                            .build());
+                    accountClient.refundPoint(new PointUseRequest(booking.getUserSq(), booking.getUsedPoint()));
                     log.info(">>> [Compensate] 포인트 환불 완료");
                 } catch (Exception refundError) {
                     // 최악의 상황: 결제 취소도 해야 하는데 환불도 실패함.

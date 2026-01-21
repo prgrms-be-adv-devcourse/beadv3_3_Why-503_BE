@@ -50,18 +50,18 @@ public class PaymentService {
 
         try {
             // 1. PG사 승인 요청 (실제 과금 발생)
-            TossPaymentResponse result = requestConfirmToToss(request.getPaymentKey(), request.getOrderId(), request.getAmount());
+            TossPaymentResponse result = requestConfirmToToss(request.paymentKey(), request.orderId(), request.amount());
 
             // 영수증 URL 저장 (나중에 사용자에게 보여주기 위함)
-            booking.setReceiptUrl(result.getReceipt().getUrl());
+            booking.setReceiptUrl(result.receipt().url());
 
             try {
                 // 2. 내부 비즈니스 로직 수행 (BookingService)
                 // -> 여기서 포인트 차감, 좌석 확정 등이 일어납니다.
                 bookingService.confirmBooking(
                         booking.getBookingSq(),
-                        result.getPaymentKey(),
-                        result.getMethod()
+                        result.paymentKey(),
+                        result.method()
                 );
 
             } catch (Exception bizEx) {
@@ -71,10 +71,10 @@ public class PaymentService {
                 log.error(">>> [Payment] 내부 로직 실패로 인한 PG 자동 취소 진행: {}", bizEx.getMessage());
 
                 try {
-                    requestCancelToToss(result.getPaymentKey(), "시스템 오류(내부 로직 실패)로 인한 자동 취소", null);
+                    requestCancelToToss(result.paymentKey(), "시스템 오류(내부 로직 실패)로 인한 자동 취소", null);
                 } catch (Exception cancelEx) {
                     // 환불조차 실패하면 개발자가 수동으로 처리해야 하므로 CRITICAL 로그를 남깁니다.
-                    log.error(">>> [CRITICAL] PG 취소 실패! 수동 환불 필요. Key={}", result.getPaymentKey());
+                    log.error(">>> [CRITICAL] PG 취소 실패! 수동 환불 필요. Key={}", result.paymentKey());
                 }
 
                 // 원래 발생한 예외를 던져서, 바깥쪽 catch 블록으로 이동시킵니다.
@@ -97,7 +97,7 @@ public class PaymentService {
      */
     @Transactional
     public void cancelPayment(PaymentCancelRequest request) {
-        Booking booking = bookingRepository.findByOrderId(request.getOrderId())
+        Booking booking = bookingRepository.findByOrderId(request.orderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
         if (booking.getPaymentKey() == null) {
@@ -108,15 +108,15 @@ public class PaymentService {
 
         // 1. DB 및 내부 상태 취소 (먼저 수행)
         // 외부 API 호출 전에 DB 상태를 먼저 바꾸고, 실패 시 롤백되는 것이 안전합니다.
-        if (request.getTicketSq() != null) {
+        if (request.ticketSq() != null) {
             // [부분 취소] 특정 티켓만 취소
             Ticket targetTicket = booking.getTickets().stream()
-                    .filter(t -> t.getTicketSq().equals(request.getTicketSq()))
+                    .filter(t -> t.getTicketSq().equals(request.ticketSq()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("티켓이 존재하지 않습니다."));
 
             cancelAmount = targetTicket.getFinalPrice(); // 취소할 금액 계산
-            bookingService.cancelTicket(booking.getBookingSq(), request.getTicketSq());
+            bookingService.cancelTicket(booking.getBookingSq(), request.ticketSq());
 
         } else {
             // [전체 취소]
@@ -125,7 +125,7 @@ public class PaymentService {
 
         // 2. PG사 취소 요청 (실패 시 @Transactional로 인해 1번 로직도 롤백됨)
         try {
-            requestCancelToToss(booking.getPaymentKey(), request.getCancelReason(), cancelAmount);
+            requestCancelToToss(booking.getPaymentKey(), request.cancelReason(), cancelAmount);
         } catch (Exception e) {
             log.error("PG사 취소 요청 실패: {}", e.getMessage());
             throw new IllegalStateException("PG사 결제 취소 실패 (잠시 후 다시 시도해주세요)");
@@ -153,14 +153,14 @@ public class PaymentService {
      * - 이미 결제된 건인지, 프론트에서 보낸 금액이 DB와 일치하는지 확인합니다.
      */
     private Booking validateBooking(PaymentConfirmRequest request) {
-        Booking booking = bookingRepository.findByOrderId(request.getOrderId())
+        Booking booking = bookingRepository.findByOrderId(request.orderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
         if (booking.getBookingStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("이미 처리된 결제입니다.");
         }
         // 금액 위변조 방지 (DB 금액 vs 요청 금액)
-        if (!booking.getPgAmount().equals(request.getAmount())) {
+        if (!booking.getPgAmount().equals(request.amount())) {
             throw new IllegalStateException("결제 금액이 일치하지 않습니다.");
         }
         return booking;

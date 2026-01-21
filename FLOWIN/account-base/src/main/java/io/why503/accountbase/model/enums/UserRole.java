@@ -2,15 +2,12 @@ package io.why503.accountbase.model.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.Getter;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 /*
-enum은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성
+이넘은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성
  */
-@Getter
 public enum UserRole {
     ADMIN(0), USER(1), COMPANY(2);
 
@@ -52,6 +49,10 @@ public enum UserRole {
 
     @JsonValue
     public Integer toJson() {
+        return code;
+    }
+
+    public Integer getCode() {
         return code;
     }
 }

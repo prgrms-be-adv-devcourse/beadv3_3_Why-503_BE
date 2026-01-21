@@ -6,6 +6,9 @@ on:
       service-name:
         required: true
         type: string
+      service-type:
+        required: false
+        type: string
 
 jobs:
   code-test:
@@ -21,6 +24,13 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+
+      - name: account yml pem 세팅
+        if: ${{ inputs.service-type == 'account' }}
+        run: |
+          mkdir -p ./FLOWIN/account-service/src/main/resources
+          echo '${{ secrets.ACCOUNT_TEST_YML }}' > ./FLOWIN/account-service/src/main/resources/application.yml
+          echo '${{ secrets.PRIVATE_KEY_TEST_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key-test.pem
 
 #      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.
 #      - name: gradlew 권한 세팅

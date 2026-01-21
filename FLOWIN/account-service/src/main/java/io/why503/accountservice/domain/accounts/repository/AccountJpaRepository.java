@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface AccountJpaRepository extends JpaRepository<Account, Long> {
     Optional<Account> findBySq(Long sq);
     Optional<Account> findById(String id);
+    boolean existsById(String id);
 }

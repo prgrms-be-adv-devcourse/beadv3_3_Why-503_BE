@@ -28,8 +28,11 @@ public class RoundSeatController {
 
     // 회차 좌석 생성
     @PostMapping
-    public ResponseEntity<RoundSeatResponse> createRoundSeat(@Valid @RequestBody RoundSeatRequest request) {
-        RoundSeatResponse response = roundSeatService.createRoundSeat(request);
+    public ResponseEntity<RoundSeatResponse> createRoundSeat(
+            @RequestHeader("X-USER-SQ") Long userSq, // 헤더에서 유저 SQ 주입
+            @Valid @RequestBody RoundSeatRequest request
+    ) {
+        RoundSeatResponse response = roundSeatService.createRoundSeat(userSq, request);
         return ResponseEntity.ok(response);
     }
 
@@ -107,7 +110,7 @@ public class RoundSeatController {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body("이미 등록된 데이터입니다.");
+                .body("DB 에러 상세: " + e.getRootCause().getMessage());
     }
 
    // @Valid 유효성 검사 실패 (@NotNull 위반 등)

@@ -14,7 +14,7 @@ public interface PaymentClient {
      * [예매 생성 요청]
      * 내 서비스에서 선점(reserve) 성공 후, 결제 서비스의 BookingController를 호출합니다.
      */
-    @PostMapping("/bookings")
+    @PostMapping("/payments/booking")
     void createBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody PaymentRequest request

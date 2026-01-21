@@ -10,6 +10,8 @@ import io.why503.performanceservice.domain.roundSeats.model.mapper.RoundSeatMapp
 import io.why503.performanceservice.domain.roundSeats.repository.RoundSeatRepository;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
+import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
+import io.why503.performanceservice.global.client.accountservice.dto.UserRoleResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -30,18 +32,27 @@ public class RoundSeatService {
     private final RoundSeatMapper roundSeatMapper;
     private final ShowSeatRepository showSeatRepository; //공연 좌석 정보 조회
     private final PaymentClient paymentClient;
+    private final AccountServiceClient accountServiceClient;
 
     //Redis 작업을 위한 템플릿 주입
     private final RedisTemplate<String, Object> redisTemplate;
 
     //회차 좌석 생성
     @Transactional
-    public RoundSeatResponse createRoundSeat(RoundSeatRequest request){
-        // FK 연동을 위해 RoundEntity 조회
+    public RoundSeatResponse createRoundSeat(Long userSq, RoundSeatRequest request) {
+
+        // Account Service 호출하여 권한 확인
+        UserRoleResponse roleInfo = accountServiceClient.getUserRole(userSq);
+
+        // 관리자(ADMIN: 0) 권한 검증
+        if (roleInfo == null || roleInfo.userRole() != 0) {
+            throw new IllegalArgumentException("관리자 권한이 없습니다. 회차 좌석은 관리자만 생성 가능합니다.");
+        }
+
+        // 권한 통과 시 기존 생성 로직 수행
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회차입니다."));
 
-        // 조회한 roundEntity를 Mapper에 전달
         RoundSeatEntity entity = roundSeatMapper.dtoToEntity(request, roundEntity);
         RoundSeatEntity savedEntity = roundSeatRepository.save(entity);
 

@@ -1,0 +1,145 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.product-section {
+    padding: 30px;
+    border-bottom: 1px solid #e9ecef;
+    background: #fff;
+}
+
+.product-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.product-details h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0 0 8px 0;
+}
+
+.product-details p {
+    color: #6c757d;
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.product-price {
+    text-align: right;
+}
+
+.price-original {
+    font-size: 18px;
+    color: #6c757d;
+    text-decoration: line-through;
+    margin: 0;
+}
+
+.price-final {
+    font-size: 28px;
+    font-weight: 700;
+    color: #000;
+    margin: 4px 0 0 0;
+}
+
+.price-final .currency {
+    font-size: 20px;
+    color: #6c757d;
+}
+
+.product-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.summary-row:last-child {
+    margin-bottom: 0;
+    padding-top: 8px;
+    border-top: 1px solid #dee2e6;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.summary-label {
+    color: #6c757d;
+}
+
+.summary-value {
+    color: #212529;
+}
+
+.box_section {
+    padding: 40px 30px 50px 30px;
+}
+
+.button {
+    width: 100%;
+    background: #3182f6;
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background: #1b64da;
+}
+
+.button:disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .product-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .product-price {
+        text-align: left;
+        width: 100%;
+    }
+
+    .wrapper {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    body {
+        padding: 0;
+    }
+}

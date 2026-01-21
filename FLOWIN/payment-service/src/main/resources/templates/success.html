@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/success-page.css">
+    <title>결제 완료</title>
+</head>
+<body>
+<div class="success-container">
+
+    <div class="loading" id="loading">
+        결제 정보를 확인 중입니다...
+    </div>
+
+    <div id="success-content" style="display: none;">
+        <div class="success-icon">✓</div>
+
+        <h1 class="success-title">결제가 완료되었습니다</h1>
+        <p class="success-subtitle">주문이 정상적으로 처리되었습니다.</p>
+
+        <div class="order-info">
+
+            <h3>주문 정보</h3>
+
+            <div class="info-row">
+                <span class="info-label">주문번호</span>
+                <span class="info-value" id="orderId"> [[ ${orderId} ]] </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">상품명</span>
+                <span class="info-value" id="orderName"> [[ ${productName} ]] </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">결제금액</span>
+                <span class="info-value" id="amount"> [[ ${amount} ]] </span>
+            </div>
+
+        </div>
+
+        <div class="action-buttons">
+            <a href="/" class="btn btn-primary">확인</a>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('loading').style.display = 'block';
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    var requestData = {
+        paymentKey: urlParams.get("paymentKey"),
+        orderId: urlParams.get("orderId"),
+        amount: Number(urlParams.get("amount")), // 숫자로 변환 권장
+    };
+
+    // [수정] 백엔드 Controller의 경로와 일치시킴 (/internal/payments/confirm)
+    fetch('/internal/payments/confirm', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
+    })
+        .then(response => {
+            // [수정] 백엔드 응답이 200 OK이면 성공으로 간주
+            if (response.ok) {
+                return response;
+            } else {
+                throw new Error("Payment Confirm Failed");
+            }
+        })
+        .then(() => {
+            // 성공 UI 노출
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success-content').style.display = 'block';
+        })
+        .catch(err => {
+            // 실패 시 실패 페이지로 이동 (메시지 포함)
+            location.href = "/fail?message=PaymentConfirmFailed&code=CONFIRM_ERROR";
+        });
+
+</script>
+</body>
+</html>

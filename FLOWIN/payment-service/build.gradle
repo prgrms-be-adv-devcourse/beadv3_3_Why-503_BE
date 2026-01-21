@@ -42,6 +42,7 @@ dependencies {
 
     // feign (service to service)
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
     // security (추후 사용)
 //    implementation 'org.springframework.boot:spring-boot-starter-security'

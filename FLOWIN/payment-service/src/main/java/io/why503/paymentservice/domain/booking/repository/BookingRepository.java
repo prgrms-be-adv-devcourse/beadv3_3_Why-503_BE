@@ -11,19 +11,36 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 예매 레포지토리
+ */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    // 상세 조회: 티켓 정보도 같이 로딩합니다. (DB 성능 최적화)
+    /**
+     * 예매 상세 조회
+     * - N+1 문제 방지를 위해 티켓 목록을 Fetch Join(EntityGraph)으로 함께 가져옵니다.
+     */
     @EntityGraph(attributePaths = {"tickets"})
     Optional<Booking> findByBookingSq(Long bookingSq);
 
-    // 스케줄러용: "돈 안 내고 시간만 끄는(PENDING + 시간초과)" 예매를 찾습니다.
+    /**
+     * 만료된 예매 조회 (스케줄러용)
+     * - 특정 상태(PENDING)이면서 지정된 시간 이전에 생성된 건을 찾습니다.
+     */
     @Query("SELECT b FROM Booking b JOIN FETCH b.tickets " +
             "WHERE b.bookingStatus = :status AND b.bookingDt < :dateTime")
     List<Booking> findExpired(@Param("status") BookingStatus status,
                               @Param("dateTime") LocalDateTime dateTime);
 
+    /**
+     * 사용자별 예매 목록 조회
+     */
+    @Query("SELECT DISTINCT b FROM Booking b JOIN FETCH b.tickets " +
+            "WHERE b.userSq = :userSq ORDER BY b.bookingDt DESC")
+    List<Booking> findByUserSq(@Param("userSq") Long userSq);
 
-    //추후 테스트 진행
-    List<Booking> findByUserSq(Long userSq);
+    /**
+     * 주문 ID로 조회 (결제 검증용)
+     */
+    Optional<Booking> findByOrderId(String orderId);
 }

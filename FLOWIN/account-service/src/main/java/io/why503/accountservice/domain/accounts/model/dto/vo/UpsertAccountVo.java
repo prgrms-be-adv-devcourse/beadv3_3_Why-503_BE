@@ -1,6 +1,6 @@
 package io.why503.accountservice.domain.accounts.model.dto.vo;
 
-import io.why503.accountservice.domain.accounts.model.enums.Gender;
+import io.why503.accountbase.model.enums.Gender;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

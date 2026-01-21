@@ -1,10 +1,10 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
 
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountbase.model.response.UserCompanyResponse;
+import io.why503.accountbase.model.response.UserPointResponse;
+import io.why503.accountbase.model.response.UserRoleResponse;
 import io.why503.accountservice.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;

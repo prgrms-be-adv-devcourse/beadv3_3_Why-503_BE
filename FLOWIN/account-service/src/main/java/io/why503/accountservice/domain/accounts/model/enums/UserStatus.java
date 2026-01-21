@@ -1,4 +1,4 @@
-package io.why503.accountservice.domain.accounts.model.dto.enums;
+package io.why503.accountservice.domain.accounts.model.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

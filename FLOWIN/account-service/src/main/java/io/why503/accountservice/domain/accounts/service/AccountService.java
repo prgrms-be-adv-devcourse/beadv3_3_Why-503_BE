@@ -1,7 +1,7 @@
 package io.why503.accountservice.domain.accounts.service;
 
 
-import io.why503.accountservice.domain.accounts.model.dto.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;

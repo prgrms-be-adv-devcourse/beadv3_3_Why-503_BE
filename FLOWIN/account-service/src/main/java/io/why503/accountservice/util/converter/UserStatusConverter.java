@@ -1,6 +1,6 @@
 package io.why503.accountservice.util.converter;
 
-import io.why503.accountservice.domain.accounts.model.dto.enums.UserStatus;
+import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 /*

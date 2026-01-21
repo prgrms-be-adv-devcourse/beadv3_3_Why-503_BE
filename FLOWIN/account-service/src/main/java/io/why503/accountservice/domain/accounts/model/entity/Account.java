@@ -1,8 +1,8 @@
 package io.why503.accountservice.domain.accounts.model.entity;
 
 import io.why503.accountservice.common.model.entity.BasicEntity;
-import io.why503.accountservice.domain.accounts.model.dto.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.dto.enums.UserStatus;
+import io.why503.accountservice.domain.accounts.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
 import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import jakarta.persistence.*;

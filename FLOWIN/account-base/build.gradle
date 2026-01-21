@@ -47,7 +47,7 @@ publishing { //maven 배포 설정
         if (System.getenv("CI") == "true") { //환경변수 CI가 true -> github actions
             maven { //maven 저장소
                 url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE") //우리 uri
-                credentials {//인증정보
+                credentials {       //인증정보
                     username = System.getenv("GITHUB_ACTOR") //환경변수 github actions 사용자
                     password = System.getenv("GITHUB_TOKEN") //환경변수 github actions 토큰
                 }

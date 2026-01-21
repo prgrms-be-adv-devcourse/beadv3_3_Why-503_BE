@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -97,7 +99,7 @@ public class RoundSeatService {
         List<Long> showSeatIds = seats.stream()
                 //seat이 들어오면 getShowSeatSq를 호출
                 .map(seat -> seat.getShowSeatSq())
-                .collect(Collectors.toList());
+                .collect(toList());
 
         // 공연 좌석 정보 한 번에 조회
         List<ShowSeatEntity> showSeats = showSeatRepository.findAllById(showSeatIds);

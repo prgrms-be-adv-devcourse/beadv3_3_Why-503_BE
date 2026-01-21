@@ -15,6 +15,11 @@ jobs:
     name: 코드 테스트
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+
+
     steps:
       - name: 브랜치로 체크아웃
         uses: actions/checkout@v5

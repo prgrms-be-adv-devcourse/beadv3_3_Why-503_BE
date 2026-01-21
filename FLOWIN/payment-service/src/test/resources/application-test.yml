@@ -12,5 +12,7 @@ spring:
         format_sql: true
 
 toss:
-  client-key: "test_client_key"
   secret-key: "test_secret_key"
+  
+payment:
+  client-key: "test_client_key"

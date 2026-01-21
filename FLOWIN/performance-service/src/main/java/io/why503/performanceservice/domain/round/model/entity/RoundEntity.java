@@ -3,6 +3,7 @@ package io.why503.performanceservice.domain.round.model.entity;
 
 import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
 import io.why503.performanceservice.domain.round.model.dto.enumconverter.RoundStatusConverter;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,10 +22,9 @@ public class RoundEntity {
     @Column(name = "round_sq")
     private Long roundSq;       //회차시퀀스
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "show_sq", nullable = false)
-    @Column(name = "show_sq")
-    private Long showSq;    //공연시퀀스
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "show_sq", nullable = false)
+    private ShowEntity showSq;    //공연시퀀스
 
     @Column(name = "round_dt",nullable = false)
     private LocalDateTime roundDt; //회차 일시

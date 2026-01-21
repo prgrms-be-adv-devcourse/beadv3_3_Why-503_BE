@@ -1,0 +1,77 @@
+plugins {
+    id 'java-library' //파일의 성격을 명시
+    id 'maven-publish' //maven저장소, publish기능 = 배포
+    id 'io.spring.dependency-management' version '1.1.7' //이건 매번 보는 의존성 매니저
+}
+//프로젝트 메타 데이터
+group = 'io.why503'
+version = '0.0.1'
+description = 'account-base'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar() //-sources.jar를 생성, IDE에서 코드 확인 가능 -> 배포를 위해 필요함
+}
+
+dependencyManagement { //Dependency Management 설정
+    imports {
+        //내가 사용할 의존성 버전들, 지금 나는 3.5.9 사용하니까 그걸로 명시
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.9"
+    }
+}
+
+jar{ //JAR 태스크 설정
+    //jar 파일 생성 활성화
+    //디폴트가 true긴 한데, 일단 명시적으로 설정
+    enabled = true
+}
+
+publishing { //maven 배포 설정
+    publications { //배포할 아키텍처 정의
+
+
+        //mavenJava라는 이름의 Maven 배포 설정, 타입은 MavenPublication
+        mavenJava(MavenPublication) {
+            from components.java //Java 컴포넌트(JAR, sources JAR 등)를 배포 대상으로 사용
+
+            versionMapping { //런타임/컴파일 시점 의존성 버전 매핑 설정
+                usage('java-runtime') { //런타임 사용 시 버전 매핑 설정
+                    fromResolutionResult() //실제 Gradle이 해결한 의존성 버전을 기준으로 매핑
+                }
+            }
+        }
+    }
+    repositories {//배포 대상 저장소 설정
+        if (System.getenv("CI") == "true") { //환경변수 CI가 true -> github actions
+            maven { //maven 저장소
+                url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE") //우리 uri
+                credentials {       //인증정보
+                    username = System.getenv("GITHUB_ACTOR") //환경변수 github actions 사용자
+                    password = System.getenv("GITHUB_TOKEN") //환경변수 github actions 토큰
+                }
+            }
+        } else { //ci 환경이 아니면 로컬저장소에 배포
+            mavenLocal()
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compileOnly 'org.springframework.boot:spring-boot-starter-validation'
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

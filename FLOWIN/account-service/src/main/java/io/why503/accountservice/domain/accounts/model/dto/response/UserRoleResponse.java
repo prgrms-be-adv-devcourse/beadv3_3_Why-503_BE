@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 /*
 sq, name, Role만 반환하는 컴팩트한 응답
  */
-public record UserSummaryResponse(
+public record UserRoleResponse(
         @NotNull Long userSq,
         @NotBlank String userName,
         @NotNull int userRole){

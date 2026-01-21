@@ -4,8 +4,7 @@ package io.why503.accountservice.domain.accounts.controller;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
-import io.why503.accountservice.domain.accounts.model.entity.Account;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,33 +25,33 @@ public class AccountsController {
     private final AccountService accountService;
     //생성
     @PostMapping
-    public ResponseEntity<UserSummaryResponse> create(
+    public ResponseEntity<UserRoleResponse> create(
             @RequestBody UpsertAccountRequest request
     ){
-        UserSummaryResponse savedAccount = accountService.create(request);
+        UserRoleResponse savedAccount = accountService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(savedAccount);
     }
     //모두 조회
     @GetMapping
-    public ResponseEntity<List<UserSummaryResponse>> readAll(){
-        List<UserSummaryResponse> foundAccountList = accountService.readAll();
+    public ResponseEntity<List<UserRoleResponse>> readAll(){
+        List<UserRoleResponse> foundAccountList = accountService.readAll();
         return ResponseEntity.ok(foundAccountList);
     }
     //sq기준 조회
     @GetMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> readBySq(
+    public ResponseEntity<UserRoleResponse> readBySq(
             @PathVariable Long sq
     ){
-        UserSummaryResponse foundAccount = accountService.readBySq(sq);
+        UserRoleResponse foundAccount = accountService.readBySq(sq);
         return ResponseEntity.ok(foundAccount);
     }
     //id기준 조회
     @GetMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> readById(
+    public ResponseEntity<UserRoleResponse> readById(
             @PathVariable String id
     ){
-        UserSummaryResponse foundAccount = accountService.readById(id);
+        UserRoleResponse foundAccount = accountService.readById(id);
         return ResponseEntity.ok(foundAccount);
     }
 
@@ -80,40 +79,40 @@ public class AccountsController {
 
     //sq기준 수정
     @PatchMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> updateBySq(
+    public ResponseEntity<UserRoleResponse> updateBySq(
             @PathVariable Long sq,
             @RequestBody UpsertAccountRequest request
     ){
-        UserSummaryResponse updatedAccount = accountService.updateBySq(sq, request);
+        UserRoleResponse updatedAccount = accountService.updateBySq(sq, request);
         return ResponseEntity.ok(updatedAccount);
     }
     //id기준 수정
     @PatchMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> updateById(
+    public ResponseEntity<UserRoleResponse> updateById(
             @PathVariable String id,
             @RequestBody UpsertAccountRequest request
     ){
-        UserSummaryResponse updatedAccount = accountService.updateById(id, request);
+        UserRoleResponse updatedAccount = accountService.updateById(id, request);
         return ResponseEntity.ok(updatedAccount);
     }
 
 
     //sq기준 삭제
     @DeleteMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> delete(
+    public ResponseEntity<UserRoleResponse> delete(
             @PathVariable Long sq
     ){
-        UserSummaryResponse deletedAccount = accountService.deleteBySq(sq);
+        UserRoleResponse deletedAccount = accountService.deleteBySq(sq);
         return ResponseEntity.ok(deletedAccount);
     }
 
 
     //id기준 삭제
     @DeleteMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> delete(
+    public ResponseEntity<UserRoleResponse> delete(
             @PathVariable String id
     ){
-        UserSummaryResponse deletedAccount = accountService.deleteById(id);
+        UserRoleResponse deletedAccount = accountService.deleteById(id);
         return ResponseEntity.ok(deletedAccount);
     }
 }

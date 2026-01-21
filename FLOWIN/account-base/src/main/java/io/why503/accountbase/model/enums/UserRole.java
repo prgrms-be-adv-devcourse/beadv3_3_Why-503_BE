@@ -1,8 +1,7 @@
-package io.why503.accountservice.domain.accounts.model.enums;
+package io.why503.accountbase.model.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;

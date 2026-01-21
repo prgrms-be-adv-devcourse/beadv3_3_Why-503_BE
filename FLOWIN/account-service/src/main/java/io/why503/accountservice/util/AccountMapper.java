@@ -3,7 +3,7 @@ package io.why503.accountservice.util;
 
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
 import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
@@ -46,8 +46,8 @@ public class AccountMapper {
         );
     }
     //엔티티를 찾아서 summaryResponse로 만들기 위한 함수
-    public UserSummaryResponse entityToSummaryResponse(Account account){
-        return new UserSummaryResponse(
+    public UserRoleResponse entityToSummaryResponse(Account account){
+        return new UserRoleResponse(
                 account.getSq(),
                 account.getName(),
                 account.getRole().getCode()

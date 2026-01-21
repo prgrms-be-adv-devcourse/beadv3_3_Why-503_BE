@@ -16,8 +16,6 @@ spring:
     discovery:
       enabled: false
 
-  main:
-    allow-bean-definition-overriding: true
 
 eureka:
   client:

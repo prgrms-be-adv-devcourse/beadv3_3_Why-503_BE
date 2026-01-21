@@ -3,6 +3,7 @@ package io.why503.performanceservice.domain.roundSeats.service;
 
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
+import io.why503.performanceservice.domain.roundSeats.client.PaymentClient;
 import io.why503.performanceservice.domain.roundSeats.model.dto.*;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
 import io.why503.performanceservice.domain.roundSeats.model.mapper.RoundSeatMapper;
@@ -28,6 +29,7 @@ public class RoundSeatService {
     private final RoundRepository roundRepository; // 추가됨
     private final RoundSeatMapper roundSeatMapper;
     private final ShowSeatRepository showSeatRepository; //공연 좌석 정보 조회
+    private final PaymentClient paymentClient;
 
     //Redis 작업을 위한 템플릿 주입
     private final RedisTemplate<String, Object> redisTemplate;
@@ -135,6 +137,8 @@ public class RoundSeatService {
                     .areaSeatNumber(showSeat.getSeat().getAreaSeatNo())
                     .build());
         }
+
+        paymentClient.createBooking(userSq, new PaymentRequest(userSq, roundSeatSqs));
 
         return responseList;
     }

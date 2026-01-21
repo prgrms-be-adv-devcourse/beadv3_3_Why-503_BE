@@ -59,27 +59,26 @@ public class RoundSeatController {
     // 좌석 선점
     @PostMapping("/reserve")
     public ResponseEntity<List<SeatReserveResponse>> reserveSeats(
-            @RequestHeader("X-USER-SQ") Long userSq,  // 헤더에서 유저 번호 받기
-            @RequestBody List<Long> roundSeatSqs
-            ) {
+            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq, // 상대방이 안 보낼 경우를 대비
+            @RequestBody List<Long> roundSeatSqs) {
         List<SeatReserveResponse> response = roundSeatService.reserveSeats(userSq, roundSeatSqs);
         return ResponseEntity.ok(response);
     }
 
     // 좌석 선점 해제
-    @PostMapping("/release")
-    public ResponseEntity<String> releaseSeats(@RequestBody List<Long> roundSeatSqs) {
+    @PostMapping("/cancel")
+    public ResponseEntity<String> cancelSeats(@RequestBody List<Long> roundSeatSqs) {
         roundSeatService.releaseSeats(roundSeatSqs);
-        return ResponseEntity.ok("좌석 선점이 정상적으로 취소되었습니다.");
+        return ResponseEntity.ok("선점이 취소되었습니다.");
     }
 
     // 좌석 판매 확정
     @PostMapping("/confirm")
     public ResponseEntity<String> confirmSeats(
-            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq,
             @RequestBody List<Long> roundSeatSqs) {
         roundSeatService.confirmSeats(userSq, roundSeatSqs);
-        return ResponseEntity.ok("좌석 판매가 정상적으로 확정되었습니다.");
+        return ResponseEntity.ok("판매가 확정되었습니다.");
     }
 
     // GlobalExceptionHandler에 넣을 내용들, 지금은 충돌이 일어날 수 있어서 컨트롤러에 작성함

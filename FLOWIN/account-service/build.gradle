@@ -25,9 +25,22 @@ configurations {
 
 repositories {
     mavenCentral()
+    if (System.getenv("CI") == "true") {
+        maven {
+            url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    } else {
+        mavenLocal()
+    }
 }
 
 dependencies {
+    implementation 'io.why503:account-base:0.0.1'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
@@ -38,6 +51,8 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2'
+
+
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
     testImplementation 'org.springframework.security:spring-security-test'

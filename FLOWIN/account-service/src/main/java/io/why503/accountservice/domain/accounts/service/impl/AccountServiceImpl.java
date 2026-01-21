@@ -3,7 +3,7 @@ package io.why503.accountservice.domain.accounts.service.impl;
 
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
@@ -44,7 +44,7 @@ public class AccountServiceImpl implements AccountService {
     }
     @Override
     @Transactional
-    public UserSummaryResponse create(UpsertAccountRequest request){
+    public UserRoleResponse create(UpsertAccountRequest request){
 
         Account account = new Account(
                 accountMapper.upsertDtoToUpsertVo(request)
@@ -55,7 +55,7 @@ public class AccountServiceImpl implements AccountService {
     //모든 회원 조회
     @Override
     @Transactional(readOnly = true)
-    public List<UserSummaryResponse> readAll() {
+    public List<UserRoleResponse> readAll() {
         return accountJpaRepository.findAll().stream()
                 .map((account) -> accountMapper.entityToSummaryResponse(account))
                 .toList();
@@ -63,14 +63,14 @@ public class AccountServiceImpl implements AccountService {
     //sq기반 조회
     @Override
     @Transactional(readOnly = true)
-    public UserSummaryResponse readBySq(Long sq) {
+    public UserRoleResponse readBySq(Long sq) {
         Account account = findBySq(sq);
         return accountMapper.entityToSummaryResponse(account);
     }
     //id기반 조회
     @Override
     @Transactional(readOnly = true)
-    public UserSummaryResponse readById(String id) {
+    public UserRoleResponse readById(String id) {
         Account account = findById(id);
         return accountMapper.entityToSummaryResponse(account);
     }
@@ -84,7 +84,7 @@ public class AccountServiceImpl implements AccountService {
     //sq기반 수정
     @Override
     @Transactional
-    public UserSummaryResponse updateBySq(Long sq, UpsertAccountRequest request) {
+    public UserRoleResponse updateBySq(Long sq, UpsertAccountRequest request) {
         Account account = findBySq(sq);
         account.update(accountMapper.upsertDtoToUpsertVo(request));
         return accountMapper.entityToSummaryResponse(account);
@@ -92,7 +92,7 @@ public class AccountServiceImpl implements AccountService {
     //id기반 수정
     @Override
     @Transactional
-    public UserSummaryResponse updateById(String id, UpsertAccountRequest request) {
+    public UserRoleResponse updateById(String id, UpsertAccountRequest request) {
         Account account = findById(id);
         account.update(accountMapper.upsertDtoToUpsertVo(request));
         return accountMapper.entityToSummaryResponse(account);
@@ -100,7 +100,7 @@ public class AccountServiceImpl implements AccountService {
     //sq기반 삭제
     @Override
     @Transactional
-    public UserSummaryResponse deleteBySq(Long sq) {
+    public UserRoleResponse deleteBySq(Long sq) {
         Account account = findBySq(sq);
         accountJpaRepository.delete(account);
         return accountMapper.entityToSummaryResponse(account);
@@ -108,7 +108,7 @@ public class AccountServiceImpl implements AccountService {
     //id기반 삭제
     @Override
     @Transactional
-    public UserSummaryResponse deleteById(String id) {
+    public UserRoleResponse deleteById(String id) {
         Account account = findById(id);
         accountJpaRepository.delete(account);
         return accountMapper.entityToSummaryResponse(account);
@@ -148,7 +148,7 @@ public class AccountServiceImpl implements AccountService {
     //sq로 UserRole 수정
     @Override
     @Transactional
-    public UserSummaryResponse updateUserRoleBySq(Long sq, UserRole role) {
+    public UserRoleResponse updateUserRoleBySq(Long sq, UserRole role) {
         Account account = findBySq(sq);
         account.setRole(role);
         return accountMapper.entityToSummaryResponse(account);

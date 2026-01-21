@@ -35,7 +35,7 @@ public class PaymentViewController {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다."));
 
         // 대표 티켓 정보 추출
-        Ticket ticket = booking.getTickets().get(0);
+        Ticket ticket = booking.getTickets().getFirst();
 
         model.addAttribute("amount", booking.getPgAmount());
         model.addAttribute("orderId", booking.getOrderId());

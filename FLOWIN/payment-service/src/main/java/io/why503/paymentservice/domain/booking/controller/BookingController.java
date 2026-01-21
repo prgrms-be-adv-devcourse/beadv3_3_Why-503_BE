@@ -50,7 +50,7 @@ public class BookingController {
 
     /**
      * 예매 확정
-     * - PG사 결제 승인 후 호출되며, 예매 상태를 'CONFIRMED'로 변경합니다.
+     * - PG사 결제 승인 후 호출되며, 예매 상태를 'CONFIRMED' 변경합니다.
      */
     @PatchMapping("/{bookingSq}/confirm")
     public ResponseEntity<Void> confirmBooking(

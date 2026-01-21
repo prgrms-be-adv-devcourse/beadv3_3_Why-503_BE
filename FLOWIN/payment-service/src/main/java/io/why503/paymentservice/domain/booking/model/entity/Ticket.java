@@ -106,12 +106,12 @@ public class Ticket {
         this.ticketStatus = TicketStatus.USED;
     }
 
-    /**
-     * 좌석 번호 포맷팅 (예: A-15)
-     */
-    public String getFormattedSeatNo() {
-        return this.seatArea + "-" + this.areaSeatNumber;
-    }
+//    /**
+//     * 좌석 번호 포맷팅 (예: A-15)
+//     */
+//    public String getFormattedSeatNo() {
+//        return this.seatArea + "-" + this.areaSeatNumber;
+//    }
 
     // --- 7. 내부 로직 ---
 

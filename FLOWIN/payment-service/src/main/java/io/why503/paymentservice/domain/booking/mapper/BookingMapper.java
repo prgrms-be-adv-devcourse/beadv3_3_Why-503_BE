@@ -10,18 +10,24 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 예매 엔티티와 DTO 간의 변환을 담당하는 매퍼
+ */
 @Component
 @RequiredArgsConstructor
 public class BookingMapper {
 
     private final TicketMapper ticketMapper;
 
-    // 2. Entity -> ResDto 변환
+    /**
+     * Booking Entity -> BookingResponse DTO 변환
+     */
     public BookingResponse EntityToResponse(Booking booking) {
-        List<TicketResponse> list = new ArrayList<>();
+        // 티켓 목록 변환 (메서드 참조 대신 루프 사용)
+        List<TicketResponse> ticketResponses = new ArrayList<>();
         for (Ticket ticket : booking.getTickets()) {
-            TicketResponse ticketResponse = ticketMapper.EntityToResponse(ticket);
-            list.add(ticketResponse);
+            TicketResponse response = ticketMapper.EntityToResponse(ticket);
+            ticketResponses.add(response);
         }
 
         return BookingResponse.builder()
@@ -29,14 +35,14 @@ public class BookingMapper {
                 .userSq(booking.getUserSq())
                 .bookingStatus(booking.getBookingStatus())
 
-                // [수정] 상세 금액 정보 매핑
+                // 금액 정보 매핑
                 .bookingAmount(booking.getBookingAmount())
-                .totalAmount(booking.getTotalAmount())  // 추가됨
-                .usedPoint(booking.getUsedPoint())      // 추가됨
-                .pgAmount(booking.getPgAmount())        // 추가됨
+                .totalAmount(booking.getTotalAmount())
+                .usedPoint(booking.getUsedPoint())
+                .pgAmount(booking.getPgAmount())
 
                 .bookingDt(booking.getBookingDt())
-                .tickets(list)
+                .tickets(ticketResponses)
                 .build();
     }
 }

@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 티켓 API 컨트롤러
+ * - 입장 처리 등 티켓 자체에 대한 기능을 제공합니다.
+ */
 @RestController
 @RequestMapping("/tickets")
 @RequiredArgsConstructor
@@ -15,10 +19,15 @@ public class TicketController {
 
     private final BookingService bookingService;
 
-    // QR 코드 스캔 시 호출될 API
+    /**
+     * QR 입장 처리
+     * - UUID를 확인하여 티켓을 'USED' 상태로 변경합니다.
+     */
     @PostMapping("/entry")
     public ResponseEntity<Void> enterTicket(@RequestBody String ticketUuid) {
-        bookingService.enterTicket(ticketUuid.replace("\"", "")); // 따옴표 제거 안전장치
+        // JSON 문자열로 넘어올 경우 따옴표 제거 처리
+        String cleanUuid = ticketUuid.replace("\"", "");
+        bookingService.enterTicket(cleanUuid);
         return ResponseEntity.ok().build();
     }
 }

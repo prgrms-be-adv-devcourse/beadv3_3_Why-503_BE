@@ -9,49 +9,71 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 예매 API 컨트롤러
+ * - 예매 생성, 조회, 취소, 확정 기능을 제공합니다.
+ */
 @RestController
-@RequestMapping("/bookings") // 복수형 URL 권장
+@RequestMapping("/bookings")
 @RequiredArgsConstructor
 public class BookingController {
 
     private final BookingService bookingService;
 
-    // 예매 생성
+    /**
+     * 예매 생성
+     * - 결제 전 'PENDING' 상태의 예매 데이터를 생성합니다.
+     */
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
-            @RequestHeader("X-USER-SQ") Long userSq, // 헤더에서 직접 꺼냄!
-            @RequestBody BookingRequest bookingRequest) {
-        // 서비스로 헤더에서 꺼낸 userSq를 함께 넘겨줍니다.
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody BookingRequest bookingRequest
+    ) {
         return ResponseEntity.ok(bookingService.createBooking(bookingRequest, userSq));
     }
 
-    // 예매 상세 조회
+    /**
+     * 예매 상세 조회
+     */
     @GetMapping("/{bookingSq}")
     public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingSq) {
         return ResponseEntity.ok(bookingService.getBooking(bookingSq));
     }
 
-    // 예매 취소
+    /**
+     * 내 예매 내역 조회
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getMyBookings(@RequestHeader("X-USER-SQ") Long userSq) {
+        return ResponseEntity.ok(bookingService.getBookingsByUser(userSq));
+    }
+
+    /**
+     * 예매 확정
+     * - PG사 결제 승인 후 호출되며, 예매 상태를 'CONFIRMED'로 변경합니다.
+     */
+    @PatchMapping("/{bookingSq}/confirm")
+    public ResponseEntity<Void> confirmBooking(
+            @PathVariable Long bookingSq,
+            @RequestParam String paymentKey,
+            @RequestParam String paymentMethod
+    ) {
+        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 예매 전체 취소
+     */
     @PatchMapping("/{bookingSq}/cancel")
     public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingSq) {
         bookingService.cancelBooking(bookingSq);
         return ResponseEntity.ok().build();
     }
 
-    // 예매 확정 API
-    // 요청 예시: PATCH /bookings/1/confirm?paymentKey=toss_1234&paymentMethod=CARD
-    @PatchMapping("/{bookingSq}/confirm")
-    public ResponseEntity<Void> confirmBooking(
-            @PathVariable Long bookingSq,
-            @RequestParam String paymentKey,
-            @RequestParam String paymentMethod // 결제 수단 파라미터 추가
-    ) {
-        // 서비스의 변경된 시그니처에 맞춰 3개의 인수를 전달합니다.
-        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod);
-        return ResponseEntity.ok().build();
-    }
-
-    // 개별 티켓 취소 API
+    /**
+     * 티켓 개별(부분) 취소
+     */
     @PatchMapping("/{bookingSq}/tickets/{ticketSq}/cancel")
     public ResponseEntity<Void> cancelTicket(
             @PathVariable Long bookingSq,
@@ -60,13 +82,4 @@ public class BookingController {
         bookingService.cancelTicket(bookingSq, ticketSq);
         return ResponseEntity.ok().build();
     }
-
-    @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(
-            @RequestHeader("X-USER-SQ") Long userSq
-    ) {
-        // 여기서 서비스의 getBookingsByUser를 호출하면 경고가 사라집니다!
-        return ResponseEntity.ok(bookingService.getBookingsByUser(userSq));
-    }
-
 }

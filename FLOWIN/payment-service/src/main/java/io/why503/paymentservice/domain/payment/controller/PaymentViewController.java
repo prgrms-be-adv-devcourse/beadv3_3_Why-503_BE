@@ -12,22 +12,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.format.DateTimeFormatter;
 
+/**
+ * 결제 화면 컨트롤러 (View)
+ * - 사용자가 보는 HTML 페이지(Thymeleaf)를 반환합니다.
+ */
 @Controller
 @RequiredArgsConstructor
 public class PaymentViewController {
 
     private final BookingRepository bookingRepository;
 
-    @Value("${payment.client-key}") // application.yml에 설정 필요
+    @Value("${payment.client-key}")
     private String clientKey;
 
-    // 결제 페이지 (checkout)
+    /**
+     * 결제 페이지 (Checkout)
+     * - 토스 페이먼츠 위젯이 렌더링될 페이지입니다.
+     */
     @GetMapping("/payment/checkout")
     public String checkoutPage(@RequestParam Long bookingSq, Model model) {
         Booking booking = bookingRepository.findById(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다."));
 
-        // 첫 번째 티켓 정보 가져오기
+        // 대표 티켓 정보 추출
         Ticket ticket = booking.getTickets().get(0);
 
         model.addAttribute("amount", booking.getPgAmount());
@@ -35,18 +42,19 @@ public class PaymentViewController {
         model.addAttribute("productName", ticket.getShowName());
         model.addAttribute("clientKey", clientKey);
 
-        // [추가된 부분] 날짜와 좌석 정보를 모델에 담습니다.
-        // 날짜를 예쁘게 포맷팅 (예: 2026-01-28 00:01:05)
+        // 부가 정보 (날짜 포맷팅)
         String formattedDate = ticket.getRoundDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
-        model.addAttribute("showDate", formattedDate);     // 공연 일시
-        model.addAttribute("seatGrade", ticket.getGrade()); // 좌석 등급 (VIP)
-        model.addAttribute("seatArea", ticket.getSeatArea()); // 좌석 구역 (A구역)
+        model.addAttribute("showDate", formattedDate);
+        model.addAttribute("seatGrade", ticket.getGrade());
+        model.addAttribute("seatArea", ticket.getSeatArea());
 
         return "index";
     }
 
-    // 결제 성공 페이지 (success)
+    /**
+     * 결제 성공 페이지
+     */
     @GetMapping("/success")
     public String successPage(
             @RequestParam String paymentKey,
@@ -60,7 +68,9 @@ public class PaymentViewController {
         return "success";
     }
 
-    // 결제 실패 페이지 (fail)
+    /**
+     * 결제 실패 페이지
+     */
     @GetMapping("/fail")
     public String failPage(
             @RequestParam String message,

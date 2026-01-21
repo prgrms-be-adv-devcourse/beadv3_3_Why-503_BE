@@ -5,12 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
+/**
+ * 티켓 레포지토리
+ */
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     /**
-     * [QR 입장 확인용]
-     * UUID 문자열로 티켓 엔티티를 찾습니다.
-     * select * from ticket where ticket_uuid = ?
+     * UUID로 티켓 조회
+     * - QR 코드 입장 확인 시 사용됩니다.
      */
     Optional<Ticket> findByTicketUuid(String ticketUuid);
 }

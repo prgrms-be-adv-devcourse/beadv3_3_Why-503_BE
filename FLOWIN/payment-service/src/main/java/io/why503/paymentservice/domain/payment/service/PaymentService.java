@@ -23,6 +23,10 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 결제 서비스
+ * - 담당: PG사(토스) 승인/취소 요청, BookingService 상태 변경 호출
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,35 +37,40 @@ public class PaymentService {
     private final TossPaymentConfig tossPaymentConfig;
     private final RestTemplate restTemplate;
 
-    // [변경] 승인/취소 공통 사용을 위해 기본 URL로 변경
     private static final String TOSS_API_URL = "https://api.tosspayments.com/v1/payments/";
 
+    /**
+     * 결제 승인
+     * 1. 주문 유효성 및 금액 검증
+     * 2. PG사 승인 API 호출
+     * 3. BookingService 확정 처리
+     */
     @Transactional
     public void confirmPayment(PaymentConfirmRequest request) {
 
-        /* 1. booking 조회 */
+        // 1. booking 조회
         Booking booking = bookingRepository.findByOrderId(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
 
-        /* 2. 상태 검증 */
+        // 2. 상태 검증
         if (booking.getBookingStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("이미 처리된 결제입니다.");
         }
 
-        /* 3. 금액 검증 */
+        // 3. 금액 검증
         if (!booking.getPgAmount().equals(request.getAmount())) {
             throw new IllegalStateException("결제 금액이 일치하지 않습니다.");
         }
 
-        /* 4. 결제 승인 요청 (리팩토링: 별도 메서드로 분리) */
+        // 4. 결제 승인 요청
         try {
             TossPaymentResponse result = requestConfirmToToss(request.getPaymentKey(), request.getOrderId(), request.getAmount());
 
             if (result != null) {
-                // 1. 엔티티에 영수증 URL 설정
+                // 엔티티에 영수증 URL 설정
                 booking.setReceiptUrl(result.getReceipt().getUrl());
 
-                // 2. BookingService 확정 호출
+                // BookingService 확정 호출
                 bookingService.confirmBooking(
                         booking.getBookingSq(),
                         result.getPaymentKey(),
@@ -70,16 +79,15 @@ public class PaymentService {
             }
 
         } catch (HttpClientErrorException e) {
-            /* 5. 승인 실패 처리 */
+            // 5. 승인 실패 처리
             booking.cancel("결제 승인 실패: " + e.getResponseBodyAsString());
             throw e;
         }
     }
 
     /**
-     * [결제 취소 (환불)]
-     * - 전체 취소: ticketSq가 null일 때
-     * - 부분 취소: ticketSq가 존재할 때
+     * 결제 취소 (환불)
+     * - ticketSq 유무에 따라 전체/부분 취소를 분기합니다.
      */
     @Transactional
     public void cancelPayment(PaymentCancelRequest request) {
@@ -105,7 +113,7 @@ public class PaymentService {
 
             cancelAmount = targetTicket.getFinalPrice();
 
-            // DB 및 내부 상태 취소 (좌석 해제 포함)
+            // DB 및 내부 상태 취소
             bookingService.cancelTicket(booking.getBookingSq(), request.getTicketSq());
 
         } else {
@@ -118,11 +126,13 @@ public class PaymentService {
             requestCancelToToss(paymentKey, request.getCancelReason(), cancelAmount);
         } catch (Exception e) {
             log.error("PG사 취소 요청 실패: {}", e.getMessage());
-            // 이미 DB 상태는 변경되었으므로, 실무에서는 여기서 알람을 보내거나 재시도 로직이 필요할 수 있음
             throw new IllegalStateException("PG사 결제 취소에 실패했습니다. (DB 롤백됨)");
         }
     }
 
+    /**
+     * 결제 실패 처리
+     */
     @Transactional
     public void failPayment(String orderId, String reason) {
         Booking booking = bookingRepository.findByOrderId(orderId)
@@ -133,11 +143,11 @@ public class PaymentService {
         }
     }
 
-    // =================================================================
-    //  Private Helper Methods (Toss API 통신 로직 분리)
-    // =================================================================
+    // --- Private Helper Methods (Toss API) ---
 
-    // 승인 요청 보내기
+    /**
+     * 토스 승인 API 호출
+     */
     private TossPaymentResponse requestConfirmToToss(String paymentKey, String orderId, Integer amount) {
         HttpHeaders httpHeaders = getTossHeaders();
 
@@ -153,7 +163,9 @@ public class PaymentService {
         return restTemplate.postForEntity(url, entity, TossPaymentResponse.class).getBody();
     }
 
-    // 취소 요청 보내기
+    /**
+     * 토스 취소 API 호출
+     */
     private void requestCancelToToss(String paymentKey, String reason, Integer cancelAmount) {
         HttpHeaders httpHeaders = getTossHeaders();
 
@@ -166,13 +178,14 @@ public class PaymentService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, httpHeaders);
 
-        // Toss 결제 취소 API: POST /v1/payments/{paymentKey}/cancel
         String url = TOSS_API_URL + paymentKey + "/cancel";
 
         restTemplate.postForEntity(url, entity, Map.class);
     }
 
-    // 헤더 생성 (공통)
+    /**
+     * 토스 API 헤더 생성 (Authorization)
+     */
     private HttpHeaders getTossHeaders() {
         String authValue = Base64.getEncoder().encodeToString(
                 (tossPaymentConfig.getSecretKey() + ":").getBytes(StandardCharsets.UTF_8)

@@ -2,13 +2,17 @@ package io.why503.paymentservice.global.client.dto;
 
 import lombok.*;
 
-//추후 테스트 진행
+/**
+ * 회원 정보 응답 DTO
+ * - Account Service로부터 받아온 회원 상세 정보입니다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class AccountResponse {
+
     private String name;
-    private Integer point;
+    private Integer point; // 보유 포인트
 }

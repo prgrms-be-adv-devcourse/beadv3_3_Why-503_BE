@@ -56,8 +56,8 @@ public class BookingService {
         }
 
         // 2. 좌석 선점 요청 ID 추출 (람다식 유지)
-        List<Long> roundSeatIds = bookingRequest.getTickets().stream()
-                .map(ticketRequest -> ticketRequest.getRoundSeatSq())
+        List<Long> roundSeatIds = bookingRequest.tickets().stream()
+                .map(ticketRequest -> ticketRequest.roundSeatSq())
                 .collect(Collectors.toList());
 
         // 3. 공연 서비스 호출 (좌석 선점 및 정보 수신)

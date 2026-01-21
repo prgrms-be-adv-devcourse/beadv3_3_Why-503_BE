@@ -1,10 +1,9 @@
 package io.why503.paymentservice.domain.booking.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
+
 import java.time.LocalDateTime;
 
-@Builder
 public record TicketResponse(
         Long ticketSq,
         Long roundSeatSq,

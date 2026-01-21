@@ -30,19 +30,16 @@ public class BookingMapper {
             ticketResponses.add(response);
         }
 
-        return BookingResponse.builder()
-                .bookingSq(booking.getBookingSq())
-                .userSq(booking.getUserSq())
-                .bookingStatus(booking.getBookingStatus())
-
-                // 금액 정보 매핑
-                .bookingAmount(booking.getBookingAmount())
-                .totalAmount(booking.getTotalAmount())
-                .usedPoint(booking.getUsedPoint())
-                .pgAmount(booking.getPgAmount())
-
-                .bookingDt(booking.getBookingDt())
-                .tickets(ticketResponses)
-                .build();
+        return new BookingResponse(
+                booking.getBookingSq(),
+                booking.getUserSq(),
+                booking.getBookingStatus(),
+                booking.getBookingAmount(),
+                booking.getTotalAmount(),
+                booking.getUsedPoint(),
+                booking.getPgAmount(),
+                booking.getBookingDt(),
+                ticketResponses
+        );
     }
 }

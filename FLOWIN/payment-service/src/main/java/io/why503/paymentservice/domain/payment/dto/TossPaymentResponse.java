@@ -2,12 +2,14 @@ package io.why503.paymentservice.domain.payment.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * 토스 페이먼츠 응답 DTO
  * - 결제 승인 API 호출 결과로 반환되는 PG사 데이터입니다.
  */
 @Getter
+@Setter
 @NoArgsConstructor
 public class TossPaymentResponse {
 

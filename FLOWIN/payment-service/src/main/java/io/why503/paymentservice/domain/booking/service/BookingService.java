@@ -12,6 +12,7 @@ import io.why503.paymentservice.domain.booking.repository.TicketRepository;
 import io.why503.paymentservice.global.client.AccountClient;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.dto.AccountResponse;
+import io.why503.paymentservice.global.client.dto.PointUseRequest;
 import io.why503.paymentservice.global.client.dto.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,8 +51,7 @@ public class BookingService {
         log.info(">>> [Booking] 예매 생성 요청 | UserSq={}", userSq);
 
         // 1. 회원 정보 조회
-        AccountResponse accountResponse = accountClient.getAccount(userSq);
-        if (accountResponse == null) {
+        if (accountClient.getAccount(userSq) == null) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
 
@@ -96,19 +96,45 @@ public class BookingService {
 
         // 6. 금액 및 포인트 설정
         booking.setTotalAmount(totalTicketPrice);
-
-        int requestedPoint = (bookingRequest.getUsedPoint() != null) ? bookingRequest.getUsedPoint() : 0;
-        if (accountResponse.getPoint() < requestedPoint) {
-            throw new IllegalArgumentException(String.format("포인트 부족 (보유: %d / 요청: %d)", accountResponse.getPoint(), requestedPoint));
-        }
-
-        booking.applyPoints(requestedPoint);
+        booking.applyPoints(0); // 초기화
 
         // 7. 저장
         Booking savedBooking = bookingRepository.save(booking);
         log.info(">>> [Booking] 예매 데이터 저장 완료 | ID={}, PG결제액={}", savedBooking.getBookingSq(), savedBooking.getPgAmount());
 
         return bookingMapper.EntityToResponse(savedBooking);
+    }
+
+    /**
+     * 포인트 적용 (사용자 선택)
+     * - 사용자가 입력한 포인트를 검증하고 최종 결제 금액에 반영합니다.
+     */
+    @Transactional
+    public BookingResponse applyPointToBooking(Long bookingSq, Long userSq, Integer pointToUse) {
+        log.info(">>> [Booking] 포인트 적용 요청 | ID={}, Point={}", bookingSq, pointToUse);
+
+        Booking booking = findBookingOrThrow(bookingSq);
+
+        if (!booking.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 예매만 수정할 수 있습니다.");
+        }
+
+        if (booking.getBookingStatus() != BookingStatus.PENDING) {
+            throw new IllegalStateException("결제 대기 상태에서만 포인트를 적용할 수 있습니다.");
+        }
+
+        // 1. 유저 보유 포인트 조회 및 검증
+        AccountResponse account = accountClient.getAccount(userSq);
+        int requestPoint = (pointToUse != null) ? pointToUse : 0;
+
+        if (account.getPoint() < requestPoint) {
+            throw new IllegalArgumentException(String.format("포인트 부족 (보유: %d / 요청: %d)", account.getPoint(), requestPoint));
+        }
+
+        // 2. 포인트 적용 (Entity 내부에서 pgAmount 재계산됨)
+        booking.applyPoints(requestPoint);
+
+        return bookingMapper.EntityToResponse(booking);
     }
 
     /**
@@ -124,7 +150,21 @@ public class BookingService {
         // 1. 내부 상태 변경
         booking.confirm(paymentKey, paymentMethod);
 
-        // 2. 공연 서비스 확정 통보 (람다식 유지)
+        // 2. 포인트 사용 처리 (사용한 포인트가 있을 경우에만)
+        if (booking.getUsedPoint() > 0) {
+            log.info(">>> [Booking] 포인트 차감 요청 | UserSq={}, Amount={}", booking.getUserSq(), booking.getUsedPoint());
+            try {
+                accountClient.usePoint(PointUseRequest.builder()
+                        .userSq(booking.getUserSq())
+                        .amount(booking.getUsedPoint())
+                        .build());
+            } catch (Exception e) {
+                log.error(">>> [Compensate] 포인트 차감 실패: {}", e.getMessage());
+                throw new IllegalStateException("포인트 차감 실패로 인해 결제를 취소합니다.");
+            }
+        }
+
+        // 3. 공연 서비스 확정 통보 (람다식 유지)
         List<Long> seatIds = booking.getTickets().stream()
                 .map(ticket -> ticket.getRoundSeatSq())
                 .collect(Collectors.toList());
@@ -132,8 +172,28 @@ public class BookingService {
         try {
             performanceClient.confirmRoundSeats(seatIds);
         } catch (Exception e) {
-            log.error(">>> [Booking] 좌석 확정 통신 실패 (보상 트랜잭션 필요) | Reason={}", e.getMessage());
-            throw new IllegalStateException("좌석 확정 처리에 실패했습니다.");
+            // [중요] 좌석 확정 실패 -> "포인트 환불" 보상 트랜잭션 수행해야 함
+            log.error(">>> [Compensate] 좌석 확정 실패 -> 포인트 환불 진행");
+
+            if (booking.getUsedPoint() > 0) {
+                try {
+                    // 아까 깎았던 포인트 다시 돌려주기
+                    accountClient.refundPoint(PointUseRequest.builder()
+                            .userSq(booking.getUserSq())
+                            .amount(booking.getUsedPoint())
+                            .build());
+                    log.info(">>> [Compensate] 포인트 환불 완료");
+                } catch (Exception refundError) {
+                    // 최악의 상황: 결제 취소도 해야 하는데 환불도 실패함.
+                    // 이런 로그는 별도 파일로 남겨서 개발자가 수동 처리해야 함 (Alery, Slack 등)
+                    log.error(">>> [CRITICAL] 포인트 환불 실패! 수동 확인 필요. UserSq={}, Amount={}",
+                            booking.getUserSq(), booking.getUsedPoint());
+                }
+            }
+
+            // 보상 처리 후 예외를 던져서 내부 DB(Booking)를 롤백시키고,
+            // 상위(PaymentService)로 에러를 전파해야 함 (거기서 PG 취소 하게)
+            throw new IllegalStateException("좌석 확정 실패로 인해 결제를 취소합니다.");
         }
     }
 
@@ -274,162 +334,3 @@ public class BookingService {
         }
     }
 }
-
-
-// 테스트 코드
-//package io.why503.paymentservice.domain.booking.service;
-//
-//import io.why503.paymentservice.domain.booking.mapper.BookingMapper;
-//import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
-//import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
-//import io.why503.paymentservice.domain.booking.model.entity.Booking;
-//import io.why503.paymentservice.domain.booking.model.entity.Ticket;
-//import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
-//import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
-//import io.why503.paymentservice.domain.booking.repository.BookingRepository;
-//import io.why503.paymentservice.domain.booking.repository.TicketRepository;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//
-//import java.time.LocalDateTime;
-//import java.util.List;
-//
-//@Slf4j
-//@Service
-//@RequiredArgsConstructor
-//@Transactional(readOnly = true)
-//public class BookingService {
-//
-//    private final BookingRepository bookingRepository;
-//    private final TicketRepository ticketRepository;
-//    private final BookingMapper bookingMapper;
-//
-//    // Client들은 없으므로 사용하지 않음
-//    // private final AccountClient accountClient;
-//    // private final PerformanceClient performanceClient;
-//
-//    /**
-//     * [1] 예매 생성 (테스트용 - 외부 통신 제거)
-//     */
-//    @Transactional
-//    public BookingResponse createBooking(BookingRequest bookingRequest, Long userSq) {
-//        log.info(">>> [TEST MODE] 예매 생성 시작 | UserSq={}", userSq);
-//
-//        // 1. 회원 정보 조회 -> (가짜 통과)
-//        log.info(">>> [TEST MODE] 회원 검증 패스");
-//
-//        // 2. 공연 서비스 호출 -> (가짜 데이터 생성)
-//        log.info(">>> [TEST MODE] 좌석 선점 패스 (가짜 데이터 생성)");
-//
-//        // 요청한 티켓 수만큼 가짜 좌석 정보 생성
-//        int requestCount = bookingRequest.getTickets().size();
-//        int ticketPrice = 10000; // 테스트 가격 고정
-//
-//        // 3. 엔티티 생성
-//        Booking booking = Booking.builder()
-//                .userSq(userSq)
-//                .bookingStatus(BookingStatus.PENDING)
-//                .build();
-//
-//        int totalTicketPrice = 0;
-//
-//        // 4. 가짜 티켓 생성
-//        for (int i = 0; i < requestCount; i++) {
-//            Long seatId = bookingRequest.getTickets().get(i).getRoundSeatSq();
-//
-//            Ticket ticket = Ticket.builder()
-//                    .roundSeatSq(seatId)
-//                    .showName("테스트 뮤지컬")
-//                    .concertHallName("서울 예술의전당")
-//                    .roundDate(LocalDateTime.now().plusDays(7))
-//                    .grade("VIP")
-//                    .seatArea("A구역")
-//                    .areaSeatNumber(10 + i)
-//                    .originalPrice(ticketPrice)
-//                    .finalPrice(ticketPrice)
-//                    .ticketStatus(TicketStatus.RESERVED)
-//                    .build();
-//
-//            booking.addTicket(ticket);
-//            totalTicketPrice += ticketPrice;
-//        }
-//
-//        // 5. 금액 설정
-//        booking.setBookingAmount(totalTicketPrice);
-//        booking.setTotalAmount(totalTicketPrice);
-//
-//        // 포인트 사용 (있으면 차감)
-//        int requestedPoint = bookingRequest.getUsedPoint() != null ? bookingRequest.getUsedPoint() : 0;
-//        booking.applyPoints(requestedPoint);
-//
-//        // 6. 저장
-//        Booking savedBooking = bookingRepository.save(booking);
-//        log.info(">>> [TEST MODE] 예매 저장 완료 | BookingSq={}, PG결제액={}", savedBooking.getBookingSq(), savedBooking.getPgAmount());
-//
-//        return bookingMapper.EntityToResponse(savedBooking);
-//    }
-//
-//    /**
-//     * [2] 예매 확정 (테스트용 - 외부 통신 제거)
-//     */
-//    @Transactional
-//    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod) {
-//        Booking booking = findBookingThrow(bookingSq);
-//        log.info(">>> [TEST MODE] 예매 확정 처리 | BookingSq={}, Method={}", bookingSq, paymentMethod);
-//
-//        // 1. 내부 상태 변경
-//        booking.confirm(paymentKey, paymentMethod);
-//
-//        // 2. 공연 서비스 통보 -> (생략)
-//        log.info(">>> [TEST MODE] 공연 서비스 통보 생략 (성공 처리)");
-//    }
-//
-//    /**
-//     * [3] 예매 취소 (테스트용)
-//     */
-//    @Transactional
-//    public void cancelBooking(Long bookingSq) {
-//        Booking booking = findBookingThrow(bookingSq);
-//        log.info(">>> [TEST MODE] 예매 취소 요청");
-//
-//        // 외부 서비스 통신 생략하고 상태만 변경
-//        if (booking.getBookingStatus() == BookingStatus.PENDING) {
-//            bookingRepository.delete(booking);
-//        } else {
-//            booking.cancel("테스트 취소");
-//        }
-//    }
-//
-//    /**
-//     * [4] 티켓 개별 취소 (테스트용)
-//     */
-//    @Transactional
-//    public void cancelTicket(Long bookingSq, Long ticketSq) {
-//        Booking booking = findBookingThrow(bookingSq);
-//        // 로직 생략하고 상태만 변경
-//        booking.cancelTicket(ticketSq, "테스트 개별 취소");
-//    }
-//
-//    // [기타 조회 메서드는 그대로 사용 가능]
-//    public BookingResponse getBooking(Long bookingSq) {
-//        return bookingMapper.EntityToResponse(findBookingThrow(bookingSq));
-//    }
-//
-//    public List<BookingResponse> getBookingsByUser(Long userSq) {
-//        return bookingRepository.findByUserSq(userSq).stream()
-//                .map(bookingMapper::EntityToResponse)
-//                .toList();
-//    }
-//
-//    // 헬퍼 메서드
-//    private Booking findBookingThrow(Long bookingSq) {
-//        return bookingRepository.findByBookingSq(bookingSq)
-//                .orElseThrow(() -> new IllegalArgumentException("예매 정보 없음: " + bookingSq));
-//    }
-//
-//    // 사용하지 않는 메서드 임시 더미 처리
-//    public int cancelExpiredBookings() { return 0; }
-//    public void enterTicket(String uuid) {}
-//}

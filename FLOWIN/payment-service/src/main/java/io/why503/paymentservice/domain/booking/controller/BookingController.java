@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.booking.controller;
 
+import io.why503.paymentservice.domain.booking.model.dto.ApplyPointRequest;
 import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
 import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
 import io.why503.paymentservice.domain.booking.service.BookingService;
@@ -30,6 +31,19 @@ public class BookingController {
             @RequestBody BookingRequest bookingRequest
     ) {
         return ResponseEntity.ok(bookingService.createBooking(bookingRequest, userSq));
+    }
+
+    /**
+     * 포인트 적용
+     * - 예매 생성 후, 결제 직전에 포인트를 적용하여 최종 금액을 확정합니다.
+     */
+    @PatchMapping("/{bookingSq}/points")
+    public ResponseEntity<BookingResponse> applyPoint(
+            @PathVariable Long bookingSq,
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody ApplyPointRequest request
+    ) {
+        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.getPoint()));
     }
 
     /**

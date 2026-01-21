@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+
+  cloud:
+    discovery:
+      enabled: false
+
+
+eureka:
+  client:
+    enabled: false
+jwt:
+  secret: "test-secret-key-1234-test-secret-key-1234" # 테스트용 임의 값
+cloud:
+  aws:
+    credentials:
+      access-key: "test-key"
+      secret-key: "test-secret"

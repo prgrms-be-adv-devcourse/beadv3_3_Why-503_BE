@@ -1,10 +1,10 @@
 package io.why503.accountservice.util;
 
 
-import io.why503.accountbase.model.enums.Gender;
-import io.why503.accountbase.model.response.UserCompanyResponse;
-import io.why503.accountbase.model.response.UserPointResponse;
-import io.why503.accountbase.model.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
 import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;

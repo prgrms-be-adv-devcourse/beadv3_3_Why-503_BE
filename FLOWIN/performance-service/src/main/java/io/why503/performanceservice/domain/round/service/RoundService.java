@@ -44,11 +44,11 @@ public class RoundService {
     }
 
 
-    //관리자 여부 확인
+    //기업 여부 확인
     private void validateAdminRole(Long userSq) {
         UserRoleResponse roleResponse = accountServiceClient.getUserRole(userSq);
-        if (roleResponse == null || roleResponse.userRole() != 0) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자 권한이 필요합니다.");
+        if (roleResponse == null || roleResponse.userRole() != 2) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "기업 권한이 필요합니다.");
         }
     }
 

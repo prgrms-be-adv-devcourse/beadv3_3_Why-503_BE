@@ -3,11 +3,14 @@ package io.why503.paymentservice.domain.payment.controller;
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
+import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.format.DateTimeFormatter;
@@ -18,9 +21,10 @@ import java.time.format.DateTimeFormatter;
  */
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/payment-view")
 public class PaymentViewController {
 
-    private final BookingRepository bookingRepository;
+    private final BookingService bookingService;
 
     @Value("${payment.client-key}")
     private String clientKey;
@@ -29,10 +33,14 @@ public class PaymentViewController {
      * 결제 페이지 (Checkout)
      * - 토스 페이먼츠 위젯이 렌더링될 페이지입니다.
      */
-    @GetMapping("/payment/checkout")
-    public String checkoutPage(@RequestParam Long bookingSq, Model model) {
-        Booking booking = bookingRepository.findById(bookingSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다."));
+    @GetMapping("/checkout")
+    public String checkoutPage(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestParam Long bookingSq,
+            Model model
+    ) {
+        // [수정] 서비스가 조회와 검증을 모두 수행함 (한 줄로 깔끔해짐)
+        Booking booking = bookingService.getMyBooking(bookingSq, userSq);
 
         // 대표 티켓 정보 추출
         Ticket ticket = booking.getTickets().getFirst();

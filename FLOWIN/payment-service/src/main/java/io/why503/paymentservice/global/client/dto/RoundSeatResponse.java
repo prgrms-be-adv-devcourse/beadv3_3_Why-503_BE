@@ -16,9 +16,5 @@ public record RoundSeatResponse(
         String seatArea,
         Integer areaSeatNumber
 ) {
-    // 레코드에서도 메서드를 추가할 수 있습니다.
-    // 접근자 호출 시 'get'을 떼고 호출하도록 내부 로직을 수정했습니다.
-    public String getFormattedSeatNo() {
-        return this.seatArea + "-" + this.areaSeatNumber;
-    }
+
 }

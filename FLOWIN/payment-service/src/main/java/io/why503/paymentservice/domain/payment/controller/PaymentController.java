@@ -2,6 +2,8 @@ package io.why503.paymentservice.domain.payment.controller;
 
 import io.why503.paymentservice.domain.payment.dto.PaymentCancelRequest;
 import io.why503.paymentservice.domain.payment.dto.PaymentConfirmRequest;
+import io.why503.paymentservice.domain.payment.dto.PointChargeRequest;
+import io.why503.paymentservice.domain.payment.dto.PointChargeResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -56,5 +58,19 @@ public class PaymentController {
             @RequestParam(required = false) String message
     ) {
         paymentService.failPayment(orderId, message, userSq);
+    }
+
+    /**
+     * [추가] 포인트 충전 요청
+     * - DB에 "POINT_CHARGE" 타입의 Booking 데이터를 생성하고 orderId를 반환합니다.
+     */
+    @PostMapping("/point/request")
+    public ResponseEntity<PointChargeResponse> requestPointCharge(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody PointChargeRequest request
+    ) {
+        // PointChargeRequest는 { Long amount } 필드만 가짐
+        PointChargeResponse response = paymentService.requestPointCharge(userSq, request);
+        return ResponseEntity.ok(response);
     }
 }

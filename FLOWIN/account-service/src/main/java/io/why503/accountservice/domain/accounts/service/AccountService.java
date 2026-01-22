@@ -25,4 +25,6 @@ public interface AccountService {
     boolean existId(String id);
     UserPointResponse readPointBySq(Long sq);
     UserCompanyResponse readCompanyBySq(Long sq);
+    UserRoleResponse increasePoint(Long sq, Long point);
+    UserRoleResponse decreasePoint(Long sq, Long point);
 }

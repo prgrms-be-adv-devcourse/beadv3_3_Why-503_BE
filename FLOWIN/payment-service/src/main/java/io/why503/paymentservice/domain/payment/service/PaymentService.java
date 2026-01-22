@@ -6,9 +6,9 @@ import io.why503.paymentservice.domain.booking.model.vo.BookingStatus;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import io.why503.paymentservice.domain.payment.config.TossPaymentConfig;
-import io.why503.paymentservice.domain.payment.dto.PaymentCancelRequest;
-import io.why503.paymentservice.domain.payment.dto.PaymentConfirmRequest;
-import io.why503.paymentservice.domain.payment.dto.TossPaymentResponse;
+import io.why503.paymentservice.domain.payment.dto.*;
+import io.why503.paymentservice.global.client.AccountClient;
+import io.why503.paymentservice.global.client.dto.PointUseRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -16,11 +16,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import io.why503.paymentservice.domain.payment.dto.PointChargeRequest;
+import io.why503.paymentservice.domain.payment.dto.PointChargeResponse;
+
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 결제 서비스
@@ -35,6 +40,7 @@ public class PaymentService {
     private final BookingService bookingService;
     private final TossPaymentConfig tossPaymentConfig;
     private final RestTemplate restTemplate;
+    private final AccountClient accountClient;
 
     private static final String TOSS_API_URL = "https://api.tosspayments.com/v1/payments/";
 
@@ -49,7 +55,7 @@ public class PaymentService {
         Booking booking = validateBooking(request, userSq);
 
         try {
-            // 1. PG사 승인 요청 (실제 과금 발생)
+            // 1. PG사 승인 요청 (실제 과금 발생)(사실 테스트라 진짜 돈이 나가진 않음)
             TossPaymentResponse result = requestConfirmToToss(request.paymentKey(), request.orderId(), request.amount());
 
             // 영수증 URL 저장 (나중에 사용자에게 보여주기 위함)
@@ -58,12 +64,18 @@ public class PaymentService {
             try {
                 // 2. 내부 비즈니스 로직 수행 (BookingService)
                 // -> 여기서 포인트 차감, 좌석 확정 등이 일어납니다.
-                bookingService.confirmBooking(
-                        booking.getBookingSq(),
-                        result.paymentKey(),
-                        result.method(),
-                        userSq
-                );
+                if ("POINT_CHARGE".equals(booking.getPaymentMethod())) {
+                    // [A] 포인트 충전 로직
+                    processPointCharge(booking, result.paymentKey(), userSq);
+                } else {
+                    // [B] 일반 예매 로직 (기존 bookingService 호출)
+                    bookingService.confirmBooking(
+                            booking.getBookingSq(),
+                            result.paymentKey(),
+                            result.method(),
+                            userSq
+                    );
+                }
             } catch (Exception bizEx) {
                 // [중요] 보상 트랜잭션 (Compensating Transaction)
                 // PG 승인은 났는데(돈은 나갔는데) 내부 로직(DB/포인트)이 터진 상황입니다.
@@ -214,4 +226,44 @@ public class PaymentService {
         headers.set("Content-Type", "application/json");
         return headers;
     }
+
+
+    //예치금(긴급 패치, 추후 분리)
+    @Transactional
+    public PointChargeResponse requestPointCharge(Long userSq, PointChargeRequest request) {
+        String orderId = "CHG-" + UUID.randomUUID(); // 충전용 Prefix
+
+        Booking booking = Booking.builder()
+                .userSq(userSq)
+                .bookingStatus(BookingStatus.PENDING) // 대기
+                .bookingDt(LocalDateTime.now())
+                .bookingAmount(0)      // 티켓 가격 0원
+                .totalAmount(request.amount().intValue()) // 총 결제 금액
+                .pgAmount(request.amount().intValue())    // PG 결제 금액
+                .usedPoint(0)
+                .paymentMethod("POINT_CHARGE") // ★ 구분자: 포인트 충전임 표시
+                .orderId(orderId)
+                .build();
+
+        bookingRepository.save(booking);
+
+        return new PointChargeResponse(orderId, request.amount(), "포인트 충전");
+    }
+
+    /**
+     * 포인트 충전 내부 처리 헬퍼
+     */
+    private void processPointCharge(Booking booking, String paymentKey, Long userSq) {
+        // 1. Booking 상태 업데이트
+        booking.setPaymentKey(paymentKey);
+        booking.setBookingStatus(BookingStatus.CONFIRMED); // 완료 처리
+        booking.setApprovedAt(LocalDateTime.now());
+
+        // 2. Account Service 호출 -> 포인트 증가
+        // (booking.getPgAmount()는 Integer이므로 Long으로 변환)
+        accountClient.increasePoint(userSq, new PointUseRequest(booking.getPgAmount().longValue()));
+
+        log.info(">>> 포인트 충전 완료: User={}, Amount={}", userSq, booking.getPgAmount());
+    }
+
 }

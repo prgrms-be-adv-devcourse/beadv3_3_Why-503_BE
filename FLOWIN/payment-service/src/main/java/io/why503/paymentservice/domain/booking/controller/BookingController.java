@@ -44,7 +44,7 @@ public class BookingController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody ApplyPointRequest request
     ) {
-        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.point()));
+        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.userPoint()));
     }
 
     /**

@@ -41,9 +41,9 @@ public class ShowServiceImpl implements ShowService {
     @Transactional
     public Long createShowWithSeats(
             ShowCreateWithSeatPolicyRequest request,
-            String authorization
+            Long userSq
     ) {
-        Long companySq = resolveCompanySq(authorization);
+        Long companySq = resolveCompanySq(userSq);
 
         ShowEntity show = showMapper.toEntity(request.getShow(), companySq);
         ShowEntity savedShow = showRepository.save(show);
@@ -71,8 +71,8 @@ public class ShowServiceImpl implements ShowService {
 
     @Override
     @Transactional
-    public ShowResponse createShow(ShowRequest request, String authorization) {
-        Long companySq = resolveCompanySq(authorization);
+    public ShowResponse createShow(ShowRequest request, Long userSq) {
+        Long companySq = resolveCompanySq(userSq);
         ShowEntity show = showMapper.toEntity(request, companySq);
         ShowEntity saved = showRepository.save(show);
         return showMapper.toResponse(saved);
@@ -100,9 +100,9 @@ public class ShowServiceImpl implements ShowService {
                 .toList();
     }
 
-    private Long resolveCompanySq(String authorization) {
+    private Long resolveCompanySq(Long userSq) {
         try {
-            CompanyInfoResponse response = accountServiceClient.getMyCompanyInfo(authorization);
+            CompanyInfoResponse response = accountServiceClient.getMyCompanyInfo(userSq);
             if (response == null || response.getCompanySq() == null) {
                 throw new PerformanceForbiddenException("company info not found for current user");
             }

@@ -61,9 +61,9 @@ public class PaymentService {
                 bookingService.confirmBooking(
                         booking.getBookingSq(),
                         result.paymentKey(),
-                        result.method()
+                        result.method(),
+                        booking.getUserSq()
                 );
-
             } catch (Exception bizEx) {
                 // [중요] 보상 트랜잭션 (Compensating Transaction)
                 // PG 승인은 났는데(돈은 나갔는데) 내부 로직(DB/포인트)이 터진 상황입니다.
@@ -109,18 +109,16 @@ public class PaymentService {
         // 1. DB 및 내부 상태 취소 (먼저 수행)
         // 외부 API 호출 전에 DB 상태를 먼저 바꾸고, 실패 시 롤백되는 것이 안전합니다.
         if (request.ticketSq() != null) {
-            // [부분 취소] 특정 티켓만 취소
             Ticket targetTicket = booking.getTickets().stream()
                     .filter(t -> t.getTicketSq().equals(request.ticketSq()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("티켓이 존재하지 않습니다."));
 
-            cancelAmount = targetTicket.getFinalPrice(); // 취소할 금액 계산
-            bookingService.cancelTicket(booking.getBookingSq(), request.ticketSq());
+            cancelAmount = targetTicket.getFinalPrice();
+            bookingService.cancelTicket(booking.getBookingSq(), request.ticketSq(), booking.getUserSq());
 
         } else {
-            // [전체 취소]
-            bookingService.cancelBooking(booking.getBookingSq());
+            bookingService.cancelBooking(booking.getBookingSq(), booking.getUserSq());
         }
 
         // 2. PG사 취소 요청 (실패 시 @Transactional로 인해 1번 로직도 롤백됨)

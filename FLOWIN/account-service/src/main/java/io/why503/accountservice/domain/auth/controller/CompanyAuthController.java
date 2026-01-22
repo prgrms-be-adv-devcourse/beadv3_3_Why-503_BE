@@ -7,7 +7,7 @@
  */
 package io.why503.accountservice.domain.auth.controller;
 
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
+import io.why503.accountbase.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.auth.model.request.CompanyEmailRequest;
 import io.why503.accountservice.domain.auth.model.request.CompanyVerifyRequest;

@@ -1,10 +1,10 @@
 package io.why503.accountservice.domain.accounts.controller;
 
 
+import io.why503.accountbase.model.response.UserCompanyResponse;
+import io.why503.accountbase.model.response.UserPointResponse;
+import io.why503.accountbase.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

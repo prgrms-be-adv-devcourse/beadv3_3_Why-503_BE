@@ -2,7 +2,6 @@ package io.why503.paymentservice.domain.payment.controller;
 
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
-import io.why503.paymentservice.domain.booking.repository.BookingRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

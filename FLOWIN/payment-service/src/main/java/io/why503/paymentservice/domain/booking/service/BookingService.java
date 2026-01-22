@@ -143,8 +143,9 @@ public class BookingService {
      * - 공연 서비스에 판매 완료(SOLD)를 통보합니다.
      */
     @Transactional
-    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod) {
+    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
         log.info(">>> [Booking] 예매 확정 처리 | ID={}, Method={}", bookingSq, paymentMethod);
 
         // 1. 내부 상태 변경
@@ -197,8 +198,10 @@ public class BookingService {
      * - 결제 후: 취소 상태 변경 (Soft Delete) 및 환불 처리
      */
     @Transactional
-    public void cancelBooking(Long bookingSq) {
+    public void cancelBooking(Long bookingSq, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+
         BookingStatus status = booking.getBookingStatus();
         log.info(">>> [Booking] 예매 전체 취소 요청 | ID={}, Status={}", bookingSq, status);
 
@@ -222,8 +225,10 @@ public class BookingService {
      * - 티켓 하나만 취소하며, 남은 티켓이 없으면 전체 취소로 자동 전환됩니다.
      */
     @Transactional
-    public void cancelTicket(Long bookingSq, Long ticketSq) {
+    public void cancelTicket(Long bookingSq, Long ticketSq, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+
         BookingStatus status = booking.getBookingStatus();
         log.info(">>> [Booking] 티켓 부분 취소 요청 | BookingID={}, TicketID={}", bookingSq, ticketSq);
 
@@ -283,8 +288,10 @@ public class BookingService {
     /**
      * 예매 단건 조회
      */
-    public BookingResponse getBooking(Long bookingSq) {
-        return bookingMapper.EntityToResponse(findBookingOrThrow(bookingSq));
+    public BookingResponse getBooking(Long bookingSq, Long userSq) {
+        Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+        return bookingMapper.EntityToResponse(booking);
     }
 
     /**
@@ -309,9 +316,15 @@ public class BookingService {
 
     // --- Private Helper Methods ---
 
-    private Booking findBookingOrThrow(Long bookingSq) {
+    private Booking     findBookingOrThrow(Long bookingSq) {
         return bookingRepository.findByBookingSq(bookingSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다. (ID=" + bookingSq + ")"));
+    }
+
+    private void validateOwner(Booking booking, Long userSq) {
+        if (!booking.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 예매만 조회/취소/확정할 수 있습니다.");
+        }
     }
 
     private void releaseSeatsInShowService(List<Ticket> tickets) {

@@ -44,9 +44,9 @@ public class PaymentService {
      * - 내부 처리가 실패하면 반드시 PG 결제를 취소(환불)해야 합니다. (보상 트랜잭션)
      */
     @Transactional
-    public void confirmPayment(PaymentConfirmRequest request) {
+    public void confirmPayment(PaymentConfirmRequest request, Long userSq) {
         // 중복 승인 방지 및 금액 위변조 검증
-        Booking booking = validateBooking(request);
+        Booking booking = validateBooking(request, userSq);
 
         try {
             // 1. PG사 승인 요청 (실제 과금 발생)
@@ -61,9 +61,9 @@ public class PaymentService {
                 bookingService.confirmBooking(
                         booking.getBookingSq(),
                         result.paymentKey(),
-                        result.method()
+                        result.method(),
+                        userSq
                 );
-
             } catch (Exception bizEx) {
                 // [중요] 보상 트랜잭션 (Compensating Transaction)
                 // PG 승인은 났는데(돈은 나갔는데) 내부 로직(DB/포인트)이 터진 상황입니다.
@@ -96,9 +96,12 @@ public class PaymentService {
      * - 티켓 ID 유무에 따라 부분 취소와 전체 취소를 구분합니다.
      */
     @Transactional
-    public void cancelPayment(PaymentCancelRequest request) {
+    public void cancelPayment(PaymentCancelRequest request, Long userSq) {
         Booking booking = bookingRepository.findByOrderId(request.orderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+
+        // [추가] 소유자 검증
+        validateOwner(booking, userSq);
 
         if (booking.getPaymentKey() == null) {
             throw new IllegalStateException("결제 완료된 건만 취소할 수 있습니다.");
@@ -109,18 +112,16 @@ public class PaymentService {
         // 1. DB 및 내부 상태 취소 (먼저 수행)
         // 외부 API 호출 전에 DB 상태를 먼저 바꾸고, 실패 시 롤백되는 것이 안전합니다.
         if (request.ticketSq() != null) {
-            // [부분 취소] 특정 티켓만 취소
             Ticket targetTicket = booking.getTickets().stream()
                     .filter(t -> t.getTicketSq().equals(request.ticketSq()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("티켓이 존재하지 않습니다."));
 
-            cancelAmount = targetTicket.getFinalPrice(); // 취소할 금액 계산
-            bookingService.cancelTicket(booking.getBookingSq(), request.ticketSq());
+            cancelAmount = targetTicket.getFinalPrice();
+            bookingService.cancelTicket(booking.getBookingSq(), request.ticketSq(), userSq);
 
         } else {
-            // [전체 취소]
-            bookingService.cancelBooking(booking.getBookingSq());
+            bookingService.cancelBooking(booking.getBookingSq(), userSq);
         }
 
         // 2. PG사 취소 요청 (실패 시 @Transactional로 인해 1번 로직도 롤백됨)
@@ -136,9 +137,11 @@ public class PaymentService {
      * 결제 실패 처리 (단순 상태 변경)
      */
     @Transactional
-    public void failPayment(String orderId, String reason) {
+    public void failPayment(String orderId, String reason, Long userSq) {
         Booking booking = bookingRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+
+        validateOwner(booking, userSq);
 
         // 이미 처리된 건이 아닐 때만 실패로 마킹
         if (booking.getBookingStatus() == BookingStatus.PENDING) {
@@ -149,21 +152,31 @@ public class PaymentService {
     // --- Private Helper Methods ---
 
     /**
-     * 유효성 검증
-     * - 이미 결제된 건인지, 프론트에서 보낸 금액이 DB와 일치하는지 확인합니다.
+     * 유효성 검증 (소유자 확인 추가)
      */
-    private Booking validateBooking(PaymentConfirmRequest request) {
+    private Booking validateBooking(PaymentConfirmRequest request, Long userSq) {
         Booking booking = bookingRepository.findByOrderId(request.orderId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
+
+        // [추가] 소유자 검증
+        validateOwner(booking, userSq);
 
         if (booking.getBookingStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("이미 처리된 결제입니다.");
         }
-        // 금액 위변조 방지 (DB 금액 vs 요청 금액)
         if (!booking.getPgAmount().equals(request.amount())) {
             throw new IllegalStateException("결제 금액이 일치하지 않습니다.");
         }
         return booking;
+    }
+
+    /**
+     * 소유자 검증 헬퍼 메서드
+     */
+    private void validateOwner(Booking booking, Long userSq) {
+        if (!booking.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 주문만 처리할 수 있습니다.");
+        }
     }
 
     private TossPaymentResponse requestConfirmToToss(String paymentKey, String orderId, Integer amount) {

@@ -3,9 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/fail-page.css">
     <title>결제 실패</title>
 </head>
+<style>
+    /* fail-page.css */
+    body {
+        font-family: 'Suit', sans-serif;
+        background-color: #f5f6f7;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .failure-container {
+        background-color: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .failure-icon {
+        font-size: 48px;
+        color: #e43636; /* 빨간색 경고 */
+        margin-bottom: 20px;
+    }
+
+    .failure-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .failure-subtitle {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    /* 실패 상세 정보 영역 */
+    .order-summary {
+        background-color: #fff5f5; /* 연한 빨간 배경 */
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: left;
+        border: 1px solid #ffebeb;
+    }
+
+    .order-summary h3 {
+        font-size: 14px;
+        color: #e43636;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #ffdbdb;
+        padding-bottom: 10px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .summary-label {
+        color: #888;
+    }
+
+    .summary-value {
+        font-weight: bold;
+        color: #333;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* 버튼 영역 */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 12px 0;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+        text-align: center;
+        transition: background 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #3182f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #1b64da;
+    }
+
+    .btn-secondary {
+        background-color: #f2f4f6;
+        color: #4e5968;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e1e4e8;
+    }
+</style>
 <body>
 <div class="failure-container">
 

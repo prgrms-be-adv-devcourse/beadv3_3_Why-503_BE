@@ -38,6 +38,7 @@ public class Booking {
     @Column(name = "user_sq", nullable = false)
     private Long userSq;
 
+    @Setter
     @Column(name = "booking_status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
@@ -78,6 +79,7 @@ public class Booking {
     @Builder.Default
     private String paymentMethod = "PENDING";
 
+    @Setter
     @Column(name = "payment_key")
     private String paymentKey; // PG사 승인 키
 
@@ -101,6 +103,7 @@ public class Booking {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Setter
     @Column(name = "approved_at")
     private LocalDateTime approvedAt; // 결제 승인 일시
 

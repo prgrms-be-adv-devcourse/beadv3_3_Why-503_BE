@@ -1,6 +1,7 @@
 package io.why503.performanceservice.domain.roundSeats.service;
 
 
+import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.roundSeats.client.PaymentClient;
@@ -8,6 +9,7 @@ import io.why503.performanceservice.domain.roundSeats.model.dto.*;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
 import io.why503.performanceservice.domain.roundSeats.model.mapper.RoundSeatMapper;
 import io.why503.performanceservice.domain.roundSeats.repository.RoundSeatRepository;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
 import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
@@ -33,6 +35,7 @@ public class RoundSeatService {
     private final ShowSeatRepository showSeatRepository; //공연 좌석 정보 조회
     private final PaymentClient paymentClient;
     private final AccountServiceClient accountServiceClient;
+    private final ConcertHallRepository concertHallRepository;
 
     //Redis 작업을 위한 템플릿 주입
     private final RedisTemplate<String, Object> redisTemplate;
@@ -44,9 +47,9 @@ public class RoundSeatService {
         // Account Service 호출하여 권한 확인
         UserRoleResponse roleInfo = accountServiceClient.getUserRole(userSq);
 
-        // 관리자(ADMIN: 0) 권한 검증
-        if (roleInfo == null || roleInfo.userRole() != 0) {
-            throw new IllegalArgumentException("관리자 권한이 없습니다. 회차 좌석은 관리자만 생성 가능합니다.");
+        // 기업(2) 권한 검증
+        if (roleInfo == null || roleInfo.userRole() != 2) {
+            throw new IllegalArgumentException("기업 권한이 없습니다. 회차 좌석은 기업 회원만 생성 가능합니다.");
         }
 
         // 권한 통과 시 기존 생성 로직 수행
@@ -78,10 +81,18 @@ public class RoundSeatService {
         return convertToDtoList(entities);
     }
 
-
     //상태 변경
     @Transactional
-    public RoundSeatResponse patchRoundSeatStatus(Long roundSeatSq, RoundSeatStatus newStatus){
+    public RoundSeatResponse patchRoundSeatStatus(Long userSq, Long roundSeatSq, RoundSeatStatus newStatus){
+
+        // Account Service 호출하여 권한 확인
+        UserRoleResponse roleInfo = accountServiceClient.getUserRole(userSq);
+
+        // 기업(2) 권한 검증
+        if (roleInfo == null || roleInfo.userRole() != 0) {
+            throw new IllegalArgumentException("관리자 권한이 없습니다. 회차 좌석 상태는 관리자만 변경 가능합니다.");
+        }
+
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
                 //존재하지 않는 데이터 조회시
                 .orElseThrow(()-> new IllegalArgumentException("해당 좌석을 찾을 수 없습니다."));
@@ -91,65 +102,80 @@ public class RoundSeatService {
 
     }
 
-    //좌석 선점
-    // 유저 식별자(userSq) 파라미터 추가 (Redis 저장을 위함)
+    // 좌석 선점
     @Transactional
     public List<SeatReserveResponse> reserveSeats(Long userSq, List<Long> roundSeatSqs) {
         List<SeatReserveResponse> responseList = new ArrayList<>();
 
-        // 요청된 모든 회차 좌석 조회
+        // 1. 요청된 모든 회차 좌석 조회
         List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
 
         if (seats.size() != roundSeatSqs.size()) {
             throw new IllegalArgumentException("요청한 좌석 중 존재하지 않는 좌석이 있습니다.");
         }
 
-        // 공연 좌석 ID만 추출
+        // 2. 공연 좌석 정보(가격, 등급) 조회 및 Map핑
         List<Long> showSeatIds = seats.stream()
-                //seat이 들어오면 getShowSeatSq를 호출
                 .map(seat -> seat.getShowSeatSq())
-                .toList();
+                .collect(Collectors.toList());
 
-        // 공연 좌석 정보 한 번에 조회
-        List<ShowSeatEntity> showSeats = showSeatRepository.findAllById(showSeatIds);
-
-        //
-        // Key: 공연좌석ID, Value: 공연좌석객체
-        Map<Long, ShowSeatEntity> showSeatMap = showSeats.stream()
+        Map<Long, ShowSeatEntity> showSeatMap = showSeatRepository.findAllById(showSeatIds).stream()
                 .collect(Collectors.toMap(
                         showSeat -> showSeat.getShowSeatSq(),
                         showSeat -> showSeat
                 ));
 
-        // 반복문 처리
-        for (RoundSeatEntity roundSeat : seats) {
-            // 상태 변경 (낙관적 락 작동)
-            roundSeat.reserve();
+        // 3. [2] 공연장 이름 조회를 위한 ID 추출 (이 부분이 누락되어 'concertHallSqs' 미사용 경고가 떴던 것 같습니다)
+        // RoundSeat -> Round -> Show -> ConcertHallSq (Long 타입)
+        List<Long> concertHallIds = seats.stream()
+                .map(seat -> seat.getRoundSq().getShowSq().getConcertHallSq())
+                .distinct() // 중복 ID 제거
+                .collect(Collectors.toList());
 
-            // Redis에 소유권 등록 (좌석번호:유저번호)
-            // 시간 제한 로직은 결제 쪽에서 담당하므로 여기선 소유권만 기록
+        // 4. [3] 공연장 이름 조회 (이 부분이 누락되어 'concertHallRepository' 미사용 경고가 떴던 것 같습니다)
+        Map<Long, String> concertHallMap = concertHallRepository.findAllById(concertHallIds).stream()
+                .collect(Collectors.toMap(
+                        concertHall -> concertHall.getConcertHallSq(),
+                        concertHall -> concertHall.getConcertHallName()
+                ));
+
+        // 5. 반복문 돌면서 데이터 조합
+        for (RoundSeatEntity roundSeat : seats) {
+            // 상태 변경 및 Redis 저장
+            roundSeat.reserve();
             String key = "seat_owner:" + roundSeat.getRoundSeatSq();
             redisTemplate.opsForValue().set(key, String.valueOf(userSq));
 
-            // Map에서 공연 좌석 정보 가져오기
+            // 공연 좌석 정보 (가격, 등급 등)
             ShowSeatEntity showSeat = showSeatMap.get(roundSeat.getShowSeatSq());
-
             if (showSeat == null) {
                 throw new IllegalArgumentException("연결된 공연 좌석 정보가 없습니다.");
             }
 
+            // [4] 변수 선언 (이 부분이 누락되어 'symbol cannot be resolved' 에러가 났던 것 같습니다)
+            // 아래 세 줄이 있어야 builder에서 show.xxx, concertHallName 등을 쓸 수 있습니다.
+            RoundEntity round = roundSeat.getRoundSq();
+            ShowEntity show = round.getShowSq();
+            String concertHallName = concertHallMap.get(show.getConcertHallSq());
+
             // 응답 객체 생성
             responseList.add(SeatReserveResponse.builder()
+                    // 기존 필드
                     .roundSeatSq(roundSeat.getRoundSeatSq())
                     .roundSeatStatus(roundSeat.getRoundSeatStatus().name())
                     .price(showSeat.getPrice())
                     .grade(showSeat.getGrade().name())
                     .seatArea(showSeat.getSeat().getSeatArea())
                     .areaSeatNumber(showSeat.getSeat().getAreaSeatNo())
+
+                    // 추가 정보 매핑
+                    .showName(show.getShowName())              // 위에서 정의한 show 변수 사용
+                    .concertHallName(concertHallName)          // 위에서 정의한 concertHallName 변수 사용
+                    .roundDate(round.getRoundDt())             // 위에서 정의한 round 변수 사용
                     .build());
         }
 
-        paymentClient.createBooking(userSq, new PaymentRequest(userSq, roundSeatSqs));
+        // paymentClient 호출 코드 삭제됨 (순환 호출 방지)
 
         return responseList;
     }

@@ -13,7 +13,6 @@ import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
-@Profile("!test")
 @Configuration
 public class JwtKeyConfig {
 

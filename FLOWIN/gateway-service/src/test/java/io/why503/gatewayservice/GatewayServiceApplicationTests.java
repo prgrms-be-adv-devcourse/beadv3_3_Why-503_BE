@@ -11,7 +11,6 @@ import java.security.PublicKey;
 
 @ActiveProfiles("test")
 @SpringBootTest
-@Import(TestKeyConfig.class)
 class GatewayServiceApplicationTests {
 
     @Test

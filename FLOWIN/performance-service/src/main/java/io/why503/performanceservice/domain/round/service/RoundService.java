@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.round.service;
 
-import io.why503.performanceservice.domain.round.mapper.RoundMapper;
+import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
 import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
 import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
@@ -32,13 +32,13 @@ public class RoundService {
     private final AccountServiceClient accountServiceClient;
 
     //공연 엔티티 조회 및 예외 처리
-    private ShowEntity findShowOrThrow(Long showSq) {
+    private ShowEntity findShowBySq(Long showSq) {
         return showRepository.findById(showSq)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공연입니다."));
     }
 
     //회차 엔티티 조회 및 예외 처리
-    private RoundEntity findRoundOrThrow(Long roundSq) {
+    private RoundEntity findRoundBySq(Long roundSq) {
         return roundRepository.findById(roundSq)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
     }
@@ -58,7 +58,7 @@ public class RoundService {
 
         validateAdminRole(userSq);
 
-        ShowEntity show = findShowOrThrow(request.showSq());
+        ShowEntity show = findShowBySq(request.showSq());
 
         //초기 생성 시엔 상태가 예매 가능이여야만 함
         if (request.roundStatus() != RoundStatus.AVAILABLE) {
@@ -105,7 +105,7 @@ public class RoundService {
 
         validateAdminRole(userSq);
 
-        ShowEntity show = findShowOrThrow(showSq);
+        ShowEntity show = findShowBySq(showSq);
 
         //DB에서 리스트를 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSq(show);
@@ -119,7 +119,7 @@ public class RoundService {
      * - 예매 종료나 취소된 회차는 제외
      */
     public List<RoundResponse> getAvailableRoundList(Long showSq) {
-        ShowEntity show = findShowOrThrow(showSq);
+        ShowEntity show = findShowBySq(showSq);
         // DB에서 예매가능 상태인 것만 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(show, RoundStatus.AVAILABLE);
 
@@ -133,7 +133,7 @@ public class RoundService {
      * - 데이터가 없으면 404 Not Found 에러를 발생
      */
     public RoundResponse getRoundDetail(Long roundSq) {
-        return roundMapper.entityToDto(findRoundOrThrow(roundSq));
+        return roundMapper.entityToDto(findRoundBySq(roundSq));
     }
 
     //회차 상태 변경
@@ -142,7 +142,7 @@ public class RoundService {
 
         validateAdminRole(userSq);
 
-        RoundEntity entity = findRoundOrThrow(roundSq);
+        RoundEntity entity = findRoundBySq(roundSq);
 
         entity.updateStat(newStatus);
 

@@ -1,12 +1,15 @@
 package io.why503.performanceservice.domain.round.model.dto;
 
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 
 public record RoundRequest(
-        Long showSq,
-        LocalDateTime roundDt,
-        String roundCast,
-        RoundStatus roundStatus
+        @NotBlank Long showSq,
+        @NotNull LocalDateTime roundDt,
+        @NotBlank String roundCast,
+        @NotNull RoundStatus roundStatus
 ) {
 }

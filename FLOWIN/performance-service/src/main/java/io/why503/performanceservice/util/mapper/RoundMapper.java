@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.round.mapper;
+package io.why503.performanceservice.util.mapper;
 
 import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
 import io.why503.performanceservice.domain.round.model.dto.RoundResponse;

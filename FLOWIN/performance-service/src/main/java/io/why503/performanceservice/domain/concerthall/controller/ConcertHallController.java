@@ -16,9 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallRequest;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallResponse;
-import io.why503.performanceservice.domain.concerthall.model.dto.ConcertHallWithSeatsRequest;
+import io.why503.performanceservice.domain.concerthall.model.dto.request.ConcertHallRequest;
+import io.why503.performanceservice.domain.concerthall.model.dto.response.ConcertHallResponse;
+import io.why503.performanceservice.domain.concerthall.model.dto.request.ConcertHallWithSeatsRequest;
 import io.why503.performanceservice.domain.concerthall.service.ConcertHallService;
 
 
@@ -31,20 +31,18 @@ public class ConcertHallController {
 
     /**
      * 공연장 등록
-     *
      * 처리 내용 :
      * - 공연장 기본 정보 DB 저장
      * - 공연 등록(Show) 시 참조되는 기준 데이터 생성
-     *
-     * @param reqDto 공연장 등록 요청 DTO
+     * @param request 공연장 등록 요청 DTO
      * @return 200 OK
      */
     @PostMapping
     public ResponseEntity<Void> createConcertHall(
-            @RequestBody ConcertHallRequest reqDto
+            @RequestBody ConcertHallRequest request
     ) {
         try {
-            concertHallSv.createConcertHall(reqDto);
+            concertHallSv.createConcertHall(request);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -54,11 +52,9 @@ public class ConcertHallController {
 
     /**
      * 공연장 단건 조회
-     *
      * 처리 내용 :
      * - 공연장 식별자 기준 조회
      * - 존재하지 않을 경우 예외 발생
-     *
      * @param concertHallSq 공연장 식별자
      * @return 공연장 응답 DTO
      */
@@ -72,9 +68,7 @@ public class ConcertHallController {
 
     /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
-     *
      * POST /concert-halls/custom-seats
-     *
      * 요청 바디 예시:
      * {
      *   "concertHall": { ... },
@@ -86,11 +80,11 @@ public class ConcertHallController {
      */
     @PostMapping("/custom-seats")
     public Long createConcertHallWithCustomSeats(
-            @RequestBody ConcertHallWithSeatsRequest req
+            @RequestBody ConcertHallWithSeatsRequest request
     ) {
         return concertHallSv.createWithCustomSeats(
-                req.getConcertHall(),
-                req.getSeatAreas()
+                request.concertHall(),
+                request.seatAreas()
         );
     }
 }

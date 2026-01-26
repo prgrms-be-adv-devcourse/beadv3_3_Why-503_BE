@@ -1,6 +1,7 @@
 package io.why503.accountservice.domain.accounts.controller;
 
 
+import io.why503.accountservice.domain.accounts.model.dto.requests.PointUseRequest;
 import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
@@ -95,7 +96,24 @@ public class AccountsController {
         UserRoleResponse updatedAccount = accountService.updateById(id, request);
         return ResponseEntity.ok(updatedAccount);
     }
-
+    //point 증가
+    @PostMapping("/point/increase/{sq}")
+    public ResponseEntity<UserRoleResponse> increasePoint(
+            @PathVariable Long sq,
+            @RequestBody PointUseRequest request
+    ){
+        UserRoleResponse updatedAccount = accountService.increasePoint(sq, request.amount());
+        return ResponseEntity.ok(updatedAccount);
+    }
+    //point 감소
+    @PostMapping("/point/decrease/{sq}")
+    public ResponseEntity<UserRoleResponse> decreasePoint(
+            @PathVariable Long sq,
+            @RequestBody PointUseRequest request
+    ){
+        UserRoleResponse updatedAccount = accountService.decreasePoint(sq, request.amount());
+        return ResponseEntity.ok(updatedAccount);
+    }
 
     //sq기준 삭제
     @DeleteMapping("/sq/{sq}")

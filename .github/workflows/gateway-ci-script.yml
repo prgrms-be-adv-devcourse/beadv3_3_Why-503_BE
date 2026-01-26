@@ -14,3 +14,4 @@ jobs:
     secrets: inherit
     with:
       service-name: gateway-service #얘 수정
+      service-type: gateway

@@ -56,14 +56,14 @@ public class BookingService {
         }
 
         // 2. 좌석 선점 요청 ID 추출 (람다식 유지)
-        List<Long> roundSeatIds = bookingRequest.tickets().stream()
+        List<Long> roundSeatSqs = bookingRequest.tickets().stream()
                 .map(ticketRequest -> ticketRequest.roundSeatSq())
                 .collect(Collectors.toList());
 
         // 3. 공연 서비스 호출 (좌석 선점 및 정보 수신)
-        List<RoundSeatResponse> reservedSeats = performanceClient.reserveRoundSeats(roundSeatIds);
+        List<RoundSeatResponse> reservedSeats = performanceClient.reserveRoundSeats(userSq, roundSeatSqs);
 
-        if (reservedSeats.size() != roundSeatIds.size()) {
+        if (reservedSeats.size() != roundSeatSqs.size()) {
             throw new IllegalStateException("좌석 선점 실패: 일부 좌석을 확보하지 못했습니다.");
         }
 
@@ -110,7 +110,7 @@ public class BookingService {
      * - 사용자가 입력한 포인트를 검증하고 최종 결제 금액에 반영합니다.
      */
     @Transactional
-    public BookingResponse applyPointToBooking(Long bookingSq, Long userSq, Integer pointToUse) {
+    public BookingResponse applyPointToBooking(Long bookingSq, Long userSq, Long pointToUse) {
         log.info(">>> [Booking] 포인트 적용 요청 | ID={}, Point={}", bookingSq, pointToUse);
 
         Booking booking = findBookingOrThrow(bookingSq);
@@ -125,26 +125,39 @@ public class BookingService {
 
         // 1. 유저 보유 포인트 조회 및 검증
         AccountResponse account = accountClient.getAccount(userSq);
-        int requestPoint = (pointToUse != null) ? pointToUse : 0;
 
-        if (account.point() < requestPoint) {
-            throw new IllegalArgumentException(String.format("포인트 부족 (보유: %d / 요청: %d)", account.point(), requestPoint));
+        // [수정 1] Null 방어 로직: account.userPoint()가 null이면 0L로 처리
+        long userCurrentPoint = (account.userPoint() != null) ? account.userPoint() : 0L;
+
+        // [수정 2] 요청 포인트 Null 방어
+        long requestPoint = (pointToUse != null) ? pointToUse : 0L;
+
+        // 디버깅용 로그 (필수! 이걸 봐야 null인지 0인지 100000인지 압니다)
+        log.info(">>> [포인트 검증] 보유 포인트: {} / 요청 포인트: {}", userCurrentPoint, requestPoint);
+
+        // [수정 3] 안전한 변수끼리 비교 (이제 에러 안 남)
+        if (userCurrentPoint < requestPoint) {
+            // [수정 4] 에러 메시지에도 안전한 변수 사용 (%d는 Long도 사용 가능)
+            throw new IllegalArgumentException(
+                    String.format("포인트 부족 (보유: %d / 요청: %d)", userCurrentPoint, requestPoint)
+            );
         }
 
         // 2. 포인트 적용 (Entity 내부에서 pgAmount 재계산됨)
-        booking.applyPoints(requestPoint);
+        booking.applyPoints((int) requestPoint);
 
         return bookingMapper.EntityToResponse(booking);
     }
 
     /**
      * 예매 확정
-     * - PG사 결제 승인 후 호출되어 예매 상태를 'CONFIRMED'로 변경합니다.
+     * - PG사 결제 승인 후 호출되어 예매 상태를 CONFIRMED 변경합니다.
      * - 공연 서비스에 판매 완료(SOLD)를 통보합니다.
      */
     @Transactional
-    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod) {
+    public void confirmBooking(Long bookingSq, String paymentKey, String paymentMethod, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
         log.info(">>> [Booking] 예매 확정 처리 | ID={}, Method={}", bookingSq, paymentMethod);
 
         // 1. 내부 상태 변경
@@ -154,7 +167,7 @@ public class BookingService {
         if (booking.getUsedPoint() > 0) {
             log.info(">>> [Booking] 포인트 차감 요청 | UserSq={}, Amount={}", booking.getUserSq(), booking.getUsedPoint());
             try {// 빌더 대신 new PointUseRequest(...) 사용
-                accountClient.usePoint(new PointUseRequest(booking.getUserSq(), booking.getUsedPoint()));
+                accountClient.decreasePoint(userSq, new PointUseRequest((long) booking.getUsedPoint()));
             } catch (Exception e) {
                 log.error(">>> [Compensate] 포인트 차감 실패: {}", e.getMessage());
                 throw new IllegalStateException("포인트 차감 실패로 인해 결제를 취소합니다.");
@@ -167,7 +180,7 @@ public class BookingService {
                 .collect(Collectors.toList());
 
         try {
-            performanceClient.confirmRoundSeats(seatIds);
+            performanceClient.confirmRoundSeats(userSq, seatIds);
         } catch (Exception e) {
             // [중요] 좌석 확정 실패 -> "포인트 환불" 보상 트랜잭션 수행해야 함
             log.error(">>> [Compensate] 좌석 확정 실패 -> 포인트 환불 진행");
@@ -175,11 +188,11 @@ public class BookingService {
             if (booking.getUsedPoint() > 0) {
                 try {
                     // 아까 깎았던 포인트 다시 돌려주기
-                    accountClient.refundPoint(new PointUseRequest(booking.getUserSq(), booking.getUsedPoint()));
+                    accountClient.increasePoint(userSq, new PointUseRequest((long) booking.getUsedPoint()));
                     log.info(">>> [Compensate] 포인트 환불 완료");
                 } catch (Exception refundError) {
                     // 최악의 상황: 결제 취소도 해야 하는데 환불도 실패함.
-                    // 이런 로그는 별도 파일로 남겨서 개발자가 수동 처리해야 함 (Alery, Slack 등)
+                    // 이런 로그는 별도 파일로 남겨서 개발자가 수동 처리해야 함 (Alert, Slack 등)
                     log.error(">>> [CRITICAL] 포인트 환불 실패! 수동 확인 필요. UserSq={}, Amount={}",
                             booking.getUserSq(), booking.getUsedPoint());
                 }
@@ -197,8 +210,10 @@ public class BookingService {
      * - 결제 후: 취소 상태 변경 (Soft Delete) 및 환불 처리
      */
     @Transactional
-    public void cancelBooking(Long bookingSq) {
+    public void cancelBooking(Long bookingSq, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+
         BookingStatus status = booking.getBookingStatus();
         log.info(">>> [Booking] 예매 전체 취소 요청 | ID={}, Status={}", bookingSq, status);
 
@@ -222,8 +237,10 @@ public class BookingService {
      * - 티켓 하나만 취소하며, 남은 티켓이 없으면 전체 취소로 자동 전환됩니다.
      */
     @Transactional
-    public void cancelTicket(Long bookingSq, Long ticketSq) {
+    public void cancelTicket(Long bookingSq, Long ticketSq, Long userSq) {
         Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+
         BookingStatus status = booking.getBookingStatus();
         log.info(">>> [Booking] 티켓 부분 취소 요청 | BookingID={}, TicketID={}", bookingSq, ticketSq);
 
@@ -283,8 +300,10 @@ public class BookingService {
     /**
      * 예매 단건 조회
      */
-    public BookingResponse getBooking(Long bookingSq) {
-        return bookingMapper.EntityToResponse(findBookingOrThrow(bookingSq));
+    public BookingResponse getBooking(Long bookingSq, Long userSq) {
+        Booking booking = findBookingOrThrow(bookingSq);
+        validateOwner(booking, userSq);
+        return bookingMapper.EntityToResponse(booking);
     }
 
     /**
@@ -314,6 +333,12 @@ public class BookingService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다. (ID=" + bookingSq + ")"));
     }
 
+    private void validateOwner(Booking booking, Long userSq) {
+        if (!booking.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 예매만 조회/취소/확정할 수 있습니다.");
+        }
+    }
+
     private void releaseSeatsInShowService(List<Ticket> tickets) {
         if (tickets == null || tickets.isEmpty()) return;
 
@@ -327,4 +352,15 @@ public class BookingService {
             log.error(">>> [Booking] 좌석 해제 요청 실패 | IDs={}", seatIds);
         }
     }
+    public Booking getMyBooking(Long bookingSq, Long userSq) {
+        Booking booking = bookingRepository.findById(bookingSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다."));
+
+        if (!booking.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 예매 내역만 접근할 수 있습니다.");
+        }
+
+        return booking;
+    }
+
 }

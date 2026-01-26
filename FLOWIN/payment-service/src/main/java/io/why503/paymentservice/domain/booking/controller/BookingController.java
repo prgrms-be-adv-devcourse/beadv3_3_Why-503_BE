@@ -13,6 +13,7 @@ import java.util.List;
 /**
  * 예매 API 컨트롤러
  * - 예매 생성, 조회, 취소, 확정 기능을 제공합니다.
+ * - [수정] 모든 메서드에 사용자 검증(X-USER-SQ) 추가
  */
 @RestController
 @RequestMapping("/bookings")
@@ -43,15 +44,18 @@ public class BookingController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody ApplyPointRequest request
     ) {
-        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.point()));
+        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.userPoint()));
     }
 
     /**
      * 예매 상세 조회
      */
     @GetMapping("/{bookingSq}")
-    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingSq) {
-        return ResponseEntity.ok(bookingService.getBooking(bookingSq));
+    public ResponseEntity<BookingResponse> getBooking(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long bookingSq
+    ) {
+        return ResponseEntity.ok(bookingService.getBooking(bookingSq, userSq));
     }
 
     /**
@@ -68,11 +72,12 @@ public class BookingController {
      */
     @PatchMapping("/{bookingSq}/confirm")
     public ResponseEntity<Void> confirmBooking(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long bookingSq,
             @RequestParam String paymentKey,
             @RequestParam String paymentMethod
     ) {
-        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod);
+        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod, userSq);
         return ResponseEntity.ok().build();
     }
 
@@ -80,8 +85,11 @@ public class BookingController {
      * 예매 전체 취소
      */
     @PatchMapping("/{bookingSq}/cancel")
-    public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingSq) {
-        bookingService.cancelBooking(bookingSq);
+    public ResponseEntity<Void> cancelBooking(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long bookingSq
+    ) {
+        bookingService.cancelBooking(bookingSq, userSq);
         return ResponseEntity.ok().build();
     }
 
@@ -90,10 +98,11 @@ public class BookingController {
      */
     @PatchMapping("/{bookingSq}/tickets/{ticketSq}/cancel")
     public ResponseEntity<Void> cancelTicket(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long bookingSq,
             @PathVariable Long ticketSq
     ) {
-        bookingService.cancelTicket(bookingSq, ticketSq);
+        bookingService.cancelTicket(bookingSq, ticketSq, userSq);
         return ResponseEntity.ok().build();
     }
 }

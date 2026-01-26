@@ -51,11 +51,12 @@ public class RoundSeatController {
     // 상태 변경
     @PatchMapping("/{roundSeatSq}/status")
     public ResponseEntity<RoundSeatResponse> patchRoundSeatStatus(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable(name = "roundSeatSq") Long roundSeatSq,
             @RequestBody @Valid RoundSeatStatusRequest request
     ) {
         // request.roundSeatStatus()로 값 꺼내기
-        RoundSeatResponse response = roundSeatService.patchRoundSeatStatus(roundSeatSq, request.roundSeatStatus());
+        RoundSeatResponse response = roundSeatService.patchRoundSeatStatus(userSq, roundSeatSq, request.roundSeatStatus());
         return ResponseEntity.ok(response);
     }
 

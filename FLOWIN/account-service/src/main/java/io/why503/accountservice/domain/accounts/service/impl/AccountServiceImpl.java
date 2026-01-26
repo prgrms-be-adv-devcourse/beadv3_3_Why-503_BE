@@ -145,6 +145,22 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+    @Override
+    @Transactional
+    public UserRoleResponse increasePoint(Long sq, Long point) {
+        Account account = findBySq(sq);
+        account.increasePoint(point);
+        return accountMapper.entityToSummaryResponse(account);
+    }
+
+    @Override
+    @Transactional
+    public UserRoleResponse decreasePoint(Long sq, Long point) {
+        Account account = findBySq(sq);
+        account.decreasePoint(point);
+        return accountMapper.entityToSummaryResponse(account);
+    }
+
     //sq로 UserRole 수정
     @Override
     @Transactional

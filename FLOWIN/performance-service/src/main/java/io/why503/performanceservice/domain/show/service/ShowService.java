@@ -26,7 +26,7 @@ public interface ShowService {
      */
     Long createShowWithSeats(
             ShowCreateWithSeatPolicyRequest request,
-            String authorization
+            Long userSq
     );
 
     /**
@@ -35,7 +35,7 @@ public interface ShowService {
      */
     ShowResponse createShow(
             ShowRequest request,
-            String authorization
+            Long userSq
     );
 
     /**

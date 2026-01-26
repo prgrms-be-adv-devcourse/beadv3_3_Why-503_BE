@@ -62,6 +62,7 @@ public class Account extends BasicEntity {
 
     @Column(name = "point")
     private Long point = 0L;
+
     //생성자, 암호화는 이미 cmd에서 완료
     public Account(UpsertAccountVo vo){
         this.id = vo.userId();
@@ -95,6 +96,7 @@ public class Account extends BasicEntity {
     }
     //포인트 감소
     public void decreasePoint(Long decrease){
+
         this.point -= decrease;
     }
     /*

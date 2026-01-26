@@ -15,10 +15,8 @@ public interface AccountServiceClient {
      * - COMPANY 권한 검증은 account-service 책임
      * - 성공 시 companySq 반환
      */
-    @GetMapping("/internal/account/company")
-    CompanyInfoResponse getMyCompanyInfo(
-            @RequestHeader("Authorization") String authorization
-    );
+    @GetMapping("/accounts/company/{sq}")
+    CompanyInfoResponse getMyCompanyInfo(@PathVariable("sq") Long sq);
 
     /**
      * account-service의 상세 조회 API를 호출

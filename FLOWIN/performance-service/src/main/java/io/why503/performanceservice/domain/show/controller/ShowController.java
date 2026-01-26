@@ -38,10 +38,10 @@ public class ShowController {
     @PostMapping
     public ResponseEntity<ShowResponse> createShow(
             @RequestBody ShowRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @RequestHeader("X-USER-SQ") Long userSq
     ) {
-        requireAuthorization(authorization);
-        ShowResponse response = showService.createShow(request, authorization);
+        requireAuthorization(userSq);
+        ShowResponse response = showService.createShow(request, userSq);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -52,10 +52,10 @@ public class ShowController {
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(
             @RequestBody ShowCreateWithSeatPolicyRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @RequestHeader("X-USER-SQ") Long userSq
     ) {
-        requireAuthorization(authorization);
-        Long showSq = showService.createShowWithSeats(request, authorization);
+        requireAuthorization(userSq);
+        Long showSq = showService.createShowWithSeats(request, userSq);
         return ResponseEntity.status(HttpStatus.CREATED).body(showSq);
     }
 
@@ -73,8 +73,8 @@ public class ShowController {
     /**
      * Authorization 헤더 필수 검증
      */
-    private void requireAuthorization(String authorization) {
-        if (authorization == null || authorization.isBlank()) {
+    private void requireAuthorization(Long authorization) {
+        if (authorization == null) {
             throw new UnauthorizedException("missing Authorization header");
         }
     }

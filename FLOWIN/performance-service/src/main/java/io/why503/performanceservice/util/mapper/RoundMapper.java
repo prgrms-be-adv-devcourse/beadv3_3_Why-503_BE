@@ -15,7 +15,6 @@ public class RoundMapper {
     //Request -> Entity
     public RoundEntity dtoToEntity(RoundRequest request, ShowEntity showEntity, Integer calculatedNo) {
         return RoundEntity.builder()
-                .showSq(showEntity)
                 .roundDt(request.roundDt())
                 .roundNum(calculatedNo)
                 .roundCast(request.roundCast())
@@ -26,13 +25,12 @@ public class RoundMapper {
     //Entity -> Response
     public RoundResponse entityToDto(RoundEntity entity) {
         return RoundResponse.builder()
-                .roundSq(entity.getRoundSq())
-                .showSq(entity.getShowSq().getShowSq())
-                .roundDt(entity.getRoundDt())
-                .roundNum(entity.getRoundNum())
-                .roundCast(entity.getRoundCast())
-                .roundStatus(entity.getRoundStatus())
-                .roundStatusName(entity.getRoundStatus().getDescription())
+                .showSq(entity.getShow().getSq())
+                .roundDt(entity.getDateTime())
+                .roundNum(entity.getNum())
+                .roundCast(entity.getCast())
+                .roundStatus(entity.getStatus())
+                .roundStatusName(entity.getStatus().getDescription())
                 .build();
     }
     //Entity -> Dto

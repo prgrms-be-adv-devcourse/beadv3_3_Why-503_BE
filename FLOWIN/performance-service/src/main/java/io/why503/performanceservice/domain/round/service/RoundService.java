@@ -1,5 +1,6 @@
 package io.why503.performanceservice.domain.round.service;
 
+import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
 import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
@@ -7,7 +8,6 @@ import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
-import io.why503.performanceservice.domain.show.repository.ShowRepository;
 import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
 import io.why503.performanceservice.global.client.accountservice.dto.UserRoleResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +28,10 @@ public class RoundService {
 
     private final RoundRepository roundRepository;
     private final RoundMapper roundMapper;
-    private final ShowRepository showRepository;
     private final AccountServiceClient accountServiceClient;
+    private final ShowService showService;
 
-    //공연 엔티티 조회 및 예외 처리
-    private ShowEntity findShowBySq(Long showSq) {
-        return showRepository.findById(showSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공연입니다."));
-    }
+
 
     //회차 엔티티 조회 및 예외 처리
     private RoundEntity findRoundBySq(Long roundSq) {
@@ -58,15 +54,15 @@ public class RoundService {
 
         validateAdminRole(userSq);
 
-        ShowEntity show = findShowBySq(request.showSq());
+        ShowEntity show = showService.findShowBySq(request.showSq());
 
         //초기 생성 시엔 상태가 예매 가능이여야만 함
         if (request.roundStatus() != RoundStatus.AVAILABLE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회차 생성 시 상태는 '예매가능(AVAILABLE)'만 가능합니다.");
         }
 
-        // 레포지토리 조회 시 show 객체 전달
-        if (roundRepository.existsByShowSqAndRoundDt(show, request.roundDt())) {
+        // 레포지토리 조회 시 showRequest 객체 전달
+        if (roundRepository.existsByShow_SqAndRoundDt(show, request.roundDt())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
         }
 
@@ -84,7 +80,7 @@ public class RoundService {
         roundList.add(newEntity);
 
         // 리스트 내부의 회차들을 시간(RoundDt) 순서대로 오름차순 정렬
-        roundList.sort((r1, r2) -> r1.getRoundDt().compareTo(r2.getRoundDt()));
+        roundList.sort((r1, r2) -> r1.getDateTime().compareTo(r2.getDateTime()));
 
         // 정렬된 순서대로 회차 번호(roundNum) 다시 부여 (1번부터 시작)
         for (int i = 0; i < roundList.size(); i++) {
@@ -105,10 +101,10 @@ public class RoundService {
 
         validateAdminRole(userSq);
 
-        ShowEntity show = findShowBySq(showSq);
+        ShowEntity show = showService.findShowBySq(showSq);
 
         //DB에서 리스트를 꺼냄
-        List<RoundEntity> entities = roundRepository.findByShowSq(show);
+        List<RoundEntity> entities = roundRepository.findByShow_Sq(show);
 
         return roundMapper.entityListToDtoList(entities);
     }
@@ -119,7 +115,7 @@ public class RoundService {
      * - 예매 종료나 취소된 회차는 제외
      */
     public List<RoundResponse> getAvailableRoundList(Long showSq) {
-        ShowEntity show = findShowBySq(showSq);
+        ShowEntity show = showService.findShowBySq(showSq);
         // DB에서 예매가능 상태인 것만 꺼냄
         List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(show, RoundStatus.AVAILABLE);
 

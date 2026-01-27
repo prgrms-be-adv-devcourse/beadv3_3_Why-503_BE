@@ -1,0 +1,23 @@
+/**
+ * Show Request DTO
+ * 공연 등록 요청 시 전달되는 데이터를 담는 DTO
+ * 사용 목적 :
+ * - 공연 등록 API에서 클라이언트 요청 데이터 수신
+ */
+package io.why503.performanceservice.domain.show.model.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDateTime;
+
+public record ShowRequest(
+        @NotBlank String showName,          // 공연명
+        @NotNull LocalDateTime showStartDate,   // 공연 시작일
+        @NotNull LocalDateTime showEndDate,     // 공연 종료일
+        @NotNull LocalDateTime showOpenDate,      // 티켓 오픈 일시
+        @NotBlank String showRunningTime,          // 러닝타임
+        @NotBlank String showViewingAge,        // 관람 등급
+        @NotNull Integer showCategory,          // 공연 카테고리 (번호로 전달받음, 예: 0 콘서트 / 1 뮤지컬 / 2 연극 / 3 클래식)
+        @NotNull Long concertHallSq         // 공연장 식별자
+) { }

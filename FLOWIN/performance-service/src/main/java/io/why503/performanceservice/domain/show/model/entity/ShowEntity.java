@@ -12,6 +12,7 @@
  */
 package io.why503.performanceservice.domain.show.model.entity;
 
+import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +22,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 @Entity
-@Table(name = "`show`")
+@Table(name = "`showRequest`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -31,10 +32,10 @@ public class ShowEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "show_sq")
-    private Long showSq;               // 공연 시퀀스 (PK)
+    private Long sq;               // 공연 시퀀스 (PK)
 
     @Column(name = "show_name", nullable = false, length = 100)
-    private String showName;           // 공연명
+    private String name;           // 공연명
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;   // 공연 시작일
@@ -43,10 +44,10 @@ public class ShowEntity {
     private LocalDateTime endDate;     // 공연 종료일
 
     @Column(name = "open_dt", nullable = false)
-    private LocalDateTime openDt;      // 티켓 오픈 일시
+    private LocalDateTime openDate;      // 티켓 오픈 일시
 
     @Column(name = "show_time", nullable = false, length = 50)
-    private String showTime;           // 러닝타임
+    private String runningTime;           // 러닝타임
 
     @Column(name = "viewing_age", nullable = false, length = 20)
     private String viewingAge;         // 관람 등급
@@ -57,7 +58,7 @@ public class ShowEntity {
     private int category;              // 공연 카테고리 코드
 
     @Column(name = "show_stat", nullable = false)
-    private int showStat;              // 공연 상태 코드
+    private int status;              // 공연 상태 코드
 
     @Column(name = "concert_hall_sq", nullable = false)
     private Long concertHallSq;        // 공연장 식별자 (FK)
@@ -65,33 +66,48 @@ public class ShowEntity {
     @Column(name = "company_sq", nullable = false)
     private Long companySq;             // 회사 식별자 (FK)
 
-    // ===== Enum 변환 메서드 =====
+    @Builder
+    public ShowEntity(
+            String name,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            LocalDateTime openDate,
+            String runningTime,
+            String viewingAge,
+            int category,
+            Long concertHallSq,
+            Long companySq) {
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.openDate = openDate;
+        this.runningTime = runningTime;
+        this.viewingAge = viewingAge;
+        this.category = category;
+        this.status = ShowStatus.SCHEDULED.getCode();
+        this.concertHallSq = concertHallSq;
+        this.companySq = companySq;
+    }
 
-    /**
-     * 카테고리 코드 → Enum 변환
-     */
+// ===== Enum 변환 메서드 =====
+
+    //카테고리 코드 → Enum 변환
     public ShowCategory getCategoryEnum() {
         return ShowCategory.fromCode(this.category);
     }
 
-    /**
-     * 공연 상태 코드 → Enum 변환
-     */
+    //공연 상태 코드 → Enum 변환
     public ShowStatus getShowStatus() {
-        return ShowStatus.fromCode(this.showStat);
+        return ShowStatus.fromCode(this.status);
     }
 
-    /**
-     * 카테고리 Enum → 코드 값 저장
-     */
+    //카테고리 Enum → 코드 값 저장
     public void setCategory(ShowCategory category) {
         this.category = category.getCode();
     }
 
-    /**
-     * 공연 상태 Enum → 코드 값 저장
-     */
+    //공연 상태 Enum → 코드 값 저장
     public void setShowStatus(ShowStatus status) {
-        this.showStat = status.getCode();
+        this.status = status.getCode();
     }
 }

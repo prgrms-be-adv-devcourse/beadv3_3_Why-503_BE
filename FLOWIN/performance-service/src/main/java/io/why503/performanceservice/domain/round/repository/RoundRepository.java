@@ -11,7 +11,7 @@ import java.util.List;
 public interface RoundRepository extends JpaRepository<RoundEntity,Long> {
 
     // 특정 공연에 걸려 있는 모든 회차를 다 가져올 때 사용
-    List<RoundEntity> findByShowSq(ShowEntity showSq);
+    List<RoundEntity> findByShow_Sq(ShowEntity showSq);
 
     //예매가 가능한 것만 골라낼 때 사용
     List<RoundEntity> findByShowSqAndRoundStatus(ShowEntity showSq, RoundStatus roundStatus);
@@ -20,7 +20,7 @@ public interface RoundRepository extends JpaRepository<RoundEntity,Long> {
     List<RoundEntity> findAllByShowSqAndRoundDtBetween(ShowEntity showSq, LocalDateTime start, LocalDateTime end);
 
     //특정 공연이 해당 시간에 이미 존재하는지 확인
-    boolean existsByShowSqAndRoundDt(ShowEntity showSq, LocalDateTime roundDt);
+    boolean existsByShow_SqAndRoundDt(ShowEntity showSq, LocalDateTime roundDt);
 }
 
 

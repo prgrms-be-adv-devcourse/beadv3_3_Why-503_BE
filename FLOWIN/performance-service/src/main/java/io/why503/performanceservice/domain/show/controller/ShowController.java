@@ -1,8 +1,8 @@
 package io.why503.performanceservice.domain.show.controller;
 
-import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyRequest;
-import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
-import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
+import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWithSeatPolicyRequest;
+import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
+import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.global.error.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
@@ -12,16 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * Show Controller
- *
  * 역할:
  * - 공연 등록
  * - 공연 + 좌석 정책 등록
  * - 공연 단건 조회
- *
  * 책임:
  * - 요청/응답 매핑
  * - Authorization 헤더 존재 여부 검증
- *
  * 비즈니스 로직은 Service 계층에 위임
  */
 @RestController
@@ -66,7 +63,7 @@ public class ShowController {
     public ResponseEntity<ShowResponse> getShow(
             @PathVariable Long showSq
     ) {
-        ShowResponse response = showService.getShow(showSq);
+        ShowResponse response = showService.readShowBySq(showSq);
         return ResponseEntity.ok(response);
     }
 

@@ -29,7 +29,7 @@ public class RoundSeatMapper {
     public RoundSeatResponse entityToDto(RoundSeatEntity entity){
         return RoundSeatResponse.builder()
                 .roundSeatSq(entity.getRoundSeatSq())
-                .roundSq(entity.getRoundSq().getRoundSq())
+                .roundSq(entity.getRoundSq().getSq())
                 .showSeatSq(entity.getShowSeatSq())
                 .roundSeatStatus(entity.getRoundSeatStatus())
                 .roundSeatStatusName(entity.getRoundSeatStatus().getDescription())

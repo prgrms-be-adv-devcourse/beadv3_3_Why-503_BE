@@ -97,7 +97,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
         ConcertHallEntity hall = concertHallMapper.requestToEntity(request);
 
         hall.setConcertHallStatus(
-            ConcertHallStatus.fromCode(request.concertHallStat())
+            ConcertHallStatus.fromCode(request.concertHallStatus())
         );
         concertHallRepo.save(hall);
     }
@@ -135,6 +135,6 @@ public class ConcertHallServiceImpl implements ConcertHallService {
         // 공연장 생성 후 관리자 입력 기반 좌석 생성
         seatSv.createCustomSeats(hall, seatAreaCmds);
 
-        return hall.getConcertHallSq();
+        return hall.getSq();
     }
 }

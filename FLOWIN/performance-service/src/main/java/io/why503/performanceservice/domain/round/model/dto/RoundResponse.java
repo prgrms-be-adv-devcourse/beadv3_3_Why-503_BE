@@ -3,8 +3,6 @@ package io.why503.performanceservice.domain.round.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-
 
 import java.time.LocalDateTime;
 

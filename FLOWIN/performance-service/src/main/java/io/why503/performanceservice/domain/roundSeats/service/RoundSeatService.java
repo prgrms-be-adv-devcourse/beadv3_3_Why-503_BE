@@ -128,15 +128,15 @@ public class RoundSeatService {
         // 3. [2] 공연장 이름 조회를 위한 ID 추출 (이 부분이 누락되어 'concertHallSqs' 미사용 경고가 떴던 것 같습니다)
         // RoundSeat -> Round -> Show -> ConcertHallSq (Long 타입)
         List<Long> concertHallIds = seats.stream()
-                .map(seat -> seat.getRoundSq().getShowSq().getConcertHallSq())
+                .map(seat -> seat.getRoundSq().getShow().getConcertHallSq())
                 .distinct() // 중복 ID 제거
                 .collect(Collectors.toList());
 
         // 4. [3] 공연장 이름 조회 (이 부분이 누락되어 'concertHallRepository' 미사용 경고가 떴던 것 같습니다)
         Map<Long, String> concertHallMap = concertHallRepository.findAllById(concertHallIds).stream()
                 .collect(Collectors.toMap(
-                        concertHall -> concertHall.getConcertHallSq(),
-                        concertHall -> concertHall.getConcertHallName()
+                        concertHall -> concertHall.getSq(),
+                        concertHall -> concertHall.getName()
                 ));
 
         // 5. 반복문 돌면서 데이터 조합
@@ -153,9 +153,9 @@ public class RoundSeatService {
             }
 
             // [4] 변수 선언 (이 부분이 누락되어 'symbol cannot be resolved' 에러가 났던 것 같습니다)
-            // 아래 세 줄이 있어야 builder에서 show.xxx, concertHallName 등을 쓸 수 있습니다.
+            // 아래 세 줄이 있어야 builder에서 showRequest.xxx, concertHallName 등을 쓸 수 있습니다.
             RoundEntity round = roundSeat.getRoundSq();
-            ShowEntity show = round.getShowSq();
+            ShowEntity show = round.getShow();
             String concertHallName = concertHallMap.get(show.getConcertHallSq());
 
             // 응답 객체 생성
@@ -169,9 +169,9 @@ public class RoundSeatService {
                     .areaSeatNumber(showSeat.getSeat().getAreaSeatNo())
 
                     // 추가 정보 매핑
-                    .showName(show.getShowName())              // 위에서 정의한 show 변수 사용
+                    .showName(show.getName())              // 위에서 정의한 showRequest 변수 사용
                     .concertHallName(concertHallName)          // 위에서 정의한 concertHallName 변수 사용
-                    .roundDate(round.getRoundDt())             // 위에서 정의한 round 변수 사용
+                    .roundDate(round.getDateTime())             // 위에서 정의한 round 변수 사용
                     .build());
         }
 

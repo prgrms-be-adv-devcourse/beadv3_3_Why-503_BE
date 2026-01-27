@@ -1,14 +1,15 @@
-package io.why503.performanceservice.domain.show.service;
+package io.why503.performanceservice.domain.show.service.impl;
 
 import feign.FeignException;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
-import io.why503.performanceservice.domain.show.mapper.ShowMapper;
-import io.why503.performanceservice.domain.show.model.dto.ShowCreateWithSeatPolicyRequest;
-import io.why503.performanceservice.domain.show.model.dto.ShowRequest;
-import io.why503.performanceservice.domain.show.model.dto.ShowResponse;
+import io.why503.performanceservice.util.mapper.ShowMapper;
+import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWithSeatPolicyRequest;
+import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
+import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.repository.ShowRepository;
+import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
@@ -37,6 +38,14 @@ public class ShowServiceImpl implements ShowService {
     private final AccountServiceClient accountServiceClient;
     private final ShowMapper showMapper;
 
+
+    //공연 엔티티 조회 및 예외 처리
+    @Override
+    public ShowEntity findShowBySq(Long showSq) {
+        return showRepository.findById(showSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공연입니다."));
+    }
+
     @Override
     @Transactional
     public Long createShowWithSeats(
@@ -45,7 +54,7 @@ public class ShowServiceImpl implements ShowService {
     ) {
         Long companySq = resolveCompanySq(userSq);
 
-        ShowEntity show = showMapper.toEntity(request.getShow(), companySq);
+        ShowEntity show = showMapper.requestToEntity(request.showRequest(), companySq);
         ShowEntity savedShow = showRepository.save(show);
 
         List<SeatEntity> allSeats =
@@ -61,28 +70,27 @@ public class ShowServiceImpl implements ShowService {
                 allSeats.stream().collect(Collectors.groupingBy(SeatEntity::getSeatArea));
 
         List<ShowSeatEntity> showSeats =
-                request.getSeatPolicies().stream()
+                request.seatPolicies().stream()
                         .flatMap(p -> createShowSeatsByPolicy(savedShow, p, seatsByArea).stream())
                         .toList();
 
         showSeatService.saveAll(showSeats);
-        return savedShow.getShowSq();
+        return savedShow.getSq();
     }
 
     @Override
     @Transactional
     public ShowResponse createShow(ShowRequest request, Long userSq) {
         Long companySq = resolveCompanySq(userSq);
-        ShowEntity show = showMapper.toEntity(request, companySq);
-        ShowEntity saved = showRepository.save(show);
-        return showMapper.toResponse(saved);
+        ShowEntity show = showMapper.requestToEntity(request, companySq);
+        showRepository.save(show);
+        return showMapper.entityToResponse(show);
     }
 
     @Override
-    public ShowResponse getShow(Long showSq) {
-        ShowEntity show = showRepository.findById(showSq)
-                .orElseThrow(() -> new IllegalArgumentException("show not found"));
-        return showMapper.toResponse(show);
+    public ShowResponse readShowBySq(Long showSq) {
+        ShowEntity show = findShowBySq(showSq);
+        return showMapper.entityToResponse(show);
     }
 
     private List<ShowSeatEntity> createShowSeatsByPolicy(

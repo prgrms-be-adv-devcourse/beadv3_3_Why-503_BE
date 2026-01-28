@@ -19,7 +19,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 @Entity
-@Table(name = "show")
+@Table(name = "`show`")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

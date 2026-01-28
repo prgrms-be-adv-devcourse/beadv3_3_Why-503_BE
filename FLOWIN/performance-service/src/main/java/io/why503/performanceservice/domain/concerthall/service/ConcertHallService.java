@@ -15,7 +15,7 @@ import java.util.List;
 
 import io.why503.performanceservice.domain.concerthall.model.dto.request.ConcertHallRequest;
 import io.why503.performanceservice.domain.concerthall.model.dto.response.ConcertHallResponse;
-import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
+import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 
 public interface ConcertHallService {
 
@@ -43,6 +43,6 @@ public interface ConcertHallService {
      */
     Long createWithCustomSeats(
             ConcertHallRequest reqDto,
-            List<SeatAreaCreateCmd> seatAreaCmds
+            List<SeatAreaCreateVo> seatAreaCmds
     );
 }

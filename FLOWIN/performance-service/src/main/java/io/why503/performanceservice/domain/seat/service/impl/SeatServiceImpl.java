@@ -1,9 +1,12 @@
-package io.why503.performanceservice.domain.seat.service;
+package io.why503.performanceservice.domain.seat.service.impl;
 
 import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.seat.model.dto.response.SeatResponse;
+import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
-import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
+import io.why503.performanceservice.domain.seat.service.SeatService;
+import io.why503.performanceservice.util.mapper.SeatMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +24,17 @@ import java.util.List;
 public class SeatServiceImpl implements SeatService {
 
     private final SeatRepository seatRepo;
+    private final SeatMapper seatMapper;
+
+    private List<SeatEntity> findByConcertHall(Long concertHallSq) {
+        return seatRepo.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(concertHallSq);
+    }
 
     @Override
-    public List<SeatEntity> findByConcertHall(Long concertHallSq) {
-        return seatRepo
-                .findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
-                        concertHallSq
-                );
+    public List<SeatResponse> readByConcertHall(Long concertHallSq) {
+        return findByConcertHall(concertHallSq).stream()
+                .map(i -> seatMapper.entityToResponse(i))
+                .toList();
     }
 
     /**
@@ -37,22 +44,22 @@ public class SeatServiceImpl implements SeatService {
     @Transactional
     public void createCustomSeats(
             ConcertHallEntity concertHall,
-            List<SeatAreaCreateCmd> areaCreateCmds
+            List<SeatAreaCreateVo> areaCreateVos
     ) {
         List<SeatEntity> seats = new ArrayList<>();
         int globalSeatNo = 1;
 
-        for (SeatAreaCreateCmd cmd : areaCreateCmds) {
+        for (SeatAreaCreateVo vo : areaCreateVos) {
 
-            validateAreaCmd(cmd);
+            validateAreaVo(vo);
 
-            for (int num = 1; num <= cmd.getSeatCount(); num++) {
-                seats.add(new SeatEntity(
-                        concertHall,
-                        cmd.getSeatArea(),
-                        num,
-                        globalSeatNo++
-                ));
+            for (int num = 1; num <= vo.seatCount(); num++) {
+                seats.add(SeatEntity.builder()
+                        .num(globalSeatNo++)
+                        .area(vo.seatArea())
+                        .numInArea(num)
+                        .concertHall(concertHall)
+                        .build());
             }
         }
 
@@ -68,12 +75,12 @@ public class SeatServiceImpl implements SeatService {
        private validation
        ======================= */
 
-    private void validateAreaCmd(SeatAreaCreateCmd cmd) {
-        if (cmd.getSeatArea() == null || cmd.getSeatArea().isBlank()) {
+    private void validateAreaVo(SeatAreaCreateVo vo) {
+        if (vo.seatArea() == null || vo.seatArea().isBlank()) {
             throw new IllegalArgumentException("seatArea is required");
         }
 
-        if (cmd.getSeatCount() <= 0) {
+        if (vo.seatCount() <= 0) {
             throw new IllegalArgumentException("seatCount must be greater than 0");
         }
     }

@@ -1,7 +1,7 @@
 package io.why503.performanceservice.domain.round.model.entity;
 
 
-import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.model.dto.enumconverter.RoundStatusConverter;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import jakarta.persistence.*;
@@ -37,8 +37,19 @@ public class RoundEntity {
     @Convert(converter = RoundStatusConverter.class)
     private RoundStatus status; //회차 상태 enum으로 관리 0:예매 가능, 1:예매 종료, 2: 회차취소
 
-
-
+    @Builder
+    public RoundEntity(
+            ShowEntity show,
+            LocalDateTime dateTime,
+            Integer num,
+            String cast,
+            RoundStatus status) {
+        this.show = show;
+        this.dateTime = dateTime;
+        this.num = num;
+        this.cast = cast;
+        this.status = status;
+    }
 
     //회차 상태 변경 메서드
     public void updateStat(RoundStatus newStatus) {

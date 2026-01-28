@@ -1,18 +1,15 @@
 /**
  * Show Entity
  * 공연 정보를 저장하는 JPA 엔티티
- *
  * 사용 목적 :
  * - 공연 기본 정보 DB 저장
  * - 공연 등록 및 조회 시 기준 엔티티
- *
  * 설계 특징 :
  * - Enum 값은 DB에 int 코드로 저장
  * - 비즈니스 계층에서는 Enum으로 변환하여 사용
  */
 package io.why503.performanceservice.domain.show.model.entity;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +19,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 @Entity
-@Table(name = "`showRequest`")
+@Table(name = "show")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

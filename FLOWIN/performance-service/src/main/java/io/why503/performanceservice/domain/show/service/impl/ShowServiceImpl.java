@@ -10,7 +10,7 @@ import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.repository.ShowRepository;
 import io.why503.performanceservice.domain.show.service.ShowService;
-import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyRequest;
+import io.why503.performanceservice.domain.showseat.model.dto.request.SeatPolicyRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
@@ -58,7 +58,7 @@ public class ShowServiceImpl implements ShowService {
         ShowEntity savedShow = showRepository.save(show);
 
         List<SeatEntity> allSeats =
-                seatRepository.findAllByConcertHall_ConcertHallSqOrderBySeatAreaAscAreaSeatNoAsc(
+                seatRepository.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(
                         savedShow.getConcertHallSq()
                 );
 
@@ -67,7 +67,7 @@ public class ShowServiceImpl implements ShowService {
         }
 
         Map<String, List<SeatEntity>> seatsByArea =
-                allSeats.stream().collect(Collectors.groupingBy(SeatEntity::getSeatArea));
+                allSeats.stream().collect(Collectors.groupingBy(SeatEntity::getArea));
 
         List<ShowSeatEntity> showSeats =
                 request.seatPolicies().stream()
@@ -98,13 +98,13 @@ public class ShowServiceImpl implements ShowService {
             SeatPolicyRequest policy,
             Map<String, List<SeatEntity>> seatsByArea
     ) {
-        List<SeatEntity> seats = seatsByArea.get(policy.getSeatArea());
+        List<SeatEntity> seats = seatsByArea.get(policy.seatArea());
         if (seats == null || seats.isEmpty()) {
-            throw new IllegalArgumentException("seat area not found: " + policy.getSeatArea());
+            throw new IllegalArgumentException("seat area not found: " + policy.seatArea());
         }
-        ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.getGrade());
+        ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.grade());
         return seats.stream()
-                .map(seat -> new ShowSeatEntity(show, seat, grade, policy.getPrice()))
+                .map(seat -> new ShowSeatEntity(grade,  policy.price(), show, seat))
                 .toList();
     }
 

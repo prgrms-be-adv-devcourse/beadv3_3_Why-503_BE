@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.roundSeats.client;
+package io.why503.performanceservice.global.client;
 
 
 import io.why503.performanceservice.domain.roundSeats.model.dto.PaymentRequest;

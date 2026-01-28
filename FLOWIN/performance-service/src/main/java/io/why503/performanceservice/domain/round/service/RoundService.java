@@ -2,9 +2,9 @@ package io.why503.performanceservice.domain.round.service;
 
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.util.mapper.RoundMapper;
-import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
-import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
-import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
+import io.why503.performanceservice.domain.round.model.dto.request.RoundRequest;
+import io.why503.performanceservice.domain.round.model.dto.response.RoundResponse;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
@@ -62,7 +62,7 @@ public class RoundService {
         }
 
         // 레포지토리 조회 시 showRequest 객체 전달
-        if (roundRepository.existsByShow_SqAndRoundDt(show, request.roundDt())) {
+        if (roundRepository.existsByShowAndDateTime(show, request.roundDt())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
         }
 
@@ -73,7 +73,7 @@ public class RoundService {
         LocalDateTime endOfDay = targetDate.atTime(LocalTime.MAX);
 
         // 해당 날짜의 기존 회차 리스트 조회
-        List<RoundEntity> roundList = roundRepository.findAllByShowSqAndRoundDtBetween(show, startOfDay, endOfDay);
+        List<RoundEntity> roundList = roundRepository.findAllByShowAndDateTimeBetween(show, startOfDay, endOfDay);
         // 새 회차 엔티티 생성 (번호는 0이나 임시값으로 생성)
         RoundEntity newEntity = roundMapper.dtoToEntity(request, show, 0);
         // 리스트에 새 회차 추가
@@ -104,7 +104,7 @@ public class RoundService {
         ShowEntity show = showService.findShowBySq(showSq);
 
         //DB에서 리스트를 꺼냄
-        List<RoundEntity> entities = roundRepository.findByShow_Sq(show);
+        List<RoundEntity> entities = roundRepository.findByShow(show);
 
         return roundMapper.entityListToDtoList(entities);
     }
@@ -117,7 +117,7 @@ public class RoundService {
     public List<RoundResponse> getAvailableRoundList(Long showSq) {
         ShowEntity show = showService.findShowBySq(showSq);
         // DB에서 예매가능 상태인 것만 꺼냄
-        List<RoundEntity> entities = roundRepository.findByShowSqAndRoundStatus(show, RoundStatus.AVAILABLE);
+        List<RoundEntity> entities = roundRepository.findByShowAndStatus(show, RoundStatus.AVAILABLE);
 
         return roundMapper.entityListToDtoList(entities);
     }

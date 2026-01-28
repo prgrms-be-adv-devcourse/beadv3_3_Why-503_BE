@@ -4,10 +4,10 @@ package io.why503.performanceservice.domain.roundSeats.service;
 import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
-import io.why503.performanceservice.domain.roundSeats.client.PaymentClient;
+import io.why503.performanceservice.global.client.PaymentClient;
 import io.why503.performanceservice.domain.roundSeats.model.dto.*;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
-import io.why503.performanceservice.domain.roundSeats.model.mapper.RoundSeatMapper;
+import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import io.why503.performanceservice.domain.roundSeats.repository.RoundSeatRepository;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
@@ -67,7 +67,7 @@ public class RoundSeatService {
     public List<RoundSeatResponse> getRoundSeatList(Long roundSq) {
         // Repository 메서드명 변경
         // RoundSeaEntity에서 roundSq를 찾고 RoundEntity에서 roundSq와 일치하는 것을 찾아라
-        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSq_RoundSq(roundSq);
+        List<RoundSeatEntity> entities = roundSeatRepository.findByRound_Sq(roundSq);
         return convertToDtoList(entities);
     }
 
@@ -75,7 +75,7 @@ public class RoundSeatService {
     //예매 가능 좌석 조회
     public List<RoundSeatResponse> getAvailableRoundSeatList(Long roundSq){
         // Repository 메서드명 변경
-        List<RoundSeatEntity> entities = roundSeatRepository.findByRoundSq_RoundSqAndRoundSeatStatus(
+        List<RoundSeatEntity> entities = roundSeatRepository.findByRound_SqAndStatus(
                 roundSq, RoundSeatStatus.AVAILABLE
         );
         return convertToDtoList(entities);
@@ -121,14 +121,14 @@ public class RoundSeatService {
 
         Map<Long, ShowSeatEntity> showSeatMap = showSeatRepository.findAllById(showSeatIds).stream()
                 .collect(Collectors.toMap(
-                        showSeat -> showSeat.getShowSeatSq(),
+                        showSeat -> showSeat.getSq(),
                         showSeat -> showSeat
                 ));
 
         // 3. [2] 공연장 이름 조회를 위한 ID 추출 (이 부분이 누락되어 'concertHallSqs' 미사용 경고가 떴던 것 같습니다)
         // RoundSeat -> Round -> Show -> ConcertHallSq (Long 타입)
         List<Long> concertHallIds = seats.stream()
-                .map(seat -> seat.getRoundSq().getShow().getConcertHallSq())
+                .map(seat -> seat.getRound().getShow().getConcertHallSq())
                 .distinct() // 중복 ID 제거
                 .collect(Collectors.toList());
 
@@ -143,7 +143,7 @@ public class RoundSeatService {
         for (RoundSeatEntity roundSeat : seats) {
             // 상태 변경 및 Redis 저장
             roundSeat.reserve();
-            String key = "seat_owner:" + roundSeat.getRoundSeatSq();
+            String key = "seat_owner:" + roundSeat.getSq();
             redisTemplate.opsForValue().set(key, String.valueOf(userSq));
 
             // 공연 좌석 정보 (가격, 등급 등)
@@ -154,19 +154,19 @@ public class RoundSeatService {
 
             // [4] 변수 선언 (이 부분이 누락되어 'symbol cannot be resolved' 에러가 났던 것 같습니다)
             // 아래 세 줄이 있어야 builder에서 showRequest.xxx, concertHallName 등을 쓸 수 있습니다.
-            RoundEntity round = roundSeat.getRoundSq();
+            RoundEntity round = roundSeat.getRound();
             ShowEntity show = round.getShow();
             String concertHallName = concertHallMap.get(show.getConcertHallSq());
 
             // 응답 객체 생성
             responseList.add(SeatReserveResponse.builder()
                     // 기존 필드
-                    .roundSeatSq(roundSeat.getRoundSeatSq())
-                    .roundSeatStatus(roundSeat.getRoundSeatStatus().name())
+                    .roundSeatSq(roundSeat.getSq())
+                    .roundSeatStatus(roundSeat.getStatus().name())
                     .price(showSeat.getPrice())
                     .grade(showSeat.getGrade().name())
-                    .seatArea(showSeat.getSeat().getSeatArea())
-                    .areaSeatNumber(showSeat.getSeat().getAreaSeatNo())
+                    .seatArea(showSeat.getSeat().getArea())
+                    .areaSeatNumber(showSeat.getSeat().getNumInArea())
 
                     // 추가 정보 매핑
                     .showName(show.getName())              // 위에서 정의한 showRequest 변수 사용
@@ -188,7 +188,7 @@ public class RoundSeatService {
         for (RoundSeatEntity seat : seats) {
             seat.release();
             // 선점이 해제되면 Redis의 소유권 정보도 삭제
-            redisTemplate.delete("seat_owner:" + seat.getRoundSeatSq());
+            redisTemplate.delete("seat_owner:" + seat.getSq());
         }
     }
 
@@ -220,7 +220,7 @@ public class RoundSeatService {
         for (RoundSeatEntity seat : seats) {
             seat.confirm();
             // 결제가 확정되었으므로 Redis 메모 삭제
-            redisTemplate.delete("seat_owner:" + seat.getRoundSeatSq());
+            redisTemplate.delete("seat_owner:" + seat.getSq());
         }
     }
 

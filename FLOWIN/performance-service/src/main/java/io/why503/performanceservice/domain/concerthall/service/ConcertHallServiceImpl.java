@@ -13,6 +13,7 @@ package io.why503.performanceservice.domain.concerthall.service;
 
 import java.util.List;
 
+import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.util.mapper.ConcertHallMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,6 @@ import io.why503.performanceservice.domain.concerthall.model.dto.response.Concer
 import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
 import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
 import io.why503.performanceservice.domain.concerthall.repository.ConcertHallRepository;
-import io.why503.performanceservice.domain.seat.model.dto.cmd.SeatAreaCreateCmd;
 import io.why503.performanceservice.domain.seat.service.SeatService;
 import java.math.BigDecimal;
 
@@ -126,7 +126,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     @Transactional
     public Long createWithCustomSeats(
             ConcertHallRequest request,
-            List<SeatAreaCreateCmd> seatAreaCmds
+            List<SeatAreaCreateVo> seatAreaCmds
     ) {
 
         ConcertHallEntity hall = concertHallMapper.requestToEntity(request);

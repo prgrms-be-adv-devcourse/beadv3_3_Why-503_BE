@@ -1,9 +1,9 @@
 package io.why503.performanceservice.domain.round.controller;
 
 
-import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
-import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
-import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
+import io.why503.performanceservice.domain.round.model.dto.request.RoundRequest;
+import io.why503.performanceservice.domain.round.model.dto.response.RoundResponse;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.service.RoundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,6 @@
-package io.why503.performanceservice.domain.showseat.service;
+package io.why503.performanceservice.domain.showseat.service.impl;
 
+import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,7 @@ public class ShowSeatServiceImpl implements ShowSeatService {
 
     @Override
     public List<ShowSeatEntity> getByShow(Long showSq) {
-        return showSeatRepo.findByShow_ShowSq(showSq);
+        return showSeatRepo.findByShow_Sq(showSq);
     }
 
     @Override

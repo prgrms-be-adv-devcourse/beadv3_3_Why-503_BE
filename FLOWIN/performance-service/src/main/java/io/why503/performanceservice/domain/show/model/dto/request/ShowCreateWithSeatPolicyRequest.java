@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-import io.why503.performanceservice.domain.showseat.model.dto.SeatPolicyRequest;
+import io.why503.performanceservice.domain.showseat.model.dto.request.SeatPolicyRequest;
 
 /**
  * Show Create With Seat Policy Request DTO

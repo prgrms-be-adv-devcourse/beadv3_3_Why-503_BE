@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.round.model.dto;
+package io.why503.performanceservice.domain.round.model.enums;
 
 
 import lombok.AllArgsConstructor;

@@ -3,8 +3,6 @@ package io.why503.performanceservice.util.mapper;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
-import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
-import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 
 import org.springframework.stereotype.Component;
 

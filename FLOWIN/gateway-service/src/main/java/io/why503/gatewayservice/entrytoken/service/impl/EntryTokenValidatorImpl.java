@@ -18,9 +18,13 @@ public class EntryTokenValidatorImpl implements EntryTokenValidator {
 
     private final StringRedisTemplate redisTemplate;
 
+    
+
     @Override
     public boolean isValid(String showId, String userId) {
         String key = tokenKey(showId, userId);
+        System.out.println("[ENTRY TOKEN] key = " + key);
+        System.out.println("[ENTRY TOKEN] exists = " + redisTemplate.hasKey(key));
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
@@ -28,4 +32,6 @@ public class EntryTokenValidatorImpl implements EntryTokenValidator {
     private String tokenKey(String showId, String userId) {
         return "entry:token:" + showId + ":" + userId;
     }
+    
+    
 }

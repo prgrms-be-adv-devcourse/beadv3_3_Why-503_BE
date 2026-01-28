@@ -9,10 +9,11 @@
  * - 좌석은 공영장에 종속된 고정 자원
  * - 좌석 생성 실패 시 공연장 생성도 롤백 되어야 함
  */
-package io.why503.performanceservice.domain.concerthall.service;
+package io.why503.performanceservice.domain.concerthall.service.Impl;
 
 import java.util.List;
 
+import io.why503.performanceservice.domain.concerthall.service.ConcertHallService;
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.util.mapper.ConcertHallMapper;
 import lombok.AccessLevel;
@@ -126,14 +127,14 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     @Transactional
     public Long createWithCustomSeats(
             ConcertHallRequest request,
-            List<SeatAreaCreateVo> seatAreaCmds
+            List<SeatAreaCreateVo> areaCreateVos
     ) {
 
         ConcertHallEntity hall = concertHallMapper.requestToEntity(request);
         concertHallRepo.save(hall);
 
         // 공연장 생성 후 관리자 입력 기반 좌석 생성
-        seatSv.createCustomSeats(hall, seatAreaCmds);
+        seatSv.createCustomSeats(hall, areaCreateVos);
 
         return hall.getSq();
     }

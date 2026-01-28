@@ -18,7 +18,7 @@ public interface SeatService {
      */
     void createCustomSeats(
         ConcertHallEntity concertHall,
-        List<SeatAreaCreateVo> areaCreateCmds
+        List<SeatAreaCreateVo> areaCreateVos
     );
 
 }

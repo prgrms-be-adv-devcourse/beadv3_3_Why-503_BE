@@ -9,8 +9,6 @@ package io.why503.performanceservice.domain.show.model.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +25,7 @@ public record ShowResponse(
         @NotBlank String viewingAge,        // 관람 등급
 
         @NotNull ShowCategory category,     // 공연 카테고리
-        @NotNull ShowStatus showStat,       // 공연 상태
+        @NotNull ShowStatus showStatus,       // 공연 상태
 
         @NotNull Long concertHallSq,        // 공연장 식별자
         @NotNull Long companySq             // 회사 식별자

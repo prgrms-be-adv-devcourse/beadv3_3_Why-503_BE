@@ -7,19 +7,20 @@
  */
 package io.why503.accountservice.domain.companies.controller;
 
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
-import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor // Service 의존성 생성자 주입
 @RequestMapping("/company")
@@ -43,11 +44,19 @@ public class CompanyController {
     }
 
     @GetMapping("/{companySq}") // 회사 조회 API
-    public ResponseEntity<CompanyResponse> getCompany(
+    public ResponseEntity<CompanySummaryResponse> getCompany(
             @PathVariable Long companySq // 조회할 회사 식별자
     ) {
         return ResponseEntity.ok(
-                companyService.getCompanyByCompanySq(companySq) // 회사 정보 조회 결과 반환
+                companyService.getCompanyBySq(companySq) // 회사 정보 조회 결과 반환
+        );
+    }
+    @GetMapping("/member/{companySq}") // 회사 조회 API
+    public ResponseEntity<List<UserRoleResponse>> getCompanyMembers(
+            @PathVariable Long companySq // 조회할 회사 식별자
+    ) {
+        return ResponseEntity.ok(
+                accountService.readCompanyMember(companySq) //회사 맨버 전체 조회
         );
     }
 }

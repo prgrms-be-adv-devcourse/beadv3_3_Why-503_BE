@@ -9,7 +9,7 @@ package io.why503.accountservice.domain.auth.service.impl;
 import java.util.concurrent.TimeUnit;
 
 import io.why503.accountservice.domain.auth.service.CompanyAuthService;
-import io.why503.accountservice.util.AuthCodeGenerator;
+import io.why503.accountservice.domain.auth.util.AuthCodeGenerator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -17,9 +17,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CompanyAuthServiceImpl implements CompanyAuthService {
@@ -54,8 +52,6 @@ public class CompanyAuthServiceImpl implements CompanyAuthService {
         );
 
         mailSender.send(message);
-
-        log.info("회사 이메일 인증 코드 발송 완료. email={}", email);
     }
     private String buildKey(String email) {
         return "company:email:auth:" + email;

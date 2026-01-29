@@ -4,11 +4,7 @@ import io.why503.accountservice.common.model.entity.BasicEntity;
 import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
-import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
 import io.why503.accountservice.domain.companies.model.entity.Company;
-import io.why503.accountservice.util.converter.GenderConverter;
-import io.why503.accountservice.util.converter.UserRoleConverter;
-import io.why503.accountservice.util.converter.UserStatusConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,7 +31,7 @@ public class Account extends BasicEntity {
 
     @Setter
     @Column(name = "gender")
-    @Convert(converter = GenderConverter.class)
+    @Enumerated(EnumType.STRING)
     private Gender gender;
 
     @Column(name = "join_date")
@@ -50,45 +46,45 @@ public class Account extends BasicEntity {
 
     @Setter
     @Column(name = "role")
-    @Convert(converter = UserRoleConverter.class)
+    @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
 
     @Column(name = "status")
-    @Convert(converter = UserStatusConverter.class)
+    @Enumerated(EnumType.STRING)
     private UserStatus stat = UserStatus.NORMAL;
 
-    @OneToOne(mappedBy = "owner", fetch = FetchType.LAZY)
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "company_sq", nullable = true)
     private Company company;
 
     @Column(name = "point")
     private Long point = 0L;
 
-    //생성자, 암호화는 이미 cmd에서 완료
-    public Account(UpsertAccountVo vo){
-        this.id = vo.userId();
-        this.password = vo.userPassword();
-        this.name = vo.userName();
-        this.birthday = vo.birthday();
-        this.gender = vo.gender();
-        this.phone = vo.userPhone();
-        this.email = vo.userEmail();
-        this.basicAddr = vo.userBasicAddr();
-        this.detailAddr = vo.userDetailAddr();
-        this.post = vo.userPost();
-        withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
-    }
-    //수정
-    public void update(UpsertAccountVo vo){
-        this.id = vo.userId();
-        this.password = vo.userPassword();
-        this.name = vo.userName();
-        this.birthday = vo.birthday();
-        this.gender = vo.gender();
-        this.phone = vo.userPhone();
-        this.email = vo.userEmail();
-        this.basicAddr = vo.userBasicAddr();
-        this.detailAddr = vo.userDetailAddr();
-        this.post = vo.userPost();
+    //생성자, 암호화는 이미 mapper에서 호출 되었음
+    @Builder
+    public Account(
+            String id,
+            String password,
+            String name,
+            LocalDateTime birthday,
+            Gender gender,
+            String phone,
+            String email,
+            String basicAddr,
+            String detailAddr,
+            String post) {
+        this.id = id;
+        this.password = password;
+        this.name = name;
+        this.birthday = birthday;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+        this.basicAddr = basicAddr;
+        this.detailAddr = detailAddr;
+        this.post = post;
+        this.withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
     }
     //포인트 증가, 후에 포인트(예치금) 계산을 위해 생성
     public void increasePoint(Long increase){
@@ -99,16 +95,12 @@ public class Account extends BasicEntity {
 
         this.point -= decrease;
     }
-    /*
-    role 변경, Admin만 사용가능,
-    이 함수는 이 개체의 Role을 변경하는 것이 아니라 target의 role을 변경
-     */
-    public void grantRole(Account target, UserRole role) throws Exception{
-        if(this.role != UserRole.ADMIN){
-            //throw new AccessDeniedException("only, Admin can change user's Role");
-            throw new Exception("only, Admin can change user's Role");
-        }
-         target.setRole(role);
+    public void joinCompany(Company company, UserRole role){
+        this.company = company;
+        this.role = role;
+    }
+    public void leaveCompany(){
+        this.company = null;
     }
     //탈퇴
     public void withdraw(){

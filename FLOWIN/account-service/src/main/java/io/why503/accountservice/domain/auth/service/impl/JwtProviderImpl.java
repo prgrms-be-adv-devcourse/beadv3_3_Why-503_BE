@@ -3,7 +3,6 @@ package io.why503.accountservice.domain.auth.service.impl;
 import io.jsonwebtoken.*;
 import io.why503.accountservice.domain.auth.service.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.security.PrivateKey;
@@ -12,7 +11,6 @@ import java.util.Map;
 /*
 토큰 발행 클래스
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JwtProviderImpl implements JwtProvider {

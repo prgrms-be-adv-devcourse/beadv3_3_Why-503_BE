@@ -3,7 +3,6 @@ package io.why503.performanceservice.domain.roundSeats.model.entity;
 
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.roundSeats.model.enums.RoundSeatStatus;
-import io.why503.performanceservice.domain.roundSeats.model.dto.enumconverter.RoundSeatStatusConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,8 +29,8 @@ public class RoundSeatEntity {
     @Column(name = "round_seat_sq")
     private Long sq;                                    //회차좌석시퀀스
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "round_seat_stat", nullable = false)
-    @Convert(converter = RoundSeatStatusConverter.class)
     private RoundSeatStatus status;                     //회차좌석 상태
 
     @Column(name = "round_seat_stat_time", nullable = false)

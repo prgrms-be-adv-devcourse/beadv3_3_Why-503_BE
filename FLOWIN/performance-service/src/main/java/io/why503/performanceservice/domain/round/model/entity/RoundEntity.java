@@ -2,7 +2,6 @@ package io.why503.performanceservice.domain.round.model.entity;
 
 
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
-import io.why503.performanceservice.domain.round.model.dto.enumconverter.RoundStatusConverter;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,9 +32,9 @@ public class RoundEntity {
     @Column(name = "casting",nullable = false)
     private String cast; //해당 회차 출연진
 
+    @Enumerated(EnumType.STRING) // DB에 AVAILABLE 등으로 저장
     @Column(name = "round_stat",nullable = false)
-    @Convert(converter = RoundStatusConverter.class)
-    private RoundStatus status; //회차 상태 enum으로 관리 0:예매 가능, 1:예매 종료, 2: 회차취소
+    private RoundStatus status;
 
     @Builder
     public RoundEntity(

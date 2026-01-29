@@ -1,5 +1,6 @@
-package io.why503.performanceservice.domain.roundSeats.model.dto;
+package io.why503.performanceservice.domain.roundSeats.model.dto.response;
 
+import io.why503.performanceservice.domain.roundSeats.model.enums.RoundSeatStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

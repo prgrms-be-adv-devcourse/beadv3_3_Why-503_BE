@@ -2,7 +2,7 @@ package io.why503.performanceservice.domain.roundSeats.model.entity;
 
 
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatStatus;
+import io.why503.performanceservice.domain.roundSeats.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeats.model.dto.enumconverter.RoundSeatStatusConverter;
 import jakarta.persistence.*;
 import lombok.*;

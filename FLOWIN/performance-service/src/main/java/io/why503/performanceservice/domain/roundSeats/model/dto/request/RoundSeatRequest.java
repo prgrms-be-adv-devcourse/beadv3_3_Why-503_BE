@@ -1,5 +1,6 @@
-package io.why503.performanceservice.domain.roundSeats.model.dto;
+package io.why503.performanceservice.domain.roundSeats.model.dto.request;
 
+import io.why503.performanceservice.domain.roundSeats.model.enums.RoundSeatStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record RoundSeatRequest(

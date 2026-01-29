@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.roundSeats.repository;
 
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatStatus;
+import io.why503.performanceservice.domain.roundSeats.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 

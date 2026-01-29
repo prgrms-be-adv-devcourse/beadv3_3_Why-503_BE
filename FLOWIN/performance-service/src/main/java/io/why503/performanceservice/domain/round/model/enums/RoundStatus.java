@@ -11,7 +11,8 @@ public enum RoundStatus {
 
     AVAILABLE(0,"예매가능"),
     CLOSED(1,"예매종료"),
-    CANCELLED(2,"예매취소");
+    CANCELLED(2,"예매취소"),
+    WAIT(3,"예매대기");
 
     private final Integer dbCode; //DB에 저장될 숫자(0, 1, 2)
     private final String description; // 예매가능 등의 설명

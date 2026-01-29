@@ -1,10 +1,10 @@
 package io.why503.performanceservice.domain.roundSeats.controller;
 
 
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatRequest;
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatResponse;
-import io.why503.performanceservice.domain.roundSeats.model.dto.RoundSeatStatusRequest;
-import io.why503.performanceservice.domain.roundSeats.model.dto.SeatReserveResponse;
+import io.why503.performanceservice.domain.roundSeats.model.dto.request.RoundSeatRequest;
+import io.why503.performanceservice.domain.roundSeats.model.dto.response.RoundSeatResponse;
+import io.why503.performanceservice.domain.roundSeats.model.dto.request.RoundSeatStatusRequest;
+import io.why503.performanceservice.domain.roundSeats.model.dto.response.SeatReserveResponse;
 import io.why503.performanceservice.domain.roundSeats.service.RoundSeatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +36,13 @@ public class RoundSeatController {
         return ResponseEntity.ok(response);
     }
 
-    // 전체 조회  /round-seats?roundSq=검색하고 싶은 회차시퀀스 번호
-    @GetMapping
-    public ResponseEntity<List<RoundSeatResponse>> getRoundSeatList(@RequestParam(name = "roundSq") Long roundSq) {
-        return ResponseEntity.ok(roundSeatService.getRoundSeatList(roundSq));
+    // 전체 조회  /round-seats/all?roundSq=검색하고 싶은 회차시퀀스 번호
+    @GetMapping("/all")
+    public ResponseEntity<List<RoundSeatResponse>> getRoundSeatList(
+            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq,
+            @RequestParam(name = "roundSq") Long roundSq) {
+
+        return ResponseEntity.ok(roundSeatService.getRoundSeatList(userSq, roundSq));
     }
 
     // 예매 가능 좌석 조회

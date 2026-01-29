@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.roundSeats.model.dto;
+package io.why503.performanceservice.domain.roundSeats.model.dto.response;
 
 import lombok.Builder;
 

@@ -1,7 +1,7 @@
 package io.why503.performanceservice.global.client;
 
 
-import io.why503.performanceservice.domain.roundSeats.model.dto.PaymentRequest;
+import io.why503.performanceservice.domain.roundSeats.model.dto.request.PaymentRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

@@ -1,0 +1,126 @@
+package io.why503.performanceservice.domain.round.service.Impl;
+
+import io.why503.performanceservice.domain.round.model.dto.request.RoundRequest;
+import io.why503.performanceservice.domain.round.model.dto.response.RoundResponse;
+import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
+import io.why503.performanceservice.domain.round.repository.RoundRepository;
+import io.why503.performanceservice.domain.round.service.RoundService;
+import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
+import io.why503.performanceservice.domain.show.service.ShowService;
+import io.why503.performanceservice.global.validator.UserValidator;
+import io.why503.performanceservice.util.mapper.RoundMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class RoundServiceImpl implements RoundService {
+
+    private final RoundRepository roundRepository;
+    private final RoundMapper roundMapper;
+    private final ShowService showService;
+    private final UserValidator userValidator;
+
+    //회차 생성
+    @Override
+    @Transactional
+    public RoundResponse createRound(Long userSq, RoundRequest request) {
+
+        // 권한 검증
+        userValidator.validateEnterprise(userSq);
+
+        ShowEntity show = showService.findShowBySq(request.showSq());
+
+        // 초기 생성 시엔 상태가 예매 대기여야 함
+        if (request.roundStatus() != RoundStatus.WAIT) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회차 생성 시 상태는 '예매대기(WAIT)'만 가능합니다.");
+        }
+
+        // 이미 등록된 시간인지 확인
+        if (roundRepository.existsByShowAndDateTime(show, request.roundDt())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
+        }
+
+        // 날짜 범위 계산
+        LocalDateTime targetDateTime = request.roundDt();
+        LocalDate targetDate = targetDateTime.toLocalDate();
+        LocalDateTime startOfDay = targetDate.atStartOfDay();
+        LocalDateTime endOfDay = targetDate.atTime(LocalTime.MAX);
+
+        // 해당 날짜의 기존 회차 리스트 조회 및 새 회차 추가
+        List<RoundEntity> roundList = roundRepository.findAllByShowAndDateTimeBetween(show, startOfDay, endOfDay);
+        RoundEntity newEntity = roundMapper.dtoToEntity(request, show, 0);
+        roundList.add(newEntity);
+
+        // 시간 순서대로 정렬
+        roundList.sort((r1, r2) -> r1.getDateTime().compareTo(r2.getDateTime()));
+
+        // 회차 번호 재부여
+        for (int i = 0; i < roundList.size(); i++) {
+            roundList.get(i).updateRoundNum(i + 1);
+        }
+
+        // 일괄 저장
+        roundRepository.saveAll(roundList);
+
+        return roundMapper.entityToDto(newEntity);
+    }
+
+    //특정 공연의 모든 회차 조회
+    @Override
+    public List<RoundResponse> getRoundListByShow(Long userSq, Long showSq) {
+        //기업,관리자 회원인지 확인
+        userValidator.validateEnterprise(userSq);
+        //요청된 공연 정보를 찾음
+        ShowEntity show = showService.findShowBySq(showSq);
+        //해당 공연에 소속된 모든 회차를 가져옴
+        List<RoundEntity> entities = roundRepository.findByShow(show);
+
+        return roundMapper.entityListToDtoList(entities);
+    }
+
+    //예매 가능한 회차 목록 조회
+    @Override
+    public List<RoundResponse> getAvailableRoundList(Long showSq) {
+        //요청된 공연 정보를 찾음
+        ShowEntity show = showService.findShowBySq(showSq);
+        //해당 공연의 회차중 상태가 AVAILABLE인 것만 DB에서 가져옴
+        List<RoundEntity> entities = roundRepository.findByShowAndStatus(show, RoundStatus.AVAILABLE);
+        return roundMapper.entityListToDtoList(entities);
+    }
+
+    //회차 단건 상세 조회
+    @Override
+    public RoundResponse getRoundDetail(Long roundSq) {
+        return roundMapper.entityToDto(findRoundBySq(roundSq));
+    }
+
+    //회차 상태 변경
+    @Override
+    @Transactional
+    public RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus) {
+        userValidator.validateEnterprise(userSq);
+        //변경할 회차를 DB에서 찾아옴
+        RoundEntity entity = findRoundBySq(roundSq);
+        //해당 회차의 상태를 새로운 상태로 변경
+        entity.updateStat(newStatus);
+        return roundMapper.entityToDto(entity);
+    }
+
+    // 회차 ID로 엔티티를 찾고 없으면 404에러 발생
+    private RoundEntity findRoundBySq(Long roundSq) {
+        return roundRepository.findById(roundSq)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
+    }
+
+}

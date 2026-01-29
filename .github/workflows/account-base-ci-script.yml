@@ -28,14 +28,13 @@ jobs:
           distribution: 'temurin'
 
       - name: gradlew 권한 세팅
-        run: chmod +x ./FLOWIN/${{ inputs.service-name }}/gradlew
+        run: chmod +x ./FLOWIN/account-base/gradlew
 
       - name: 테스트 실행
-        working-directory: ./FLOWIN/${{ inputs.service-name }}
+        working-directory: ./FLOWIN/account-base
         run: ./gradlew test --no-daemon
 
       - name: account-base 배포
-        if: ${{ inputs.service-name == 'account-base' }}
         run: ./FLOWIN/account-base/gradlew :account-base:publish
         env:
           CI: 'true'

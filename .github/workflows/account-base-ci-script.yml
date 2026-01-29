@@ -35,7 +35,8 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: account-base 배포
-        run: ./FLOWIN/account-base/gradlew :account-base:publish
+        working-directory: ./FLOWIN/account-base
+        run: ./gradlew publish
         env:
           CI: 'true'
           GITHUB_ACTOR: ${{ github.actor }}

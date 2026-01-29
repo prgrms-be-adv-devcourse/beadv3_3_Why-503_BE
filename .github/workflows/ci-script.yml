@@ -53,7 +53,7 @@ jobs:
         env:
           CI: 'true'
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
 
 
 #      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.

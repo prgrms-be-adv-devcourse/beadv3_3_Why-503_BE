@@ -47,7 +47,7 @@ jobs:
           echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/test/resources/application-test.yml
           echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/test/resources/public-key-test.pem
 
-      - name: gradlew 권한 세팅
+      - name: account-base 배포
         if: ${{ inputs.service-name == 'account-base' }}
         run: ./gradlew :account-base:publish
         env:

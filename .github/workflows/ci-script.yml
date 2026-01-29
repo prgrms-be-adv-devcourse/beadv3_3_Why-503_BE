@@ -49,7 +49,7 @@ jobs:
 
       - name: account-base 배포
         if: ${{ inputs.service-name == 'account-base' }}
-        run: ./gradlew :account-base:publish
+        run: ./FLOWIN/account-base/gradlew :account-base:publish
         env:
           CI: 'true'
           GITHUB_ACTOR: ${{ github.actor }}

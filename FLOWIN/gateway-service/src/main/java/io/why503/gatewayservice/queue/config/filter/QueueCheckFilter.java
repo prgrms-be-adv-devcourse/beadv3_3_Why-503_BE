@@ -54,11 +54,16 @@ public class QueueCheckFilter
             ServerHttpResponse response = exchange.getResponse();
             ServerHttpRequest request = exchange.getRequest();
 
+            String path = request.getURI().getPath();
             String userId = request.getHeaders().getFirst("X-USER-SQ");
             String showId = extractShowId(request);
 
-            // 방어 로직
+            log.info("[QUEUE] request path={}, showId={}, userId={}",
+                    path, showId, userId);
+
+            // === 방어 로직 ===
             if (userId == null || showId == null) {
+                log.warn("[QUEUE] invalid request (missing header or path)");
                 return response.writeWith(
                         Flux.just(writeResponse(
                                 response,
@@ -68,15 +73,28 @@ public class QueueCheckFilter
                 );
             }
 
-            // 입장 가능 여부 판단
-            if (queueService.canEnter(showId, userId)) {
+
+            // === 입장 가능 여부 판단 ===
+            boolean canEnter = queueService.canEnter(showId, userId);
+            log.info("[QUEUE] canEnter={}", canEnter);
+
+            if (canEnter) {
                 // EntryToken 발급 -> 입장권 + TTL 시작
                 entryTokenIssuer.issue(showId, userId);
+                log.info("[QUEUE] entry token issued showId{}, userId{}",
+                    showId, userId);
                 return chain.filter(exchange);
             }
 
             // 입장 불가? -> 대기열 진입하쇼
-            queueService.enqueue(showId, userId);
+            if (!queueService.isAlreadyQueued(showId, userId)) {
+                queueService.enqueue(showId, userId);
+                log.info("[QUEUE] enqueue userId={} into showId={}",
+                        userId, showId);
+            } else {
+                log.info("[QUEUE] already queued userId={} showId={}",
+                        userId, showId);
+            }
 
             return response.writeWith(
                     Flux.just(writeResponse(
@@ -87,10 +105,12 @@ public class QueueCheckFilter
             );
         };
     }
+
+    // /performance/{showId}/entry
     private String extractShowId(ServerHttpRequest request) {
-        // /performances/{showId}/~~~
         String path = request.getURI().getPath();
         String[] parts = path.split("/");
+
         if (parts.length < 3) {
             return null;
         }
@@ -103,9 +123,13 @@ public class QueueCheckFilter
             String message
     ) {
         response.setStatusCode(status);
-        response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
+        response.getHeaders().add(
+            HttpHeaders.CONTENT_TYPE, 
+            "application/json");
 
-        QueueRejectResponseBody body = new QueueRejectResponseBody(message);
+        QueueRejectResponseBody body = 
+                new QueueRejectResponseBody(message);
+
         return response.bufferFactory().wrap(toBytes(body));
     }
 
@@ -113,7 +137,7 @@ public class QueueCheckFilter
         try {
             return om.writeValueAsBytes(body);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize response body", e);
+            log.error("[QUEUE] failed to serialize response body", e);
             throw new RuntimeException(e);
         }
     }

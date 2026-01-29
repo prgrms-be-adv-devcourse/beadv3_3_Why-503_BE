@@ -22,10 +22,7 @@ public class ActivePollingScheduler {
 
     private static final String ACTIVE_INDEX_KEY = "active:performance:index";
 
-    /**
-     * 보험용 Polling
-     * - 운영에서는 2~5분 권장
-     */
+    // 보험용 Polling
     @Scheduled(fixedDelay = 180_000)
     public void reconcileActiveByIndex() {
 
@@ -64,9 +61,7 @@ public class ActivePollingScheduler {
         }
     }
 
-    /* =======================
-       내부 유틸
-       ======================= */
+    // ==== 내부 유틸 ====
 
     private int getActive(String activeKey) {
         String value = redisTemplate.opsForValue().get(activeKey);

@@ -17,7 +17,6 @@ import reactor.core.publisher.Flux;
 
 /**
  * Queue 통과 후 발급받은 EntryToken이 없으면 예매 API 접근 차단
- *
  * 전제:
  * - JwtValidationFilter가 먼저 실행되어 X-USER-SQ 헤더가 존재
  * - QueueCheckFilter가 통과 시 EntryTokenIssuer.issue() 수행
@@ -31,6 +30,7 @@ public class EntryTokenFilter
     private final ObjectMapper om = new ObjectMapper();
 
     public static class Config {
+        // 앞쪽은 다음에 탐색하고 오자!
     }
 
     public EntryTokenFilter(EntryTokenValidator entryTokenValidator) {
@@ -76,13 +76,15 @@ public class EntryTokenFilter
     }
 
     private String extractShowId(ServerHttpRequest request) {
-        // /performances/{showId}/~~~
         String path = request.getURI().getPath();
         String[] parts = path.split("/");
-        if (parts.length < 3) {
-            return null;
+
+        // expected: /performances/{showId}/entry
+        if (parts.length >= 4 && "performance".equals(parts[1])) {
+            return parts[2];
         }
-        return parts[2];
+
+        return null;
     }
 
     private DataBuffer writeResponse(
@@ -93,7 +95,7 @@ public class EntryTokenFilter
         response.setStatusCode(status);
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
 
-        // 응답 DTO는 기존 QueueRejectResponseBody 재사용 (message만 내려주면 충분)
+        // 응답 DTO는 기존 QueueRejectResponseBody 재사용 했습요 (message만 내려주면 충분)
         QueueRejectResponseBody body = new QueueRejectResponseBody(message);
         return response.bufferFactory().wrap(toBytes(body));
     }

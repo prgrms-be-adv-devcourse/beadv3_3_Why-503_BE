@@ -18,17 +18,13 @@ public class QueueConfig {
 
     private int maxActive;
 
-    /**
-     * Bean 생성 이후 1회 실행
-     */
+    // Bean 생성 이후 1회 실행
     @PostConstruct
     private void init() {
         this.maxActive = maxActiveProperty;
     }
 
-    /**
-     * 최대 동시 입장 가능 인원 Bean
-     */
+    // 최대 동시 입장 가능 인원 Bean
     @Bean
     public Integer maxActive() {
         return maxActive;

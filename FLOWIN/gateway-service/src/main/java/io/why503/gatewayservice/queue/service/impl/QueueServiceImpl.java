@@ -1,78 +1,99 @@
 package io.why503.gatewayservice.queue.service.impl;
 
+import io.why503.gatewayservice.entrytoken.service.EntryTokenIssuer;
 import io.why503.gatewayservice.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QueueServiceImpl implements QueueService {
 
     private final StringRedisTemplate redisTemplate;
+    private final EntryTokenIssuer entryTokenIssuer;
+
     // 동시에 예매 페이지에 들어갈 수 있는 최대 인원
     private final Integer maxActive; // QueueConfig 에서 주입
 
     private static final String ACTIVE_INDEX_KEY = "active:performance:index";
 
+    // 바로 입장 가능한지 판단
     @Override
     public boolean canEnter(String showId, String userId) {
         
+        log.info("[QUEUE-SERVICE] canEnter check showId={}, userId={}", showId, userId);
+
         // Lazy 보정 (요청 시점)
         adjustActiveIfNeeded(showId);
 
-        String activeKey = activeKey(showId);
-
         // 현재 active 수 조회
+        String activeKey = activeKey(showId);
         String activeStr = redisTemplate.opsForValue().get(activeKey);
         int active = activeStr == null ? 0 : Integer.parseInt(activeStr);
 
         // 입장 가능하면 active 증가
-        // 3️⃣ 입장 가능하면 active 증가
         if (active < maxActive) {
 
-            Long increased = redisTemplate.opsForValue()
+            Long increased = redisTemplate
+                    .opsForValue()
                     .increment(activeKey);
 
-            /*
-             * active가 0 -> 1 이 되는 순간
-             * index에 showId 등록
-             */
+            // active가 0 -> 1 이 되는 순간 index에 showId 등록
             if (increased != null && increased == 1L) {
                 redisTemplate.opsForSet()
                         .add(ACTIVE_INDEX_KEY, showId);
             }
 
+            // 대기열에 있던 사용자라면 ZSET 제거
+            redisTemplate.opsForZSet().remove(queueKey(showId), userId);
+            log.info("[QUEUE-SERVICE] canEnter=true showId={}, userId={}", showId, userId);
             return true;
         }
+        log.info("[QUEUE-SERVICE] canEnter=false showId={}, userId={}", showId, userId);
         return false;
     }
 
     // 대기열 진입
     @Override
     public void enqueue(String showId, String userId) {
+
+        if (isAlreadyQueued(showId, userId)) {
+            log.info("[QUEUE-SERVICE] already queued showId={}, userId={}", showId, userId);
+            return;
+        }
+
         String queueKey = queueKey(showId);
         String seqKey = seqKey(showId);
 
-    // 절대로 겹치지 않는 순번 생성
-    Long seq = redisTemplate.opsForValue()
-            .increment(seqKey);
+        // 절대로 겹치지 않는 순번 생성
+        Long seq = redisTemplate.opsForValue()
+                .increment(seqKey);
 
-    // ZSET에 대기열 추가
-    redisTemplate.opsForZSet()
-            .add(queueKey, userId, seq.doubleValue());
+        // ZSET에 대기열 추가
+        redisTemplate.opsForZSet()
+                .add(queueKey, userId, seq.doubleValue());
+        
+        log.info("[QUEUE-SERVICE] enqueue showId={}, userId={}, seq={}",
+                showId, userId, seq);
     }
 
-    /** 요청 시점 Lazy 보정
-     * - entry token 실개수 기준으로 active 보정
-     * - index 기반
-    */
+    // 이미 대기열에 들어가 있는가??
+    @Override
+    public boolean isAlreadyQueued(String showId, String userId) {
+        return redisTemplate.opsForZSet()
+                .score(queueKey(showId), userId) != null;
+    }
+        
+    // 요청 시점 Lazy 보정 - entry token 실개수 기준으로 active 보정
     private void adjustActiveIfNeeded(String showId) {
 
         String activeKey = activeKey(showId);
-
         String activeStr = redisTemplate.opsForValue().get(activeKey);
         int active = activeStr == null ? 0 : Integer.parseInt(activeStr);
 
@@ -84,7 +105,6 @@ public class QueueServiceImpl implements QueueService {
 
         // active가 실제보다 크면 보정
         if (active > realTokenCount) {
-
             redisTemplate.opsForValue()
                     .set(activeKey, String.valueOf(realTokenCount));
 
@@ -93,13 +113,12 @@ public class QueueServiceImpl implements QueueService {
                 redisTemplate.opsForSet()
                         .remove(ACTIVE_INDEX_KEY, showId);
             }
+            log.info("[QUEUE-SERVICE] active corrected showId={}, active={}",
+                    showId, realTokenCount);
         }
     }
 
-    /**
-     * 실제 EntryToken 개수 조회
-     * (showId 단위로만 조회 → 전체 scan 아님)
-     */
+    // 실제 EntryToken 개수 조회 (showId 단위로만 조회)
     private int countEntryTokens(String showId) {
 
         String pattern = "entry:token:" + showId + ":*";
@@ -120,9 +139,7 @@ public class QueueServiceImpl implements QueueService {
         return "queue:seq:performance:" + showId;
     }
 
-    /** 현재 예매 페이지 안에 들어가 있는 사람 수 
-     * -> 즉 Entry Token을 가진 사람 수
-    */
+    // 현재 예매 페이지 안에 들어가 있는 사람 수 -> 즉 Entry Token을 가진 사람 수
     private String activeKey(String showId) {
         return "active:performance:" + showId;
     }

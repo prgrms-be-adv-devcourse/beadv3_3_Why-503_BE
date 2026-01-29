@@ -45,7 +45,7 @@ public class EntryTokenIssuerImpl implements EntryTokenIssuer {
         String tokenKey = tokenKey(showId, userId);
         String activeKey = activeKey(showId);
 
-        // 토근 없음? -> 아무것도 하지 않음 ( 중복 감소 방지 )
+        // 토큰 없음? -> 아무것도 하지 않음 ( 중복 감소 방지 )
         Boolean existed = redisTemplate.hasKey(tokenKey);
         if (!Boolean.TRUE.equals(existed)) {
             return;

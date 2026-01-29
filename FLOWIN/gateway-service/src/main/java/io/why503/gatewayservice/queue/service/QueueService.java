@@ -12,5 +12,8 @@ public interface QueueService {
 
     // 대기열에 사용자를 추가
     void enqueue(String showId, String userId);
+
+    // 이미 대기열에 들어가 있는지 여부 
+    boolean isAlreadyQueued(String showId, String userId);
     
 }

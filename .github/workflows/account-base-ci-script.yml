@@ -13,4 +13,4 @@ jobs:
     uses: ./.github/workflows/ci-script.yml
     secrets: inherit
     with:
-      service-name: account-base #얘 수정
+      service-name: account-base

@@ -1,13 +1,11 @@
-package io.why503.accountservice.util;
+package io.why503.accountservice.domain.accounts.util;
 
 
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
-import io.why503.accountservice.domain.accounts.model.enums.Gender;
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
-import io.why503.accountservice.domain.accounts.model.dto.vo.UpsertAccountVo;
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,19 +20,19 @@ import org.springframework.stereotype.Component;
 public class AccountMapper {
     private final PasswordEncoder passwordEncoder;
     //받은 dto의 password를 bcrypt해서 엔티티를 생성, 수정할 때 쓰는 cmd클래스로 만들기 위한 함수
-    public UpsertAccountVo upsertDtoToUpsertVo(UpsertAccountRequest dto) {
-        return new UpsertAccountVo(
-                dto.userId(),
-                passwordEncoder.encode(dto.userPassword()),
-                dto.userName(),
-                dto.birthday(),
-                Gender.getGender(dto.gender()),
-                dto.userPhone(),
-                dto.userEmail(),
-                dto.userBasicAddr(),
-                dto.userDetailAddr(),
-                dto.userPost()
-        );
+    public Account upsertRequestToEntity(CreateAccountRequest request) {
+        return Account.builder()
+                .id(request.userId())
+                .password(passwordEncoder.encode(request.userPassword()))
+                .name(request.userName())
+                .birthday(request.birthday())
+                .gender(request.gender())
+                .phone(request.userPhone())
+                .email(request.userEmail())
+                .basicAddr(request.userBasicAddr())
+                .detailAddr(request.userDetailAddr())
+                .post(request.userPost())
+                .build();
     }
     //엔티티를 찾아서 Detail로 만들기 위한 함수, payload에 사용함
     public AccountDetails entityToDetail(Account account){
@@ -45,18 +43,17 @@ public class AccountMapper {
                 account.getRole()
         );
     }
-    //엔티티를 찾아서 summaryResponse로 만들기 위한 함수
-    public UserRoleResponse entityToSummaryResponse(Account account){
+    //엔티티를 찾아서 roleResponse로 만들기 위한 함수
+    public UserRoleResponse entityToRoleResponse(Account account){
         return new UserRoleResponse(
                 account.getSq(),
                 account.getName(),
-                account.getRole().getCode()
+                account.getRole()
         );
     }
     //엔티티를 찾아서 PointResponse로 만들기 위한 함수
     public UserPointResponse entityToPointResponse(Account account){
         return new UserPointResponse(
-                account.getName(),
                 account.getPoint()
         );
     }

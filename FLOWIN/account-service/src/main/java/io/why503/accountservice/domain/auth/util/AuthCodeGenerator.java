@@ -3,7 +3,7 @@
  * 사용 목적 :
  * - 이메일 인증에 사용할 일회성 인증 코드 생성
  */
-package io.why503.accountservice.util;
+package io.why503.accountservice.domain.auth.util;
 
 import java.security.SecureRandom;
 

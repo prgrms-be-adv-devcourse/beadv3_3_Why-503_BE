@@ -1,11 +1,9 @@
 package io.why503.accountbase.model.response;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 //유저 포인트 반환에 사용
 public record UserPointResponse(
-        @NotBlank String userName,
         @NotNull Long userPoint
 ) {
 }

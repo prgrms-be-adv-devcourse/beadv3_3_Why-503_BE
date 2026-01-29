@@ -23,7 +23,7 @@ public interface ConcertHallService {
      * 공연장 등록
      * @param request 공연장 등록 요청 DTO
      */
-    void createConcertHall(ConcertHallRequest request);
+    void createConcertHall(Long userSq, ConcertHallRequest request);
 
     /**
      * 공연장 단건 조회
@@ -31,7 +31,6 @@ public interface ConcertHallService {
      * @return 공연장 응답 DTO
      */
     ConcertHallResponse getConcertHall(Long concertHallSq);
-
     /**
      * 관리자 입력 기반 좌석 생성 공연장 등록
      * 처리 내용 :
@@ -42,6 +41,7 @@ public interface ConcertHallService {
      * @return 생성된 공연장 식별자
      */
     Long createWithCustomSeats(
+            Long userSq,
             ConcertHallRequest request,
             List<SeatAreaCreateVo> areaCreateVos
     );

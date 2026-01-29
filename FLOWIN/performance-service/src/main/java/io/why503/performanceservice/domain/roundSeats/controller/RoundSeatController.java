@@ -66,7 +66,7 @@ public class RoundSeatController {
     // 좌석 선점
     @PostMapping("/reserve")
     public ResponseEntity<List<SeatReserveResponse>> reserveSeats(
-            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq, // 상대방이 안 보낼 경우를 대비
+            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq,
             @RequestBody List<Long> roundSeatSqs) {
         List<SeatReserveResponse> response = roundSeatService.reserveSeats(userSq, roundSeatSqs);
         return ResponseEntity.ok(response);

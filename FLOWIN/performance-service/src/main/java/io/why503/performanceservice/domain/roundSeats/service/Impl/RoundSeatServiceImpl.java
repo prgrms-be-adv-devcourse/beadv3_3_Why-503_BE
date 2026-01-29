@@ -206,11 +206,4 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         }
     }
 
-    private List<RoundSeatResponse> convertToDtoList(List<RoundSeatEntity> entities) {
-        List<RoundSeatResponse> dtoList = new ArrayList<>();
-        for (RoundSeatEntity entity : entities) {
-            dtoList.add(roundSeatMapper.entityToResponse(entity));
-        }
-        return dtoList;
-    }
 }

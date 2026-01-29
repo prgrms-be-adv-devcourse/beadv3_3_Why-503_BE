@@ -39,15 +39,15 @@ public class ConcertHallController {
      */
     @PostMapping
     public ResponseEntity<Void> createConcertHall(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody ConcertHallRequest request
     ) {
         try {
-            concertHallSv.createConcertHall(request);
+            concertHallSv.createConcertHall(userSq, request);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
-
     }
 
     /**
@@ -60,6 +60,7 @@ public class ConcertHallController {
      */
     @GetMapping("/{concertHallSq}")
     public ResponseEntity<ConcertHallResponse> getConcertHall(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long concertHallSq
     ) {
         ConcertHallResponse res = concertHallSv.getConcertHall(concertHallSq);
@@ -80,9 +81,11 @@ public class ConcertHallController {
      */
     @PostMapping("/custom-seats")
     public Long createConcertHallWithCustomSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody ConcertHallWithSeatsRequest request
     ) {
         return concertHallSv.createWithCustomSeats(
+                userSq,
                 request.concertHall(),
                 request.seatAreas()
         );

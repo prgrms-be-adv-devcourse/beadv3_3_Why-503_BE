@@ -15,6 +15,7 @@ import java.util.List;
 
 import io.why503.performanceservice.domain.concerthall.service.ConcertHallService;
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
+import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.ConcertHallMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,8 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     private final ConcertHallRepository concertHallRepo;
     private final SeatService seatSv;
     private final ConcertHallMapper concertHallMapper;
+    private final UserValidator userValidator;
+
     /**
      * 공연장 등록
      * 처리 흐름 :
@@ -49,15 +52,10 @@ public class ConcertHallServiceImpl implements ConcertHallService {
      */
     @Override
     @Transactional
-    public void createConcertHall(ConcertHallRequest request) {
+    public void createConcertHall(Long userSq, ConcertHallRequest request) {
 
-        //기업 회원이 아닌 경우 예외처리
-//        boolean isUserRole = auth.getAuthorities().stream()
-//                .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
-//
-//        if (isUserRole) {
-//            throw new IllegalArgumentException("기업 회원만 사용할 수 있습니다.");
-//        }
+
+        userValidator.validateEnterprise(userSq);
 
         //공연장 엔트리값 조건 추가
         //공연장명
@@ -126,10 +124,11 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     @Override
     @Transactional
     public Long createWithCustomSeats(
+            Long userSq,
             ConcertHallRequest request,
             List<SeatAreaCreateVo> areaCreateVos
     ) {
-
+        userValidator.validateEnterprise(userSq);
         ConcertHallEntity hall = concertHallMapper.requestToEntity(request);
         concertHallRepo.save(hall);
 

@@ -6,9 +6,6 @@ on:
       service-name:
         required: true
         type: string
-      service-type:
-        required: false
-        type: string
 
 jobs:
   code-test:
@@ -17,7 +14,7 @@ jobs:
 
     permissions:
       contents: read
-      packages: read
+      packages: write
 
 
     steps:
@@ -31,7 +28,7 @@ jobs:
           distribution: 'temurin'
 
       - name: account test yml pem 세팅
-        if: ${{ inputs.service-type == 'account' }}
+        if: ${{ inputs.service-name == 'account-service' }}
         run: |
           mkdir -p ./FLOWIN/account-service/src/main/resources
           echo '${{ secrets.ACCOUNT_TEST_YML }}' > ./FLOWIN/account-service/src/main/resources/application.yml
@@ -41,7 +38,7 @@ jobs:
           echo '${{ secrets.PRIVATE_KEY_TEST_PEM }}' > ./FLOWIN/account-service/src/test/resources/private-key-test.pem
 
       - name: gateway test yml pem 세팅
-        if: ${{ inputs.service-type == 'gateway' }}
+        if: ${{ inputs.service-name == 'gateway-service' }}
         run: |
           mkdir -p ./FLOWIN/gateway-service/src/main/resources
           echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/main/resources/application.yml
@@ -49,6 +46,15 @@ jobs:
           mkdir -p ./FLOWIN/gateway-service/src/test/resources
           echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/test/resources/application-test.yml
           echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/test/resources/public-key-test.pem
+
+      - name: gradlew 권한 세팅
+        if: ${{ inputs.service-name == 'account-base' }}
+        run: ./gradlew :account-base:publish
+        env:
+          CI: 'true'
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 #      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.
 #      - name: gradlew 권한 세팅

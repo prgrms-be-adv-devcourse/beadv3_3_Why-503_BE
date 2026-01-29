@@ -1,6 +1,6 @@
 package io.why503.paymentservice.domain.booking.mapper;
 
-import io.why503.paymentservice.domain.booking.model.dto.TicketResponse;
+import io.why503.paymentservice.domain.booking.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import org.springframework.stereotype.Component;
 
@@ -10,22 +10,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class TicketMapper {
 
-    /**
-     * Ticket Entity -> TicketResponse DTO 변환
-     */
-    public TicketResponse EntityToResponse(Ticket ticket) {
+    //Ticket Entity -> TicketResponse DTO 변환
+    public TicketResponse entityToResponse(Ticket ticket) {
         return new TicketResponse(
-                ticket.getTicketSq(),
+                ticket.getSq(),
                 ticket.getRoundSeatSq(),
-                ticket.getTicketUuid(),
+                ticket.getUuid(),
                 ticket.getShowName(),
                 ticket.getConcertHallName(),
-                ticket.getRoundDate(),
+                ticket.getRoundDateTime(),
                 ticket.getGrade(),
                 ticket.getSeatArea(),
-                ticket.getAreaSeatNumber(),
+                ticket.getAreaSeatNum(),
+                ticket.getOriginalPrice(),
                 ticket.getFinalPrice(),
-                ticket.getTicketStatus().getDescription()
+                ticket.getStatus()
         );
     }
 }

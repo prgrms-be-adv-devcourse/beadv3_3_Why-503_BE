@@ -1,4 +1,4 @@
-package io.why503.paymentservice.domain.payment.dto;
+package io.why503.paymentservice.domain.payment.dto.request;
 
 public record PaymentConfirmRequest(
         String paymentKey,

@@ -1,8 +1,11 @@
 package io.why503.paymentservice.domain.payment.controller;
 
+import io.why503.paymentservice.domain.booking.model.dto.response.BookingResponse;
+import io.why503.paymentservice.domain.booking.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.service.BookingService;
+import io.why503.paymentservice.domain.payment.config.TossPaymentConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -24,44 +27,42 @@ import java.time.format.DateTimeFormatter;
 public class PaymentViewController {
 
     private final BookingService bookingService;
+    private final TossPaymentConfig tossPaymentConfig;
 
-    @Value("${payment.client-key}")
-    private String clientKey;
-
-    /**
-     * 결제 페이지 (Checkout)
-     * - 토스 페이먼츠 위젯이 렌더링될 페이지입니다.
-     */
+    // 결제 페이지 (Checkout)
     @GetMapping("/checkout")
     public String checkoutPage(
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestParam Long bookingSq,
             Model model
     ) {
-        // [수정] 서비스가 조회와 검증을 모두 수행함 (한 줄로 깔끔해짐)
-        Booking booking = bookingService.getMyBooking(bookingSq, userSq);
+        // 1. [수정] DTO로 받기 (Entity X) -> 트랜잭션 범위 밖에서도 안전함
+        BookingResponse booking = bookingService.getBooking(bookingSq, userSq);
 
-        // 대표 티켓 정보 추출
-        Ticket ticket = booking.getTickets().getFirst();
+        // 2. [수정] 티켓 정보 추출 (Record는 Getter가 필드명과 동일)
+        if (booking.tickets() == null || booking.tickets().isEmpty()) {
+            throw new IllegalStateException("예매에 포함된 티켓이 없습니다.");
+        }
+        TicketResponse ticket = booking.tickets().get(0); // List의 첫 번째 요소
 
-        model.addAttribute("amount", booking.getPgAmount());
-        model.addAttribute("orderId", booking.getOrderId());
-        model.addAttribute("productName", ticket.getShowName());
-        model.addAttribute("clientKey", clientKey);
+        // 3. 모델 담기 (Record 스타일: .getPgAmount() -> .pgAmount())
+        model.addAttribute("amount", booking.pgAmount());
+        model.addAttribute("orderId", booking.orderId()); // DTO에 orderId 필드가 없다면 추가 필요! (*)
+        model.addAttribute("productName", ticket.showName());
+        model.addAttribute("clientKey", tossPaymentConfig.getClientKey()); // Config에서 가져오기
 
-        // 부가 정보 (날짜 포맷팅)
-        String formattedDate = ticket.getRoundDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        // 4. 날짜 포맷팅
+        String formattedDate = ticket.roundDateTime()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
         model.addAttribute("showDate", formattedDate);
-        model.addAttribute("seatGrade", ticket.getGrade());
-        model.addAttribute("seatArea", ticket.getSeatArea());
+        model.addAttribute("seatGrade", ticket.grade());
+        model.addAttribute("seatArea", ticket.seatArea());
 
-        return "index";
+        return "checkout"; // 보통 결제 페이지는 index보단 checkout 같은 이름이 명확합니다.
     }
 
-    /**
-     * 결제 성공 페이지
-     */
+    // 결제 성공 페이지
     @GetMapping("/success")
     public String successPage(
             @RequestParam String paymentKey,
@@ -75,9 +76,7 @@ public class PaymentViewController {
         return "success";
     }
 
-    /**
-     * 결제 실패 페이지
-     */
+    // 결제 실패 페이지
     @GetMapping("/fail")
     public String failPage(
             @RequestParam String message,

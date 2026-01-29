@@ -15,9 +15,10 @@ public class TossPaymentConfig {
     @Value("${toss.secret-key}")
     private String tossSecretKey;
 
-    /**
-     * 외부 API 호출을 위한 RestTemplate 등록
-     */
+    @Value("${payment.client-key}")
+    private String tossClientKey;
+
+    // 외부 API 호출을 위한 RestTemplate 등록
     @Bean
     public RestTemplate tossRestTemplate() {
         return new RestTemplate();
@@ -25,5 +26,10 @@ public class TossPaymentConfig {
 
     public String getSecretKey() {
         return tossSecretKey;
+    }
+
+
+    public String getClientKey() {
+        return tossClientKey;
     }
 }

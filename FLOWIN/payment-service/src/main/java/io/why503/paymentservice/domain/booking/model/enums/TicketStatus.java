@@ -1,4 +1,4 @@
-package io.why503.paymentservice.domain.booking.model.vo;
+package io.why503.paymentservice.domain.booking.model.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

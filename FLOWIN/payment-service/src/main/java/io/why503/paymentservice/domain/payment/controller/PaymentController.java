@@ -1,9 +1,9 @@
 package io.why503.paymentservice.domain.payment.controller;
 
-import io.why503.paymentservice.domain.payment.dto.PaymentCancelRequest;
-import io.why503.paymentservice.domain.payment.dto.PaymentConfirmRequest;
-import io.why503.paymentservice.domain.payment.dto.PointChargeRequest;
-import io.why503.paymentservice.domain.payment.dto.PointChargeResponse;
+import io.why503.paymentservice.domain.payment.dto.request.PaymentCancelRequest;
+import io.why503.paymentservice.domain.payment.dto.request.PaymentConfirmRequest;
+import io.why503.paymentservice.domain.payment.dto.request.PointChargeRequest;
+import io.why503.paymentservice.domain.payment.dto.response.PointChargeResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +16,12 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/internal/payments")
+@RequestMapping("/payment-api")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
-    /**
-     * 결제 승인
-     * - PG사 결제창에서 승인된 후 호출됩니다.
-     */
+    // 결제 승인
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -34,10 +31,7 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 결제 취소 (전체/부분)
-     * - 예매 전체 취소 또는 특정 티켓 부분 취소를 처리합니다.
-     */
+    // 결제 취소 (전체/부분)
     @PostMapping("/cancel")
     public ResponseEntity<?> cancelPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -47,10 +41,7 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 결제 실패 처리
-     * - PG사 연동 과정에서 실패했을 때 상태를 업데이트합니다.
-     */
+    // 결제 실패 처리
     @PostMapping("/fail")
     public void failPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -60,10 +51,7 @@ public class PaymentController {
         paymentService.failPayment(orderId, message, userSq);
     }
 
-    /**
-     * [추가] 포인트 충전 요청
-     * - DB에 "POINT_CHARGE" 타입의 Booking 데이터를 생성하고 orderId를 반환합니다.
-     */
+    // 포인트 충전 요청
     @PostMapping("/point/request")
     public ResponseEntity<PointChargeResponse> requestPointCharge(
             @RequestHeader("X-USER-SQ") Long userSq,

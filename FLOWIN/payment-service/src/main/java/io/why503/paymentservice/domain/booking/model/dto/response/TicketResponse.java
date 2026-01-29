@@ -1,21 +1,23 @@
-package io.why503.paymentservice.domain.booking.model.dto;
+package io.why503.paymentservice.domain.booking.model.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 
 import java.time.LocalDateTime;
 
 public record TicketResponse(
         Long ticketSq,
         Long roundSeatSq,
-        String ticketUuid,
+        String uuid,
         String showName,
         String concertHallName,
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-        LocalDateTime roundDate,
+        LocalDateTime roundDateTime,
         String grade,
         String seatArea,
-        Integer areaSeatNumber,
-        Integer price,
-        String status
+        Integer areaSeatNum,
+        Integer originalPrice,
+        Integer finalPrice,
+        TicketStatus status
 ) {
 }

@@ -1,6 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.entity;
 
-import io.why503.paymentservice.domain.booking.model.vo.TicketStatus;
+import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,21 +20,26 @@ import java.util.UUID;
 @Table(name = "ticket")
 public class Ticket {
 
-    // --- 1. 식별자 및 외부 참조 ---
+    // --- 식별자 및 외부 참조 ---
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ticket_sq")
-    private Long ticketSq;
+    private Long sq;
+
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_sq", nullable = false)
+    private Booking booking;
 
     @Column(name = "round_seat_sq", nullable = false)
     private Long roundSeatSq;
 
-    @Column(name = "ticket_uuid", nullable = false)
+    @Column(name = "uuid", nullable = false)
     @Builder.Default
-    private String ticketUuid = UUID.randomUUID().toString();
+    private String uuid = UUID.randomUUID().toString();
 
-    // --- 2. 좌석 정보 스냅샷 ---
+    // --- 좌석 정보 스냅샷 ---
 
     @Column(name = "show_name", nullable = false)
     private String showName;
@@ -42,78 +47,60 @@ public class Ticket {
     @Column(name = "concert_hall_name", nullable = false)
     private String concertHallName;
 
-    @Column(name = "round_date", nullable = false)
-    private LocalDateTime roundDate;
+    @Column(name = "round_date_time", nullable = false)
+    private LocalDateTime roundDateTime;
 
     @Column(name = "grade", nullable = false)
-    private String grade;
+    @Builder.Default
+    private String grade = "S";
 
     @Column(name = "seat_area", nullable = false)
-    private String seatArea;
+    @Builder.Default
+    private String seatArea = "Unknown";
 
-    @Column(name = "area_seat_no", nullable = false)
-    private Integer areaSeatNumber;
+    @Column(name = "area_seat_num", nullable = false)
+    @Builder.Default
+    private Integer areaSeatNum = 0; // Number -> Num 규칙 적용
 
-    // --- 3. 가격 정보 스냅샷 ---
+    // --- 가격 정보 스냅샷 ---
 
     @Column(name = "original_price", nullable = false)
-    private Integer originalPrice;
+    @Builder.Default
+    private Integer originalPrice = 0;
 
     @Column(name = "discount_amount", nullable = false)
     @Builder.Default
     private Integer discountAmount = 0;
 
     @Column(name = "final_price", nullable = false)
-    private Integer finalPrice;
+    @Builder.Default
+    private Integer finalPrice = 0;
 
-    // --- 4. 상태 정보 ---
+    // --- 상태 정보 ---
 
-    @Column(name = "ticket_status", nullable = false)
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
-    private TicketStatus ticketStatus = TicketStatus.AVAILABLE;
+    private TicketStatus status = TicketStatus.AVAILABLE;
 
-    // --- 5. 연관 관계 ---
+    // --- 비즈니스 로직 ---
 
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_sq", nullable = false)
-    private Booking booking;
-
-    // --- 6. 비즈니스 로직 ---
-
-    /**
-     * 결제 완료 처리
-     */
     public void paid() {
-        this.ticketStatus = TicketStatus.PAID;
+        this.status = TicketStatus.PAID;
     }
 
-    /**
-     * 취소 처리
-     */
     public void cancel() {
-        this.ticketStatus = TicketStatus.CANCELLED;
+        this.status = TicketStatus.CANCELLED;
     }
 
-    /**
-     * 입장 처리 (QR 사용)
-     */
     public void use() {
-        if (this.ticketStatus != TicketStatus.PAID) {
+        if (this.status != TicketStatus.PAID) {
             throw new IllegalStateException("결제 완료된 티켓만 사용할 수 있습니다.");
         }
-        this.ticketStatus = TicketStatus.USED;
+        this.status = TicketStatus.USED;
     }
 
-//    /**
-//     * 좌석 번호 포맷팅 (예: A-15)
-//     */
-//    public String getFormattedSeatNo() {
-//        return this.seatArea + "-" + this.areaSeatNumber;
-//    }
-
-    // --- 7. 내부 로직 ---
+    // --- 내부 로직 ---
 
     @PrePersist
     public void prePersist() {
@@ -121,15 +108,15 @@ public class Ticket {
         if (this.originalPrice == null) this.originalPrice = 0;
         if (this.discountAmount == null) this.discountAmount = 0;
         if (this.finalPrice == null) this.finalPrice = 0;
-        if (this.ticketStatus == null) this.ticketStatus = TicketStatus.AVAILABLE;
-        if (this.ticketUuid == null) this.ticketUuid = UUID.randomUUID().toString();
+        if (this.status == null) this.status = TicketStatus.AVAILABLE;
+        if (this.uuid == null) this.uuid = UUID.randomUUID().toString();
 
         if (this.grade == null) this.grade = "S";
         if (this.seatArea == null) this.seatArea = "Unknown";
-        if (this.areaSeatNumber == null) this.areaSeatNumber = 0;
+        if (this.areaSeatNum == null) this.areaSeatNum = 0;
 
         if (this.showName == null) this.showName = "Unknown Show";
         if (this.concertHallName == null) this.concertHallName = "Unknown Hall";
-        if (this.roundDate == null) this.roundDate = LocalDateTime.now();
+        if (this.roundDateTime == null) this.roundDateTime = LocalDateTime.now();
     }
 }

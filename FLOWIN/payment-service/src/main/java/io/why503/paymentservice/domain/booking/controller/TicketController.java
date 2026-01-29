@@ -19,10 +19,7 @@ public class TicketController {
 
     private final BookingService bookingService;
 
-    /**
-     * QR 입장 처리
-     * - UUID를 확인하여 티켓을 'USED' 상태로 변경합니다.
-     */
+    // QR 입장 처리
     @PostMapping("/entry")
     public ResponseEntity<Void> enterTicket(@RequestBody String ticketUuid) {
         // JSON 문자열로 넘어올 경우 따옴표 제거 처리

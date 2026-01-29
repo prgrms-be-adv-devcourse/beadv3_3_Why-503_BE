@@ -10,9 +10,6 @@ import java.util.Optional;
  */
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    /**
-     * UUID로 티켓 조회
-     * - QR 코드 입장 확인 시 사용됩니다.
-     */
-    Optional<Ticket> findByTicketUuid(String ticketUuid);
+    // UUID로 티켓 조회
+    Optional<Ticket> findByUuid(String uuid);
 }

@@ -1,4 +1,4 @@
-package io.why503.gatewayservice.auth.config.filter;
+package io.why503.gatewayservice.auth.config.filler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,8 +22,8 @@ import java.util.Optional;
 
 @Slf4j
 @Component 
-public class JwtValidationFilter 
-        extends AbstractGatewayFilterFactory<JwtValidationFilter.Config> {
+public class JwtValidationFiller extends 
+AbstractGatewayFilterFactory<JwtValidationFiller.Config> {
     //쿠키 이름
     @Value("${custom.jwt.cookie-name}")
     private String cookieName;
@@ -39,7 +39,7 @@ public class JwtValidationFilter
     생성자
     특성상 @Builder을 못쓰기에 명시적으로 초기화
      */
-    public JwtValidationFilter(JwtValidator jwtValidator){
+    public JwtValidationFiller(JwtValidator jwtValidator){
         super(Config.class);
         this.jwtValidator = jwtValidator;
     }

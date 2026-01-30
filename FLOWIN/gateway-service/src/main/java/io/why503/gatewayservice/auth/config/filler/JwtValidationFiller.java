@@ -22,8 +22,7 @@ import java.util.Optional;
 
 @Slf4j
 @Component 
-public class JwtValidationFiller extends 
-AbstractGatewayFilterFactory<JwtValidationFiller.Config> {
+public class JwtValidationFiller extends AbstractGatewayFilterFactory<JwtValidationFiller.Config> {
     //쿠키 이름
     @Value("${custom.jwt.cookie-name}")
     private String cookieName;

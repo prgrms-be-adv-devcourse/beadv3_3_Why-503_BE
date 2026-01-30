@@ -3,7 +3,6 @@ package io.why503.performanceservice.domain.show.service.impl;
 import feign.FeignException;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
-import io.why503.performanceservice.util.mapper.ShowMapper;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWithSeatPolicyRequest;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
@@ -16,9 +15,9 @@ import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
 import io.why503.performanceservice.global.client.accountservice.dto.CompanyInfoResponse;
-import io.why503.performanceservice.global.error.exception.PerformanceForbiddenException;
-import io.why503.performanceservice.global.error.exception.UnauthorizedException;
-import io.why503.performanceservice.global.error.exception.UserServiceUnavailableException;
+import io.why503.performanceservice.global.error.ErrorCode;
+import io.why503.performanceservice.global.error.exception.BusinessException;
+import io.why503.performanceservice.util.mapper.ShowMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ public class ShowServiceImpl implements ShowService {
     @Override
     public ShowEntity findShowBySq(Long showSq) {
         return showRepository.findById(showSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공연입니다."));
+                .orElseThrow(() ->new BusinessException(ErrorCode.SHOW_NOT_FOUND));
     }
 
     @Override
@@ -63,7 +62,7 @@ public class ShowServiceImpl implements ShowService {
                 );
 
         if (allSeats.isEmpty()) {
-            throw new IllegalStateException("no seats found for concert hall");
+            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
         }
 
         Map<String, List<SeatEntity>> seatsByArea =
@@ -100,7 +99,7 @@ public class ShowServiceImpl implements ShowService {
     ) {
         List<SeatEntity> seats = seatsByArea.get(policy.seatArea());
         if (seats == null || seats.isEmpty()) {
-            throw new IllegalArgumentException("seat area not found: " + policy.seatArea());
+            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
         }
         ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.grade());
         return seats.stream()
@@ -111,16 +110,24 @@ public class ShowServiceImpl implements ShowService {
     private Long resolveCompanySq(Long userSq) {
         try {
             CompanyInfoResponse response = accountServiceClient.getMyCompanyInfo(userSq);
-            if (response == null || response.getCompanySq() == null) {
-                throw new PerformanceForbiddenException("company info not found for current user");
+
+            // 응답이 없거나 회사 정보가 없는 경우 -> 권한 없음(Forbidden) 처리
+            if (response == null || response.companySq() == null) {
+                throw new BusinessException(ErrorCode.PERFORMANCE_CREATE_FORBIDDEN);
             }
-            return response.getCompanySq();
+            return response.companySq();
+
         } catch (FeignException.Forbidden e) {
-            throw new PerformanceForbiddenException("only COMPANY users can create shows");
+            // Feign Client 403 에러 -> 권한 없음
+            throw new BusinessException(ErrorCode.PERFORMANCE_CREATE_FORBIDDEN);
+
         } catch (FeignException.Unauthorized e) {
-            throw new UnauthorizedException("invalid authorization");
+            // Feign Client 401 에러 -> 인증 실패
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+
         } catch (FeignException e) {
-            throw new UserServiceUnavailableException("account-service call failed", e);
+            // 그 외 Feign 통신 에러 (서버 다운 등) -> 502 Bad Gateway
+            throw new BusinessException(ErrorCode.USER_SERVICE_UNAVAILABLE);
         }
     }
 }

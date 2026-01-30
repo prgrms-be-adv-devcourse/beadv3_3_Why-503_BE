@@ -11,7 +11,6 @@
 package io.why503.performanceservice.domain.seat.controller;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.why503.performanceservice.domain.seat.model.dto.response.SeatResponse;
-import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.service.SeatService;
 
 @RestController

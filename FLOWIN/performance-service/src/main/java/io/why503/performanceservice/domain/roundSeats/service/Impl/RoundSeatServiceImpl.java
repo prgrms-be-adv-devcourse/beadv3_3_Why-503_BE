@@ -13,6 +13,8 @@ import io.why503.performanceservice.domain.roundSeats.repository.RoundSeatReposi
 import io.why503.performanceservice.domain.roundSeats.service.RoundSeatService;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
+import io.why503.performanceservice.global.error.ErrorCode;
+import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +48,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회차입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
 
         //회차 좌석 엔티티 생성
         RoundSeatEntity entity = roundSeatMapper.requestToEntity(request, roundEntity);
@@ -83,7 +85,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
-                .orElseThrow(() -> new IllegalArgumentException("해당 좌석을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEAT_NOT_FOUND));
         //상태 변경
         entity.updateStatus(newStatus);
         return roundSeatMapper.entityToResponse(entity);
@@ -104,13 +106,11 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
 
         if (seats.size() != roundSeatSqs.size()) {
-            throw new IllegalArgumentException("요청한 좌석 중 존재하지 않는 좌석이 있습니다.");
-        }
+            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);        }
 
         for (RoundSeatEntity seat : seats) {
             if (seat.getStatus() != RoundSeatStatus.AVAILABLE) {
-                throw new IllegalArgumentException("이미 선택되었거나 예매 불가능한 좌석입니다: " + seat.getSq());
-            }
+                throw new BusinessException(ErrorCode.SEAT_ALREADY_RESERVED);            }
         }
         // 같은 회차의 좌석들이므로 공연장 정보를 얻어올때 첫번째 좌석의 정보를 이용
         RoundSeatEntity firstSeat = seats.get(0);
@@ -121,7 +121,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         // 공연장 이름 조회
         String fixedConcertHallName = concertHallRepository.findById(concertHallSq)
                 .map(ConcertHallEntity::getName)
-                .orElseThrow(() -> new IllegalArgumentException("공연장 정보가 없습니다."));
+                .orElseThrow(() ->new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
 
         // 좌석 등급 추출
         List<Long> showSeatSqs = new ArrayList<>();
@@ -149,7 +149,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             // 좌석 등급/가격 정보 Map에서 꺼내기
             ShowSeatEntity showSeat = showSeatMap.get(roundSeat.getShowSeatSq());
             if (showSeat == null) {
-                throw new IllegalArgumentException("연결된 공연 좌석 정보가 없습니다.");
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
             // Response 생성
@@ -189,12 +189,12 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             Object savedValue = redisTemplate.opsForValue().get(key);
 
             if (savedValue == null) {
-                throw new IllegalArgumentException("선점 정보가 존재하지 않습니다. 다시 예매해주세요.");
+                throw new BusinessException(ErrorCode.RESERVATION_EXPIRED);
             }
 
             String savedUserSq = String.valueOf(savedValue);
             if (!savedUserSq.equals(String.valueOf(userSq))) {
-                throw new IllegalArgumentException("본인이 선점한 좌석만 결제할 수 있습니다.");
+                throw new BusinessException(ErrorCode.NOT_MY_SEAT);
             }
         }
 

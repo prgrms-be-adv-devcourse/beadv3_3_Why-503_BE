@@ -8,13 +8,13 @@ import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.round.service.RoundService;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.service.ShowService;
+import io.why503.performanceservice.global.error.ErrorCode;
+import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -43,12 +43,12 @@ public class RoundServiceImpl implements RoundService {
 
         // 초기 생성 시엔 상태가 예매 대기여야 함
         if (request.roundStatus() != RoundStatus.WAIT) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회차 생성 시 상태는 '예매대기(WAIT)'만 가능합니다.");
+            throw new BusinessException(ErrorCode.ROUND_BAD_REQUEST);
         }
 
         // 이미 등록된 시간인지 확인
         if (roundRepository.existsByShowAndDateTime(show, request.roundDt())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
+            throw new BusinessException(ErrorCode.ROUND_CONFLICT);
         }
 
         // 날짜 범위 계산
@@ -117,10 +117,10 @@ public class RoundServiceImpl implements RoundService {
         return roundMapper.entityToDto(entity);
     }
 
-    // 회차 ID로 엔티티를 찾고 없으면 404에러 발생
+    // 회차 ID로 엔티티를 찾음
     private RoundEntity findRoundBySq(Long roundSq) {
         return roundRepository.findById(roundSq)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
     }
 
 }

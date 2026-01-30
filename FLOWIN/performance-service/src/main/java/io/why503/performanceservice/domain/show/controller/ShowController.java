@@ -4,7 +4,8 @@ import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWith
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.service.ShowService;
-import io.why503.performanceservice.global.error.exception.UnauthorizedException;
+import io.why503.performanceservice.global.error.ErrorCode;
+import io.why503.performanceservice.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,7 +73,6 @@ public class ShowController {
      */
     private void requireAuthorization(Long authorization) {
         if (authorization == null) {
-            throw new UnauthorizedException("missing Authorization header");
-        }
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);        }
     }
 }

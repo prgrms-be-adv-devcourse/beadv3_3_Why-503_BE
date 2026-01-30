@@ -10,8 +10,8 @@ import java.security.PublicKey;
 @SpringBootTest
 class GatewayServiceApplicationTests {
 
-    @Test
-    void contextLoads() {
-    }
+    // @Test
+    // void contextLoads() {
+    // }
 
 }

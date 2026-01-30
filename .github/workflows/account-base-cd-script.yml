@@ -1,4 +1,4 @@
-name: Account Base CI 스크립트
+name: Account Base CD 스크립트
 
 on:
   pull_request:
@@ -37,3 +37,5 @@ jobs:
       - name: account-base 배포
         working-directory: ./FLOWIN/account-base
         run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.TEMP_TOKEN }}

@@ -2,7 +2,6 @@ package io.why503.aiservice.config;
 
 import lombok.Getter;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -2,23 +2,34 @@ package io.why503.aiservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.aiservice.model.vo.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class AiService {
 
     private final ChatClient chatClient;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final VectorStore vectorStore;
+    private final EmbeddingModel embeddingModel;
 
 
-    public AiService(ChatClient chatClient) {
-        this.chatClient = chatClient;
-    }
 
     //ai 프롬프트 보냄(AI서버) -> 문자열 응답식으로 받음
     public String ask(String prompt) {
@@ -27,7 +38,7 @@ public class AiService {
                 .content();
     }
 
-    //포스트맨에서 json 형식으로 받기
+    //포스트맨에서 json 형식으로 받기 위한 파싱
     public AiResponse parse(String content) {
         try {
             String cleaned = cleanJson(content);
@@ -38,7 +49,7 @@ public class AiService {
         }
     }
 
-    //출력에 json에 불필요한 정보 지우기
+    //출력에 빈 리스트를 받지 않기 위한 json에 불필요한 정보 지우기
     private String cleanJson(String content) {
         if (content == null) {
             return "";
@@ -67,7 +78,6 @@ public class AiService {
             String prompt = """
                     공연 장르 추천해주는 서비스입니다.
                     아래 사용자 정보와 공연 목록을 기반으로
-                    
                     [규칙]
                     1. 반드시 JSON만 출력한다.
                     2. 설명 문장은 summary 와 explanations 필드에만 작성한다.
@@ -97,17 +107,21 @@ public class AiService {
                         }
                     """.formatted(r.category(), r.attention());
 
+            //ai 호출 -> 프롬프트 입력
             String content = ask(prompt);
             log.info("AI RAW RESPONSE = {}", content);
 
+            //ai에게 받는 응답을 문자열 파싱
             AiResponse aiResponse = parse(content);
 
+            //AiRecommendation -> 스트림, Recommendations -> 스트림
             List<Recommendations> recommendations =
                     aiResponse.recommendations().stream()
                             .map(ar -> toDomain(ar))
                             .flatMap(recommendations1 -> recommendations1.stream())
                             .toList();
 
+            //최종 문서 응답 반환
             return new ResultResponse(
                     aiResponse.summary(),
                     aiResponse.explanations(),
@@ -145,5 +159,128 @@ public class AiService {
                     .map(category ->  new Recommendations(category, ar.reason())
             );
     }
+
+    //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자)
+    public float[] embed(String content) {
+        return embeddingModel.embed(content);
+    }
+
+    //사용자가
+    public double getSimilarity(String content1, String content2) {
+        List<float[]> vectorList = embeddingModel.embed(List.of(content1, content2));
+
+        return cosineSimilarity(vectorList.get(0), vectorList.get(1));
+    }
+
+//    // 예측 평점
+//    public double predictScore(int userId, int itemId) {
+//        double sum = 0;
+//        for (int f = 0; f < k; f++) {
+//            sum += P[userId][f] * Q[itemId][f];
+//        }
+//        return sum;
+//    }
+//
+//    public double predictScoreWithCosine(int userId, int itemId, List<Integer> similarItems, double alpha) {
+//        double mfScore = predictScore(userId, itemId);
+//        double cosineSum = 0;
+//
+//        for (int simItemId : similarItems) {
+//            cosineSum += cosineSimilarity(Q[itemId], Q[simItemId]);
+//        }
+//
+//        double cosineScore = cosineSum / similarItems.size();
+//        return alpha * mfScore + (1 - alpha) * cosineScore;
+//    }
+
+    public double cosineSimilarity(float[] vectorA, float[] vectorB) {
+
+        if ( vectorA.length != vectorB.length ) {
+            throw new IllegalArgumentException("Vectors must be of equal length");
+        }
+
+        double dotProduct = 0.0;
+        double magnitudeA = 0.0;
+        double magnitudeB = 0.0;
+
+        for ( int i = 0; i < vectorA.length; i++ ) {
+            dotProduct += vectorA[i] * vectorB[i];
+            magnitudeA += vectorA[i] * vectorA[i];
+            magnitudeB += vectorB[i] * vectorB[i];
+        }
+
+
+        return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
+
+    }
+
+    public List<Document> searchShows(String query) {
+
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(query)
+                .topK(3)
+                .build();
+
+        return vectorStore.similaritySearch(searchRequest);
+    }
+
+    public String generateRagAnswer(String q) {
+        return chatClient
+                .prompt(q)
+                .advisors(QuestionAnswerAdvisor.builder(vectorStore)
+                        .build())
+                .call()
+                .content();
+    }
+
+
+
+
+//    // Map<Integer, List<Integer>> categoryToItems
+//    // userScores: Map<ItemId, Score>
+//    public Map<Integer, Double> computeCategoryScores(Map<Integer, Double> userScores,
+//                                                      Map<Integer, List<Integer>> categoryToItems) {
+//        Map<Integer, Double> categoryScores = new HashMap<>();
+//
+//        for (Map.Entry<Integer, List<Integer>> entry : categoryToItems.entrySet()) {
+//            int categoryId = entry.getKey();
+//            List<Integer> items = entry.getValue();
+//
+//            double sum = 0;
+//            int count = 0;
+//            for (int itemId : items) {
+//                if (userScores.containsKey(itemId)) {
+//                    sum += userScores.get(itemId);
+//                    count++;
+//                }
+//            }
+//            if (count > 0) categoryScores.put(categoryId, sum / count);
+//        }
+//        return categoryScores;
+//    }
+//
+//    // userEmbedding: P[userId]
+//    // categoryEmbeddings: Map<CategoryId, double[]>
+//    public Map<Integer, Double> computeCategoryScoresByEmbedding(double[] userEmbedding,
+//                                                                 Map<Integer, double[]> categoryEmbeddings) {
+//        Map<Integer, Double> scores = new HashMap<>();
+//        for (Map.Entry<Integer, double[]> entry : categoryEmbeddings.entrySet()) {
+//            int categoryId = entry.getKey();
+//            double score = cosineSimilarity(userEmbedding, entry.getValue());
+//            scores.put(categoryId, score);
+//        }
+//        return scores;
+//    }
+//
+//    public List<Integer> topN(Map<Integer, Double> scores, int N) {
+//        return scores.entrySet().stream()
+//                .sorted((a,b) -> Double.compare(b.getValue(), a.getValue()))
+//                .limit(N)
+//                .map(Map.Entry::getKey)
+//                .collect(Collectors.toList());
+//    }
+
+
+
 
 }

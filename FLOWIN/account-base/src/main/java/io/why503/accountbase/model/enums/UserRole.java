@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /*
-이넘은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성
+이넘은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성, String으로 사용
  */
 public enum UserRole {
     ADMIN("ADMIN"), USER("USER"), STAFF("STAFF") ,COMPANY("COMPANY");

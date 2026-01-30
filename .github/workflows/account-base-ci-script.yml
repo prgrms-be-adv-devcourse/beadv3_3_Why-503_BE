@@ -9,8 +9,35 @@ on:
       - 'FLOWIN/account-base/**'
 
 jobs:
-   execute-test:
-    uses: ./.github/workflows/ci-script.yml
-    secrets: inherit
-    with:
-      service-name: account-base #얘 수정
+  code-test:
+    name: 코드 테스트
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 브랜치로 체크아웃
+        uses: actions/checkout@v5
+
+      - name: JDK 세팅
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: gradlew 권한 세팅
+        run: chmod +x ./FLOWIN/account-base/gradlew
+
+      - name: 테스트 실행
+        working-directory: ./FLOWIN/account-base
+        run: ./gradlew test --no-daemon
+
+      - name: account-base 배포
+        working-directory: ./FLOWIN/account-base
+        run: ./gradlew publish
+        env:
+          CI: 'true'
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.TEMP_TOKEN }}

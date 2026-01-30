@@ -3,7 +3,7 @@ package io.why503.accountbase.model.enums;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 /*
-enum은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성
+enum은 어차피 안에 있는 속성의 개수에 따라 초기에 jvm이 알아서 생성, String으로 사용
  */
 public enum Gender {
     MALE("MALE"), FEMALE("FEMALE");

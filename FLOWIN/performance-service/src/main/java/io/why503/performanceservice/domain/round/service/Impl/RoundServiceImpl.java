@@ -63,7 +63,7 @@ public class RoundServiceImpl implements RoundService {
         roundList.add(newEntity);
 
         // 시간 순서대로 정렬
-        roundList.sort((r1, r2) -> r1.getDateTime().compareTo(r2.getDateTime()));
+        roundList.sort((r1, r2) -> r1.getStarted_dt().compareTo(r2.getStarted_dt()));
 
         // 회차 번호 재부여
         for (int i = 0; i < roundList.size(); i++) {

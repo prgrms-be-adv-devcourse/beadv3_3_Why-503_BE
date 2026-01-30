@@ -12,14 +12,13 @@
  */
 package io.why503.performanceservice.domain.concerthall.model.entity;
 
+import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 
-import io.why503.performanceservice.domain.concerthall.model.dto.enums.ConcertHallStatus;
-
 @Entity
-@Table(name = "concert_hall")
+@Table(name = "hall")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConcertHallEntity {
@@ -27,46 +26,46 @@ public class ConcertHallEntity {
     // 공연장 식별자 (PK)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "concert_hall_sq")
+    @Column(name = "sq")
     private Long sq;
 
     // 공연장명
-    @Column(name = "concert_hall_name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     // 공연장 우편번호
-    @Column(name = "concert_hall_post", nullable = false, length = 8)
+    @Column(name = "post", nullable = false, length = 8)
     private String post;
 
     // 공연장 기본 주소
-    @Column(name = "concert_hall_basic_addr", nullable = false, length = 255)
+    @Column(name = "basic_addr", nullable = false, length = 255)
     private String basicAddr;
 
     // 공연장 상세 주소
-    @Column(name = "concert_hall_detail_addr", nullable = false, length = 255)
+    @Column(name = "detail_addr", nullable = false, length = 255)
     private String detailAddr;
 
     // 공연장 상태 (Enum)
-    @Column(name = "concert_hall_stat", nullable = false, length = 1)
+    @Column(name = "status", nullable = false, length = 1)
     private String status;
 
     // 공연장 총 좌석 수
-    @Column(name = "concert_hall_seat_scale", nullable = false)
+    @Column(name = "seat_scale", nullable = false)
     private Integer seatScale;
 
     /**
      * 공연장 구조 정보
      * (예: 단층, 2층, 원형 등)
      */
-    @Column(name = "concert_hall_structure", nullable = false, length = 50)
+    @Column(name = "structure", nullable = false, length = 50)
     private String structure;
 
     // 공연장 위도
-    @Column(name = "concert_hall_latitude", nullable = false, precision = 10, scale = 8)
+    @Column(name = "latitude", nullable = false, precision = 10, scale = 8)
     private BigDecimal latitude;
 
     // 공연장 경도
-    @Column(name = "concert_hall_longitude", nullable = false, precision = 11, scale = 8)
+    @Column(name = "longitude", nullable = false, precision = 11, scale = 8)
     private BigDecimal longitude;
 
     @Builder

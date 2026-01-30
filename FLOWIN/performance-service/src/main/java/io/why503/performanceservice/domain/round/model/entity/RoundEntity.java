@@ -11,42 +11,42 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Table(name = "rounds")
+@Table(name = "round")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RoundEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "round_sq")
+    @Column(name = "sq")
     private Long sq;       //회차시퀀스
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "show_sq", nullable = false)
     private ShowEntity show;    //공연시퀀스
 
-    @Column(name = "round_dt",nullable = false)
-    private LocalDateTime dateTime; //회차 일시
+    @Column(name = "started_dt",nullable = false)
+    private LocalDateTime started_dt; //회차 일시
 
-    @Column(name = "round_no",nullable = false)
+    @Column(name = "num",nullable = false)
     private Integer num; // 회차 번호
 
     @Column(name = "casting",nullable = false)
-    private String cast; //해당 회차 출연진
+    private String casting; //해당 회차 출연진
 
     @Enumerated(EnumType.STRING) // DB에 AVAILABLE 등으로 저장
-    @Column(name = "round_stat",nullable = false)
+    @Column(name = "status",nullable = false)
     private RoundStatus status;
 
     @Builder
     public RoundEntity(
             ShowEntity show,
-            LocalDateTime dateTime,
+            LocalDateTime started_dt,
             Integer num,
-            String cast,
+            String casting,
             RoundStatus status) {
         this.show = show;
-        this.dateTime = dateTime;
+        this.started_dt = started_dt;
         this.num = num;
-        this.cast = cast;
+        this.casting = casting;
         this.status = status;
     }
 

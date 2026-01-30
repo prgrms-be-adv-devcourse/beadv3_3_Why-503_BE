@@ -44,21 +44,21 @@ public class SeatEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "seat_sq")
+    @Column(name = "sq")
     private Long sq;
 
-    @Column(name = "seat_no")
+    @Column(name = "num")
     private Integer num;
 
-    @Column(name = "seat_area", nullable = false, length = 20)
+    @Column(name = "area", nullable = false, length = 20)
     private String area;
 
-    @Column(name = "area_seat_no", nullable = false)
+    @Column(name = "area_num", nullable = false)
     private Integer numInArea;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "concert_hall_sq", nullable = false)
-    private ConcertHallEntity concertHall;
+    @JoinColumn(name = "hall_sq", nullable = false)
+    private ConcertHallEntity HallSq;
 
     /* =======================
        생성자 (비즈니스용)
@@ -68,11 +68,11 @@ public class SeatEntity {
             Integer num,
             String area,
             Integer numInArea,
-            ConcertHallEntity concertHall
+            ConcertHallEntity HallSq
     ) {
         this.num = num;
         this.area = area;
         this.numInArea = numInArea;
-        this.concertHall = concertHall;
+        this.HallSq = HallSq;
     }
 }

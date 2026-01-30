@@ -28,9 +28,9 @@ public class RoundMapper {
         return new RoundResponse(
                 entity.getSq(),
                 entity.getShow().getSq(),
-                entity.getDateTime(),
+                entity.getStarted_dt(),
                 entity.getNum(),
-                entity.getCast(),
+                entity.getCasting(),
                 entity.getStatus().getDescription(),
                 entity.getStatus()
         );

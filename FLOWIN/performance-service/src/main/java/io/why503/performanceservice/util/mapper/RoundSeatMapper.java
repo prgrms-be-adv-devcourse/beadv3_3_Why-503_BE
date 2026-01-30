@@ -25,7 +25,7 @@ public class RoundSeatMapper {
                 .round(roundEntity)
                 .showSeatSq(request.showSeatSq())
                 .status(request.roundSeatStatus())
-                .statusTime(LocalDateTime.now())
+                .status_dt(LocalDateTime.now())
                 .build();
 
     }
@@ -38,7 +38,7 @@ public class RoundSeatMapper {
                 .showSeatSq(entity.getShowSeatSq())
                 .roundSeatStatus(entity.getStatus())
                 .roundSeatStatusName(entity.getStatus().getDescription())
-                .roundSeatStatusTime(entity.getStatusTime())
+                .roundSeatStatusTime(entity.getStatus_dt())
                 .build();
     }
     //entity리스트를 dto리스트로 일괄 변환
@@ -76,7 +76,7 @@ public class RoundSeatMapper {
                 // 공연 및 공연장 정보
                 .showName(show.getName())
                 .concertHallName(concertHallName)
-                .roundDate(round.getDateTime())
+                .roundDate(round.getStarted_dt())
                 .build();
     }
 }

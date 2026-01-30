@@ -26,15 +26,15 @@ public class RoundSeatEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "round_seat_sq")
+    @Column(name = "sq")
     private Long sq;                                    //회차좌석시퀀스
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "round_seat_stat", nullable = false)
+    @Column(name = "status", nullable = false)
     private RoundSeatStatus status;                     //회차좌석 상태
 
-    @Column(name = "round_seat_stat_time", nullable = false)
-    private LocalDateTime statusTime;                   //상태변경일시
+    @Column(name = "status_dt", nullable = false)
+    private LocalDateTime status_dt;                   //상태변경일시
 
     // 변수명은 roundSq 유지, 타입은 RoundEntity로 변경하여 FK 연동
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,12 +45,13 @@ public class RoundSeatEntity {
     private Long showSeatSq;                                     //공연좌석시퀀스
 
     @Version
+    @Column(name = "version",nullable = false)
     private Long version;                                        //낙관적 락을 위한 버전 관리
 
     //상태 변경 메서드
     public void updateStatus(RoundSeatStatus newStatus) {
         this.status = newStatus;
-        this.statusTime = LocalDateTime.now();
+        this.status_dt = LocalDateTime.now();
     }
 
     //좌석 선점
@@ -59,7 +60,7 @@ public class RoundSeatEntity {
             throw new IllegalStateException("이미 판매되었거나 선점된 좌석입니다.");
         }
         this.status = RoundSeatStatus.RESERVED;
-        this.statusTime = LocalDateTime.now();
+        this.status_dt = LocalDateTime.now();
     }
 
     //선점 해제 (취소/실패 시)
@@ -68,7 +69,7 @@ public class RoundSeatEntity {
             throw new IllegalStateException("이미 결제 완료된 좌석 입니다.");
         }
         this.status = RoundSeatStatus.AVAILABLE;
-        this.statusTime = LocalDateTime.now();
+        this.status_dt = LocalDateTime.now();
     }
 
     // 판매 확정
@@ -77,6 +78,6 @@ public class RoundSeatEntity {
             throw new IllegalStateException("선점된 좌석만 판매 확정할 수 있습니다.");
         }
         this.status = RoundSeatStatus.SOLD; // 상태를 판매완료로 변경
-        this.statusTime = LocalDateTime.now();
+        this.status_dt = LocalDateTime.now();
     }
 }

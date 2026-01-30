@@ -28,22 +28,22 @@ public class ShowEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "show_sq")
+    @Column(name = "sq")
     private Long sq;               // 공연 시퀀스 (PK)
 
-    @Column(name = "show_name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;           // 공연명
 
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "starated_dt", nullable = false)
     private LocalDateTime startDate;   // 공연 시작일
 
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_dt", nullable = false)
     private LocalDateTime endDate;     // 공연 종료일
 
     @Column(name = "open_dt", nullable = false)
     private LocalDateTime openDate;      // 티켓 오픈 일시
 
-    @Column(name = "show_time", nullable = false, length = 50)
+    @Column(name = "running_time", nullable = false, length = 50)
     private String runningTime;           // 러닝타임
 
     @Column(name = "viewing_age", nullable = false, length = 20)
@@ -54,10 +54,10 @@ public class ShowEntity {
     private ShowCategory category;              // 공연 카테고리 코드
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "show_stat", nullable = false)
+    @Column(name = "status", nullable = false)
     private ShowStatus status;              // 공연 상태 코드
 
-    @Column(name = "concert_hall_sq", nullable = false)
+    @Column(name = "hall_sq", nullable = false)
     private Long concertHallSq;        // 공연장 식별자 (FK)
 
     @Column(name = "company_sq", nullable = false)

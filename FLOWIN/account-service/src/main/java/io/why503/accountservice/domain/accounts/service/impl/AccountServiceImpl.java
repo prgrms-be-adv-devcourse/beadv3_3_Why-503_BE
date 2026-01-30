@@ -1,9 +1,9 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountbase.model.response.UserCompanyResponse;
+import io.why503.accountbase.model.response.UserPointResponse;
+import io.why503.accountbase.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
@@ -11,7 +11,6 @@ import io.why503.accountservice.domain.accounts.repository.AccountJpaRepository;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

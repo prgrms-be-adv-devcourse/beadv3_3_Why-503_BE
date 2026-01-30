@@ -7,8 +7,8 @@
  */
 package io.why503.accountservice.domain.companies.controller;
 
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountbase.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;

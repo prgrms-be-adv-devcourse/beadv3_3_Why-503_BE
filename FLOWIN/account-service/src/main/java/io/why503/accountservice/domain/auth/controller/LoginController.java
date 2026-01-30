@@ -1,7 +1,7 @@
 package io.why503.accountservice.domain.auth.controller;
 
+import io.why503.accountbase.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

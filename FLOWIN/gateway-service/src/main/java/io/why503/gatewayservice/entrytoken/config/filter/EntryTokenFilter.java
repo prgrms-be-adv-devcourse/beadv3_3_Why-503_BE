@@ -29,7 +29,7 @@ public class EntryTokenFilter
     private final ObjectMapper om = new ObjectMapper();
 
     public static class Config {
-        // 앞쪽은 다음에 탐색하고 오자!
+        // Config
     }
 
     public EntryTokenFilter(EntryTokenValidator entryTokenValidator) {

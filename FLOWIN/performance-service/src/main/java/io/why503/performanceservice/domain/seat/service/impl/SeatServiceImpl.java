@@ -23,11 +23,11 @@ import java.util.List;
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 public class SeatServiceImpl implements SeatService {
 
-    private final SeatRepository seatRepo;
+    private final SeatRepository seatRepository;
     private final SeatMapper seatMapper;
 
     private List<SeatEntity> findByConcertHall(Long concertHallSq) {
-        return seatRepo.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(concertHallSq);
+        return seatRepository.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(concertHallSq);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class SeatServiceImpl implements SeatService {
         }
 
         try {
-            seatRepo.saveAll(seats);
+            seatRepository.saveAll(seats);
         } catch (DataIntegrityViolationException e) {
             log.error("커스텀 좌석 생성 중 중복 오류 발생", e);
             throw e;

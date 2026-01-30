@@ -15,30 +15,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ShowStatus {
 
-    SCHEDULED(0), // 공연 예정
-    ONGOING(1),   // 공연 중
-    ENDED(2),     // 공연 종료
-    CANCELED(3);  // 공연 취소
-
-    private final int code; // 공연 상태 코드 값
-
-    /**
-     * 코드 값 기반 ShowStatus 변환
-     *
-     * 사용 위치 :
-     * - 공연 생성 시 기본 상태 설정
-     * - 상태 코드 기반 Enum 변환 처리
-     *
-     * @param code 공연 상태 코드
-     * @return ShowStatus Enum
-     * @throws IllegalArgumentException 유효하지 않은 코드 입력 시
-     */
-    public static ShowStatus fromCode(int code) {
-        for (ShowStatus value : values()) {
-            if (value.code == code) {
-                return value;
-            }
-        }
-        throw new IllegalArgumentException("invalid showRequest status code: " + code);
-    }
+    SCHEDULED, // 공연 예정
+    ONGOING,   // 공연 중
+    ENDED,     // 공연 종료
+    CANCELED;  // 공연 취소
 }

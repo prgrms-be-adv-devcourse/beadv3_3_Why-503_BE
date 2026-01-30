@@ -53,45 +53,7 @@ public class ConcertHallServiceImpl implements ConcertHallService {
     @Override
     @Transactional
     public void createConcertHall(Long userSq, ConcertHallRequest request) {
-
-
         userValidator.validateEnterprise(userSq);
-
-        //공연장 엔트리값 조건 추가
-        //공연장명
-        if (request.concertHallName() == null || request.concertHallName().isBlank()) {
-            throw new IllegalArgumentException("공연장 이름 필수입니다.");
-        }
-        //우편번호
-        if (request.concertHallPost() == null || request.concertHallPost().isBlank()) {
-            throw new IllegalArgumentException("우편 번호 이름 필수입니다.");
-        }
-        //기본 주소
-        if ( request.concertHallBasicAddr() == null || request.concertHallBasicAddr().isBlank()) {
-            throw new IllegalArgumentException("기본 주소 이름 필수입니다.");
-        }
-        //상세 주소
-        if ( request.concertHallDetailAddr() == null || request.concertHallDetailAddr().isBlank()) {
-            throw new IllegalArgumentException("상세 주소 이름 필수입니다.");
-        }
-        //공연장 총 좌석 수
-        if ( request.concertHallSeatScale() == null || request.concertHallSeatScale() <= 50) {
-            throw new IllegalArgumentException("좌석 수가  50이상이어야 합니다");
-        }
-        //공연장 구조 정보
-        if ( request.concertHallStructure() == null || request.concertHallStructure().isBlank()) {
-            throw new IllegalArgumentException("구조 이름 필수입니다.");
-        }
-        //공연장 위도
-        if (request.concertHallLatitude().compareTo(BigDecimal.valueOf(-90)) < 0 ||
-                request.concertHallLatitude().compareTo(BigDecimal.valueOf(90)) > 0) {
-            throw new IllegalArgumentException("위도는 -90 ~ 90 사이여야 합니다.");
-        }
-        //공연장 경도
-        if (request.concertHallLongitude().compareTo(BigDecimal.valueOf(-180)) < 0 ||
-                request.concertHallLongitude().compareTo(BigDecimal.valueOf(180)) > 0) {
-            throw new IllegalArgumentException("경도는 -180 ~ 180 사이여야 합니다.");
-        }
 
         ConcertHallEntity hall = concertHallMapper.requestToEntity(request);
 

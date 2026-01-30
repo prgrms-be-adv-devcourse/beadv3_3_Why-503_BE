@@ -15,29 +15,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ShowCategory {
 
-    CONCERT(0), // 콘서트
-    MUSICAL(1), // 뮤지컬
-    PLAY(2),    // 연극
-    CLASSIC(3); // 클래식
-
-    private final int code; // 카테고리 코드 값
-
-    /**
-     * 코드 값 기반 ShowCategory 변환
-     *
-     * 사용 위치 :
-     * - ShowReqDto에서 전달받은 showCategory 값 변환 시 사용
-     *
-     * @param code 카테고리 코드
-     * @return ShowCategory Enum
-     * @throws IllegalArgumentException 유효하지 않은 코드 입력 시
-     */
-    public static ShowCategory fromCode(int code) {
-        for (ShowCategory value : values()) {
-            if (value.code == code) {
-                return value;
-            }
-        }
-        throw new IllegalArgumentException("invalid showRequest showCategory code: " + code);
-    }
+    CONCERT, // 콘서트
+    MUSICAL, // 뮤지컬
+    PLAY,  // 연극
+    CLASSIC; // 클래식
 }

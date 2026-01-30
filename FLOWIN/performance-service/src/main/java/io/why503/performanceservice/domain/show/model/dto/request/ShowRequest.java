@@ -6,6 +6,7 @@
  */
 package io.why503.performanceservice.domain.show.model.dto.request;
 
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -18,6 +19,6 @@ public record ShowRequest(
         @NotNull LocalDateTime showOpenDate,      // 티켓 오픈 일시
         @NotBlank String showRunningTime,          // 러닝타임
         @NotBlank String showViewingAge,        // 관람 등급
-        @NotNull Integer showCategory,          // 공연 카테고리 (번호로 전달받음, 예: 0 콘서트 / 1 뮤지컬 / 2 연극 / 3 클래식)
+        @NotNull ShowCategory showCategory,          // 공연 카테고리
         @NotNull Long concertHallSq         // 공연장 식별자
 ) { }

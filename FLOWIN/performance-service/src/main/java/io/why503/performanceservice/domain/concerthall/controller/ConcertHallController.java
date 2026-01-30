@@ -12,6 +12,7 @@
  */
 package io.why503.performanceservice.domain.concerthall.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +28,7 @@ import io.why503.performanceservice.domain.concerthall.service.ConcertHallServic
 @RequestMapping("/concert-halls")
 public class ConcertHallController {
 
-    private final ConcertHallService concertHallSv;
-
+    private final ConcertHallService concertHallService;
     /**
      * 공연장 등록
      * 처리 내용 :
@@ -40,14 +40,10 @@ public class ConcertHallController {
     @PostMapping
     public ResponseEntity<Void> createConcertHall(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody ConcertHallRequest request
+            @Valid @RequestBody ConcertHallRequest request
     ) {
-        try {
-            concertHallSv.createConcertHall(userSq, request);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        concertHallService.createConcertHall(userSq, request);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -60,11 +56,10 @@ public class ConcertHallController {
      */
     @GetMapping("/{concertHallSq}")
     public ResponseEntity<ConcertHallResponse> getConcertHall(
-            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long concertHallSq
     ) {
-        ConcertHallResponse res = concertHallSv.getConcertHall(concertHallSq);
-        return ResponseEntity.ok(res);
+        ConcertHallResponse response = concertHallService.getConcertHall(concertHallSq);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -84,7 +79,7 @@ public class ConcertHallController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody ConcertHallWithSeatsRequest request
     ) {
-        return concertHallSv.createWithCustomSeats(
+        return concertHallService.createWithCustomSeats(
                 userSq,
                 request.concertHall(),
                 request.seatAreas()

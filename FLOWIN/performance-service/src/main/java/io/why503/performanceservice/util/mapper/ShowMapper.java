@@ -43,8 +43,8 @@ public class ShowMapper {
                 entity.getOpenDate(),
                 entity.getRunningTime(),
                 entity.getViewingAge(),
-                entity.getCategoryEnum(),
-                entity.getShowStatus(),
+                entity.getCategory(),
+                entity.getStatus(),
                 entity.getConcertHallSq(),
                 entity.getCompanySq()
         );

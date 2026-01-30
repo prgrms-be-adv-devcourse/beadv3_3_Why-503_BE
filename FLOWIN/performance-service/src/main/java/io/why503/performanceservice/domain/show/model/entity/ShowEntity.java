@@ -49,13 +49,13 @@ public class ShowEntity {
     @Column(name = "viewing_age", nullable = false, length = 20)
     private String viewingAge;         // 관람 등급
 
-    // ===== Enum 값은 DB에 int 코드로 저장 =====
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false)
-    private int category;              // 공연 카테고리 코드
+    private ShowCategory category;              // 공연 카테고리 코드
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "show_stat", nullable = false)
-    private int status;              // 공연 상태 코드
+    private ShowStatus status;              // 공연 상태 코드
 
     @Column(name = "concert_hall_sq", nullable = false)
     private Long concertHallSq;        // 공연장 식별자 (FK)
@@ -71,7 +71,7 @@ public class ShowEntity {
             LocalDateTime openDate,
             String runningTime,
             String viewingAge,
-            int category,
+            ShowCategory category, // int category -> ShowCategory category
             Long concertHallSq,
             Long companySq) {
         this.name = name;
@@ -81,30 +81,15 @@ public class ShowEntity {
         this.runningTime = runningTime;
         this.viewingAge = viewingAge;
         this.category = category;
-        this.status = ShowStatus.SCHEDULED.getCode();
+        this.status = ShowStatus.SCHEDULED; // 기본값 설정 (Enum 직접 할당)
         this.concertHallSq = concertHallSq;
         this.companySq = companySq;
     }
 
-// ===== Enum 변환 메서드 =====
+    // JPA가 알아서 변환해주고, Lombok @Getter가 값을 꺼내주므로
+    // getCategoryEnum(), getShowStatus(), setCategory() 등은 이제 필요 없음
 
-    //카테고리 코드 → Enum 변환
-    public ShowCategory getCategoryEnum() {
-        return ShowCategory.fromCode(this.category);
-    }
-
-    //공연 상태 코드 → Enum 변환
-    public ShowStatus getShowStatus() {
-        return ShowStatus.fromCode(this.status);
-    }
-
-    //카테고리 Enum → 코드 값 저장
-    public void setCategory(ShowCategory category) {
-        this.category = category.getCode();
-    }
-
-    //공연 상태 Enum → 코드 값 저장
-    public void setShowStatus(ShowStatus status) {
-        this.status = status.getCode();
+    public void changeStatus(ShowStatus newStatus) {
+        this.status = newStatus;
     }
 }

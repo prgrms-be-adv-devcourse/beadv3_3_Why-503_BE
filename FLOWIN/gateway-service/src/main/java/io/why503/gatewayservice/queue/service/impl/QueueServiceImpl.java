@@ -51,7 +51,8 @@ public class QueueServiceImpl implements QueueService {
             }
 
             // 대기열에 있던 사용자라면 ZSET 제거
-            redisTemplate.opsForZSet().remove(queueKey(showId), userId);
+            // active가 비는 순간 그 직후 들어오는 요청은 대기열 맨 앞 유저가 보낸 요청
+            redisTemplate.opsForZSet().remove(queueKey(showId), userId); 
             log.info("[QUEUE-SERVICE] canEnter=true showId={}, userId={}", showId, userId);
             return true;
         }
@@ -88,6 +89,24 @@ public class QueueServiceImpl implements QueueService {
     public boolean isAlreadyQueued(String showId, String userId) {
         return redisTemplate.opsForZSet()
                 .score(queueKey(showId), userId) != null;
+    }
+
+    @Override
+    public Long getQueuePosition(String showId, String userId) {
+        String key = queueKey(showId);
+
+        Long rank = redisTemplate
+                .opsForZSet()
+                .rank(key,userId);
+
+        return rank == null ? null : rank + 1;
+    }
+
+    @Override
+    public Long getQueueSize(String showId) {
+        return redisTemplate
+                .opsForZSet()
+                .zCard(queueKey(showId));
     }
         
     // 요청 시점 Lazy 보정 - entry token 실개수 기준으로 active 보정

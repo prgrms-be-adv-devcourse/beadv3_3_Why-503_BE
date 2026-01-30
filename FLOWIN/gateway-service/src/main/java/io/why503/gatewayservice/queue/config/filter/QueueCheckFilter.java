@@ -64,11 +64,18 @@ public class QueueCheckFilter
             // === 방어 로직 ===
             if (userId == null || showId == null) {
                 log.warn("[QUEUE] invalid request (missing header or path)");
+
+                QueueRejectResponseBody body =
+                        new QueueRejectResponseBody(
+                        "invalid request",
+                        null,
+                        null
+                        );
                 return response.writeWith(
                         Flux.just(writeResponse(
                                 response,
                                 HttpStatus.BAD_REQUEST,
-                                "invalid request"
+                                body
                         ))
                 );
             }
@@ -96,13 +103,23 @@ public class QueueCheckFilter
                         userId, showId);
             }
 
+            Long position = queueService.getQueuePosition(showId, userId);
+            Long total = queueService.getQueueSize(showId);
+
+            QueueRejectResponseBody body =
+                    new QueueRejectResponseBody(
+                    "현재 대기열에 있습니다",
+                            position,
+                            total
+        );
+
             return response.writeWith(
                     Flux.just(writeResponse(
                             response,
                             HttpStatus.TOO_MANY_REQUESTS,
-                            "queue required"
+                            body
                     ))
-            );
+    );
         };
     }
 
@@ -120,15 +137,12 @@ public class QueueCheckFilter
     private DataBuffer writeResponse(
             ServerHttpResponse response,
             HttpStatus status,
-            String message
+            QueueRejectResponseBody body
     ) {
         response.setStatusCode(status);
         response.getHeaders().add(
             HttpHeaders.CONTENT_TYPE, 
             "application/json");
-
-        QueueRejectResponseBody body = 
-                new QueueRejectResponseBody(message);
 
         return response.bufferFactory().wrap(toBytes(body));
     }

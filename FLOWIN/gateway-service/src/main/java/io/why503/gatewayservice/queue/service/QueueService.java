@@ -15,5 +15,10 @@ public interface QueueService {
 
     // 이미 대기열에 들어가 있는지 여부 
     boolean isAlreadyQueued(String showId, String userId);
+
+    // 대기열 상태 파악
+    Long getQueuePosition(String showId, String userId);
+    Long getQueueSize(String showId);
+
     
 }

@@ -4,6 +4,8 @@
 package io.why503.gatewayservice.queue.model.dto;
 
 public record QueueRejectResponseBody(
-        String message
+        String message,
+        Long position,
+        Long totalWationg
 ) {
 }

@@ -93,12 +93,21 @@ public class EntryTokenFilter
             String message
     ) {
         response.setStatusCode(status);
-        response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
+        response.getHeaders().add(
+            HttpHeaders.CONTENT_TYPE, 
+            "application/json");
 
-        // 응답 DTO는 기존 QueueRejectResponseBody 재사용 했습요 (message만 내려주면 충분)
-        QueueRejectResponseBody body = new QueueRejectResponseBody(message);
+        QueueRejectResponseBody body =
+            new QueueRejectResponseBody(
+                    message,
+                    null,
+                    null
+            );
+
         return response.bufferFactory().wrap(toBytes(body));
     }
+
+
 
     private byte[] toBytes(QueueRejectResponseBody body) {
         try {

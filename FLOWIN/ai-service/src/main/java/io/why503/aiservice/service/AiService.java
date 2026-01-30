@@ -6,18 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -160,17 +156,17 @@ public class AiService {
             );
     }
 
-    //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자)
-    public float[] embed(String content) {
-        return embeddingModel.embed(content);
-    }
-
-    //사용자가
-    public double getSimilarity(String content1, String content2) {
-        List<float[]> vectorList = embeddingModel.embed(List.of(content1, content2));
-
-        return cosineSimilarity(vectorList.get(0), vectorList.get(1));
-    }
+//    //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자)
+//    public float[] embed(String content) {
+//        return embeddingModel.embed(content);
+//    }
+//
+//    //사용자가
+//    public double getSimilarity(String content1, String content2) {
+//        List<float[]> vectorList = embeddingModel.embed(List.of(content1, content2));
+//
+//        return cosineSimilarity(vectorList.get(0), vectorList.get(1));
+//    }
 
 //    // 예측 평점
 //    public double predictScore(int userId, int itemId) {
@@ -193,45 +189,45 @@ public class AiService {
 //        return alpha * mfScore + (1 - alpha) * cosineScore;
 //    }
 
-    public double cosineSimilarity(float[] vectorA, float[] vectorB) {
-
-        if ( vectorA.length != vectorB.length ) {
-            throw new IllegalArgumentException("Vectors must be of equal length");
-        }
-
-        double dotProduct = 0.0;
-        double magnitudeA = 0.0;
-        double magnitudeB = 0.0;
-
-        for ( int i = 0; i < vectorA.length; i++ ) {
-            dotProduct += vectorA[i] * vectorB[i];
-            magnitudeA += vectorA[i] * vectorA[i];
-            magnitudeB += vectorB[i] * vectorB[i];
-        }
-
-
-        return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
-
-    }
-
-    public List<Document> searchShows(String query) {
-
-        SearchRequest searchRequest = SearchRequest.builder()
-                .query(query)
-                .topK(3)
-                .build();
-
-        return vectorStore.similaritySearch(searchRequest);
-    }
-
-    public String generateRagAnswer(String q) {
-        return chatClient
-                .prompt(q)
-                .advisors(QuestionAnswerAdvisor.builder(vectorStore)
-                        .build())
-                .call()
-                .content();
-    }
+//    public double cosineSimilarity(float[] vectorA, float[] vectorB) {
+//
+//        if ( vectorA.length != vectorB.length ) {
+//            throw new IllegalArgumentException("Vectors must be of equal length");
+//        }
+//
+//        double dotProduct = 0.0;
+//        double magnitudeA = 0.0;
+//        double magnitudeB = 0.0;
+//
+//        for ( int i = 0; i < vectorA.length; i++ ) {
+//            dotProduct += vectorA[i] * vectorB[i];
+//            magnitudeA += vectorA[i] * vectorA[i];
+//            magnitudeB += vectorB[i] * vectorB[i];
+//        }
+//
+//
+//        return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
+//
+//    }
+//
+//    public List<Document> searchShows(String query) {
+//
+//        SearchRequest searchRequest = SearchRequest.builder()
+//                .query(query)
+//                .topK(3)
+//                .build();
+//
+//        return vectorStore.similaritySearch(searchRequest);
+//    }
+//
+//    public String generateRagAnswer(String q) {
+//        return chatClient
+//                .prompt(q)
+//                .advisors(QuestionAnswerAdvisor.builder(vectorStore)
+//                        .build())
+//                .call()
+//                .content();
+//    }
 
 
 

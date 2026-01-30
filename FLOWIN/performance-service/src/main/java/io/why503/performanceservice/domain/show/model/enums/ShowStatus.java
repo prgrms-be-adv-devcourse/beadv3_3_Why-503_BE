@@ -39,6 +39,6 @@ public enum ShowStatus {
                 return value;
             }
         }
-        throw new IllegalArgumentException("invalid show status code: " + code);
+        throw new IllegalArgumentException("invalid showRequest status code: " + code);
     }
 }

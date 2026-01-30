@@ -1,9 +1,11 @@
 package io.why503.performanceservice.domain.round.controller;
 
 
-import io.why503.performanceservice.domain.round.model.dto.RoundRequest;
-import io.why503.performanceservice.domain.round.model.dto.RoundResponse;
+import io.why503.performanceservice.domain.round.model.dto.request.RoundRequest;
+import io.why503.performanceservice.domain.round.model.dto.response.RoundResponse;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.service.RoundService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,29 +19,26 @@ public class RoundController {
 
     private final RoundService roundService;
 
-    //회차 생성
+    // 회차 생성 (관리자만)
     @PostMapping
-    public ResponseEntity<RoundResponse> createRound(@RequestBody RoundRequest request){
-        RoundResponse response = roundService.createRound(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RoundResponse> createRound(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @Valid @RequestBody RoundRequest request) {
+        return ResponseEntity.ok(roundService.createRound(userSq, request));
     }
 
-    //특정 공연의 모든 회차 조회(관리자, 기업회원)
-    @GetMapping
-    public ResponseEntity<List<RoundResponse>> getRoundListByShow(
-            @RequestParam(name = "showSq") Long showSq
-    ){
-        List<RoundResponse> response = roundService.getRoundListByShow(showSq);
-        return ResponseEntity.ok(response);
+    // 특정 공연의 모든 회차 조회 (관리자만)
+    @GetMapping("/all/{showSq}")
+    public ResponseEntity<List<RoundResponse>> getAllRounds(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long showSq) {
+        return ResponseEntity.ok(roundService.getRoundListByShow(userSq, showSq));
     }
 
-    //예매 가능한 회차 조회
-    @GetMapping("/available")
-    public ResponseEntity<List<RoundResponse>> getAvailableRoundList(
-            @RequestParam(name = "showSq") Long showSq
-    ) {
-        List<RoundResponse> response = roundService.getAvailableRoundList(showSq);
-        return ResponseEntity.ok(response);
+    // 일반 유저용 예매 가능 회차 조회
+    @GetMapping("/available/{showSq}")
+    public ResponseEntity<List<RoundResponse>> getAvailableRounds(@PathVariable Long showSq) {
+        return ResponseEntity.ok(roundService.getAvailableRoundList(showSq));
     }
 
     //회차 단건 상세 조회
@@ -54,11 +53,13 @@ public class RoundController {
     // 회차 상태 변경
     @PatchMapping("/{roundSq}/status")
     public ResponseEntity<RoundResponse> patchRoundStat(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable(name = "roundSq") Long roundSq,
             @RequestBody RoundRequest request // 상태값만 꺼내서 씀
     ) {
+        RoundStatus status = request.roundStatus();
         // req.getRoundStatus()에 변경할 상태가 들어옴
-        RoundResponse response = roundService.patchRoundStat(roundSq, request.getRoundStatus());
+        RoundResponse response = roundService.patchRoundStat(userSq, roundSq, status);
         return ResponseEntity.ok(response);
     }
 

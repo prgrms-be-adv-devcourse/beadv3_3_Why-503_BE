@@ -42,8 +42,7 @@ dependencies {
 	// feign (service to service)
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
-	// security (추후 사용)
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 	// db
 	runtimeOnly 'com.mysql:mysql-connector-j'
@@ -51,6 +50,8 @@ dependencies {
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
 
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

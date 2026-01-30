@@ -23,7 +23,7 @@ public class ShowSeatEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "show_seat_sq")
-    private Long showSeatSq;
+    private Long sq;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "grade", nullable = false)
@@ -42,15 +42,15 @@ public class ShowSeatEntity {
 
     /* 생성자 */
     public ShowSeatEntity(
-            ShowEntity show,
-            SeatEntity seat,
             ShowSeatGrade grade,
-            int price
+            int price,
+            ShowEntity show,
+            SeatEntity seat
     ) {
-        this.show = show;
-        this.seat = seat;
         this.grade = grade;
         this.price = price;
+        this.show = show;
+        this.seat = seat;
     }
 
     /* 정책 변경용 메서드 */

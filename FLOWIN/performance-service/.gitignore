@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 *.yml
 *.pem
+*.jar
+!**/application-test.yml
+!**/gradle.yml
 
 ### STS ###
 .apt_generated

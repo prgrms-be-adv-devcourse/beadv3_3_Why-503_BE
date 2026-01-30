@@ -1,29 +1,38 @@
 package io.why503.accountservice.domain.accounts.service;
 
 
+import io.why503.accountservice.domain.accounts.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
-import io.why503.accountservice.domain.accounts.model.entity.Account;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 
 import java.util.List;
 /*
 account service 인터페이스
  */
 public interface AccountService {
-    UserSummaryResponse create(UpsertAccountRequest request);
-    List<UserSummaryResponse> readAll();
-    UserSummaryResponse readBySq(Long sq);
-    UserSummaryResponse readById(String id);
-    UserRole readUserRoleBySq(Long sq);
-    UserSummaryResponse updateBySq(Long sq, UpsertAccountRequest request);
-    UserSummaryResponse updateById(String id, UpsertAccountRequest request);
-    UserSummaryResponse updateUserRoleBySq(Long sq, UserRole role);
-    UserSummaryResponse deleteBySq(Long sq);
-    UserSummaryResponse deleteById(String id);
-    boolean existId(String id);
-    UserPointResponse readPointBySq(Long sq);
+    List<UserRoleResponse> readAll();
+    List<UserRoleResponse> readCompanyMember(Long companySq);
+
+    UserRoleResponse create(CreateAccountRequest request);
+    UserRoleResponse readBySq(Long sq);
+    UserRoleResponse readById(String id);
+    UserRoleResponse deleteBySq(Long sq);
+    UserRoleResponse deleteById(String id);
+    UserRoleResponse increasePoint(Long sq, Long point);
+    UserRoleResponse decreasePoint(Long sq, Long point);
+    UserRoleResponse joinCompany(Long userSq , Company company, UserRole role);
+    UserRoleResponse leaveCompany(Long userSq);
+
     UserCompanyResponse readCompanyBySq(Long sq);
+
+    UserPointResponse readPointBySq(Long sq);
+
+    UserRole readUserRoleBySq(Long sq);
+
+    void grantCompany(Long sq);
+
+    boolean existId(String id);
 }

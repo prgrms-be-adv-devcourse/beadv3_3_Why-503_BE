@@ -1,6 +1,5 @@
 package io.why503.gatewayservice.queue.service.impl;
 
-import io.why503.gatewayservice.entrytoken.service.EntryTokenIssuer;
 import io.why503.gatewayservice.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import java.util.Set;
 public class QueueServiceImpl implements QueueService {
 
     private final StringRedisTemplate redisTemplate;
-    private final EntryTokenIssuer entryTokenIssuer;
 
     // 동시에 예매 페이지에 들어갈 수 있는 최대 인원
     private final Integer maxActive; // QueueConfig 에서 주입
@@ -26,8 +24,6 @@ public class QueueServiceImpl implements QueueService {
     // 바로 입장 가능한지 판단
     @Override
     public boolean canEnter(String showId, String userId) {
-        
-        log.info("[QUEUE-SERVICE] canEnter check showId={}, userId={}", showId, userId);
 
         // Lazy 보정 (요청 시점)
         adjustActiveIfNeeded(showId);
@@ -53,10 +49,9 @@ public class QueueServiceImpl implements QueueService {
             // 대기열에 있던 사용자라면 ZSET 제거
             // active가 비는 순간 그 직후 들어오는 요청은 대기열 맨 앞 유저가 보낸 요청
             redisTemplate.opsForZSet().remove(queueKey(showId), userId); 
-            log.info("[QUEUE-SERVICE] canEnter=true showId={}, userId={}", showId, userId);
+    
             return true;
         }
-        log.info("[QUEUE-SERVICE] canEnter=false showId={}, userId={}", showId, userId);
         return false;
     }
 
@@ -65,7 +60,6 @@ public class QueueServiceImpl implements QueueService {
     public void enqueue(String showId, String userId) {
 
         if (isAlreadyQueued(showId, userId)) {
-            log.info("[QUEUE-SERVICE] already queued showId={}, userId={}", showId, userId);
             return;
         }
 
@@ -79,9 +73,6 @@ public class QueueServiceImpl implements QueueService {
         // ZSET에 대기열 추가
         redisTemplate.opsForZSet()
                 .add(queueKey, userId, seq.doubleValue());
-        
-        log.info("[QUEUE-SERVICE] enqueue showId={}, userId={}, seq={}",
-                showId, userId, seq);
     }
 
     // 이미 대기열에 들어가 있는가??
@@ -132,8 +123,6 @@ public class QueueServiceImpl implements QueueService {
                 redisTemplate.opsForSet()
                         .remove(ACTIVE_INDEX_KEY, showId);
             }
-            log.info("[QUEUE-SERVICE] active corrected showId={}, active={}",
-                    showId, realTokenCount);
         }
     }
 

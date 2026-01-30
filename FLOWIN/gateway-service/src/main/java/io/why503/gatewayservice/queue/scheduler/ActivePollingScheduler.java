@@ -9,9 +9,14 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 /**
- * - active:performance:{showId}      -> 현재 active 수
- * - entry:token:{showId}:{userId}    -> 입장권
- * - active:performance:index         -> active 상태인 showId 목록
+ * Active 상태 보정용 Scheduler (보험 장치)
+ * 역할:
+ * - EntryToken TTL 만료, 서버 재기동 등으로 인해
+ *  active값이 실제 EntryToken 개수와 불일치 하는 경우를 주기적으로 보정
+ * 
+ * 설계 의도:
+ * - 요청 기반 Lazy 보정을 기본으로 사용하되,
+ *  요청이 전혀 없는 상황에서도 시스템 상태를 정합하기 위한 보조 수단으로 만들었음 
  */
 @Slf4j
 @Component

@@ -8,11 +8,9 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 
 /**
- * - EntryToken 발급
- * - EntryToken 회수
- * - active 감소 
- * 
- * QueueService는 active 증가만 담당
+ * - EntryToken 발급 및 회수 서비스
+ * - Entry는 active 감소만 담당 / 
+ *   ((Queue는 증가만 / Lazy는 보정만 담당하게 설계)) 
  */
 
 @Service
@@ -20,7 +18,9 @@ import java.time.Duration;
 public class EntryTokenIssuerImpl implements EntryTokenIssuer {
     private final StringRedisTemplate redisTemplate;
 
+    // Active 공연 목록 관리용 인덱스 키 / active값이 0이 되면 해당 showId 제거 됨
     private static final String ACTIVE_INDEX_KEY = "active:performance:index";
+    // Entry 토큰 유효 시간 장시간 무응답 및 이탈 시 사용자 토큰 자동 회수되게끔 설계
     private static final Duration ENTRY_TOKEN_TTL = Duration.ofMinutes(5);
 
     // EntryToken 발급
@@ -72,10 +72,12 @@ public class EntryTokenIssuerImpl implements EntryTokenIssuer {
 
     // ==== Redis Key 규칙 ====
 
+    // 입장 가능한 상태임을 나타내는 토큰
     private String tokenKey(String showId, String userId) {
         return "entry:token:" + showId + ":" + userId;
     }
 
+    // 특정 공연 페이지에 활성 상태로 존재하는 사용자 수를 나타냄
     private String activeKey(String showId) {
         return "active:performance:" + showId;
     }

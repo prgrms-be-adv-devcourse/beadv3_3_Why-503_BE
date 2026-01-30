@@ -17,7 +17,6 @@ import reactor.core.publisher.Flux;
 
 /**
  * Queue 통과 후 발급받은 EntryToken이 없으면 예매 API 접근 차단
- * 전제:
  * - JwtValidationFilter가 먼저 실행되어 X-USER-SQ 헤더가 존재
  * - QueueCheckFilter가 통과 시 EntryTokenIssuer.issue() 수행
  */
@@ -46,8 +45,11 @@ public class EntryTokenFilter
             ServerHttpRequest request = exchange.getRequest();
 
             String userId = request.getHeaders().getFirst("X-USER-SQ");
+        
+            // URL path에서 공연 식별자 추출
             String showId = extractShowId(request);
 
+            // 필수 정보 누락시 잘못된 요청 때리기
             if (userId == null || showId == null) {
                 return response.writeWith(
                         Flux.just(writeResponse(
@@ -58,10 +60,10 @@ public class EntryTokenFilter
                 );
             }
 
+            // EntryToken 유효성 검증
             boolean valid = entryTokenValidator.isValid(showId, userId);
             if (!valid) {
-                log.info("entry token missing | showId={} userId={}", showId, userId);
-
+                // EntryToken 없으면 입장 불가
                 return response.writeWith(
                         Flux.just(writeResponse(
                                 response,
@@ -70,23 +72,24 @@ public class EntryTokenFilter
                         ))
                 );
             }
-
+            // 실제 서비스로 전달
             return chain.filter(exchange);
         };
     }
 
+    // showId 추출
     private String extractShowId(ServerHttpRequest request) {
         String path = request.getURI().getPath();
         String[] parts = path.split("/");
 
-        // expected: /performances/{showId}/entry
+        // ex: /performances/{showId}/entry
         if (parts.length >= 4 && "performance".equals(parts[1])) {
             return parts[2];
         }
-
         return null;
     }
 
+    // 응답 생성
     private DataBuffer writeResponse(
             ServerHttpResponse response,
             HttpStatus status,
@@ -97,6 +100,7 @@ public class EntryTokenFilter
             HttpHeaders.CONTENT_TYPE, 
             "application/json");
 
+        // Queue와 Entry 공통 응답 포맷
         QueueRejectResponseBody body =
             new QueueRejectResponseBody(
                     message,
@@ -107,13 +111,12 @@ public class EntryTokenFilter
         return response.bufferFactory().wrap(toBytes(body));
     }
 
-
-
+    // Json byte[]로 직렬화
     private byte[] toBytes(QueueRejectResponseBody body) {
         try {
             return om.writeValueAsBytes(body);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize response body", e);
+            // log.error("Failed to serialize response body", e);
             throw new RuntimeException(e);
         }
     }

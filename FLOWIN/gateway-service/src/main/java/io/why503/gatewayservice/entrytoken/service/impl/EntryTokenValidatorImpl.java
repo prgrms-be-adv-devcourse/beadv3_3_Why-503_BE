@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * - EntryToken의 유효성(존재 여부) 검증
- * - 검증만 담당 (발급/회수 X)
- */
+// EntryToken의 존재 여부 검증
 @Service
 @RequiredArgsConstructor
 public class EntryTokenValidatorImpl implements EntryTokenValidator {
@@ -16,13 +13,14 @@ public class EntryTokenValidatorImpl implements EntryTokenValidator {
     private final StringRedisTemplate redisTemplate;
 
     @Override
+    // 토큰 존재?
     public boolean isValid(String showId, String userId) {
         String key = tokenKey(showId, userId);
-        // System.out.println("[ENTRY TOKEN] key = " + key);
-        // System.out.println("[ENTRY TOKEN] exists = " + redisTemplate.hasKey(key));
+
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
+    // 현재 예매 페이지에 접근 가능한 상태임을 나타내는 토큰
     private String tokenKey(String showId, String userId) {
         return "entry:token:" + showId + ":" + userId;
     }

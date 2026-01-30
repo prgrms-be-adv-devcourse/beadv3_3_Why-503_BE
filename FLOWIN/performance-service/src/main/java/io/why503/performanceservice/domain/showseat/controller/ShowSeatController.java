@@ -1,7 +1,6 @@
 /**
  * ShowSeat Controller
  * 공연 좌석 정책(show_seat) 관리 API
- *
  * 역할:
  * - 공연별 좌석 정책 조회
  * - 좌석 등급 변경
@@ -15,8 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatGradeChangeRequest;
-import io.why503.performanceservice.domain.showseat.model.dto.ShowSeatPriceChangeRequest;
+import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatGradeChangeRequest;
+import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatPriceChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
@@ -46,9 +45,9 @@ public class ShowSeatController {
     @PatchMapping("/{showSeatSq}/grade")
     public ResponseEntity<Void> changeGrade(
             @PathVariable Long showSeatSq,
-            @RequestBody ShowSeatGradeChangeRequest req
+            @RequestBody ShowSeatGradeChangeRequest request
     ) {
-        ShowSeatGrade grade = ShowSeatGrade.valueOf(req.getGrade());
+        ShowSeatGrade grade = ShowSeatGrade.valueOf(request.grade());
         showSeatService.changeGrade(showSeatSq, grade);
         return ResponseEntity.ok().build();
     }
@@ -59,9 +58,9 @@ public class ShowSeatController {
     @PatchMapping("/{showSeatSq}/price")
     public ResponseEntity<Void> changePrice(
             @PathVariable Long showSeatSq,
-            @RequestBody ShowSeatPriceChangeRequest req
+            @RequestBody ShowSeatPriceChangeRequest request
     ) {
-        showSeatService.changePrice(showSeatSq, req.getPrice());
+        showSeatService.changePrice(showSeatSq, request.price());
         return ResponseEntity.ok().build();
     }
 }

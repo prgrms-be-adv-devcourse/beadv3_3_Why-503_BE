@@ -1,6 +1,5 @@
 package io.why503.accountservice.domain.auth.model.dto;
 
-
 import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import lombok.Builder;
 import lombok.Getter;

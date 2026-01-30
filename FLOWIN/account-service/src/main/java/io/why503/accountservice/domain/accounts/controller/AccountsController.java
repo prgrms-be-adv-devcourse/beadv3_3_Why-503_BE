@@ -1,58 +1,59 @@
 package io.why503.accountservice.domain.accounts.controller;
 
 
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
+import io.why503.accountservice.domain.accounts.model.dto.requests.PointUseRequest;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserSummaryResponse;
-import io.why503.accountservice.domain.accounts.model.entity.Account;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.companies.model.entity.Company;
+import io.why503.accountservice.domain.companies.service.CompanyService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
-// HATEOAS
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/accounts")
 public class AccountsController {
 
     private final AccountService accountService;
+
+    private final CompanyService companyService;
     //생성
     @PostMapping
-    public ResponseEntity<UserSummaryResponse> create(
-            @RequestBody UpsertAccountRequest request
+    public ResponseEntity<UserRoleResponse> create(
+            @RequestBody CreateAccountRequest request
     ){
-        UserSummaryResponse savedAccount = accountService.create(request);
+        UserRoleResponse savedAccount = accountService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(savedAccount);
     }
     //모두 조회
     @GetMapping
-    public ResponseEntity<List<UserSummaryResponse>> readAll(){
-        List<UserSummaryResponse> foundAccountList = accountService.readAll();
+    public ResponseEntity<List<UserRoleResponse>> readAll(){
+        List<UserRoleResponse> foundAccountList = accountService.readAll();
         return ResponseEntity.ok(foundAccountList);
     }
     //sq기준 조회
     @GetMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> readBySq(
+    public ResponseEntity<UserRoleResponse> readBySq(
             @PathVariable Long sq
     ){
-        UserSummaryResponse foundAccount = accountService.readBySq(sq);
+        UserRoleResponse foundAccount = accountService.readBySq(sq);
         return ResponseEntity.ok(foundAccount);
     }
     //id기준 조회
     @GetMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> readById(
+    public ResponseEntity<UserRoleResponse> readById(
             @PathVariable String id
     ){
-        UserSummaryResponse foundAccount = accountService.readById(id);
+        UserRoleResponse foundAccount = accountService.readById(id);
         return ResponseEntity.ok(foundAccount);
     }
 
@@ -76,44 +77,59 @@ public class AccountsController {
         }
         return ResponseEntity.ok(foundCompanySq);
     }
+    //회사 가입(이걸로 가입하면 무조건 STAFF)
+    @PatchMapping("/company/join/{companySq}")
+    public ResponseEntity<UserRoleResponse> joinCompany(
+            @PathVariable Long companySq,
+            @RequestHeader("X-USER-SQ") Long userSq
+    ){
+        Company company = companyService.readCompanyBySq(companySq);
+        UserRoleResponse response = accountService.joinCompany(userSq, company, UserRole.STAFF);
+        return ResponseEntity.ok(response);
+    }
+    //회사 탈퇴
+    @PatchMapping("/company/leave")
+    public ResponseEntity<UserRoleResponse> leaveCompany(
+            @RequestHeader("X-USER-SQ") Long userSq
+    ){
+        UserRoleResponse response = accountService.leaveCompany(userSq);
+        return ResponseEntity.ok(response);
+    }
 
-
-    //sq기준 수정
-    @PatchMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> updateBySq(
+    //point 증가
+    @PostMapping("/point/increase/{sq}")
+    public ResponseEntity<UserRoleResponse> increasePoint(
             @PathVariable Long sq,
-            @RequestBody UpsertAccountRequest request
+            @RequestBody PointUseRequest request
     ){
-        UserSummaryResponse updatedAccount = accountService.updateBySq(sq, request);
+        UserRoleResponse updatedAccount = accountService.increasePoint(sq, request.amount());
         return ResponseEntity.ok(updatedAccount);
     }
-    //id기준 수정
-    @PatchMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> updateById(
-            @PathVariable String id,
-            @RequestBody UpsertAccountRequest request
+    //point 감소
+    @PostMapping("/point/decrease/{sq}")
+    public ResponseEntity<UserRoleResponse> decreasePoint(
+            @PathVariable Long sq,
+            @RequestBody PointUseRequest request
     ){
-        UserSummaryResponse updatedAccount = accountService.updateById(id, request);
+        UserRoleResponse updatedAccount = accountService.decreasePoint(sq, request.amount());
         return ResponseEntity.ok(updatedAccount);
     }
-
 
     //sq기준 삭제
     @DeleteMapping("/sq/{sq}")
-    public ResponseEntity<UserSummaryResponse> delete(
+    public ResponseEntity<UserRoleResponse> delete(
             @PathVariable Long sq
     ){
-        UserSummaryResponse deletedAccount = accountService.deleteBySq(sq);
+        UserRoleResponse deletedAccount = accountService.deleteBySq(sq);
         return ResponseEntity.ok(deletedAccount);
     }
 
-
     //id기준 삭제
     @DeleteMapping("/id/{id}")
-    public ResponseEntity<UserSummaryResponse> delete(
+    public ResponseEntity<UserRoleResponse> delete(
             @PathVariable String id
     ){
-        UserSummaryResponse deletedAccount = accountService.deleteById(id);
+        UserRoleResponse deletedAccount = accountService.deleteById(id);
         return ResponseEntity.ok(deletedAccount);
     }
 }

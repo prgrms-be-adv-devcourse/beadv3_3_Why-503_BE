@@ -2,7 +2,6 @@ package io.why503.accountservice.domain.auth.config;
 
 
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +16,6 @@ import java.util.Base64;
 /*
 jwt의 인증키를 RSA로 구성 했기에 만들어진 RSA키(.pem)을 파싱하기 위한 함수
  */
-@Slf4j
 @Configuration
 public class JwtKeyConfig {
 

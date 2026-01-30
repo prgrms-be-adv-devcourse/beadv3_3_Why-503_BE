@@ -9,6 +9,6 @@ import java.util.List;
 
 public interface ShowSeatRepository extends JpaRepository<ShowSeatEntity, Long> {
 
-    List<ShowSeatEntity> findByShow_ShowSq(Long showSq);
+    List<ShowSeatEntity> findByShow_Sq(Long showSq);
 
 }

@@ -24,7 +24,7 @@ public class CompanyMapper {
                 .basicAddr(request.companyBasicAddr())
                 .detailAddr(request.companyDetailAddr())
                 .post(request.companyPost())
-                .amountDate(request.amountDate())
+                .amountDt(request.amountDt())
                 .build();
     }
     public CompanySummaryResponse EntityToSummaryResponse(Company company){

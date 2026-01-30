@@ -1,9 +1,9 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
 import io.why503.accountbase.model.enums.UserRole;
-import io.why503.accountbase.model.response.UserCompanyResponse;
-import io.why503.accountbase.model.response.UserPointResponse;
-import io.why503.accountbase.model.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;

@@ -37,7 +37,3 @@ jobs:
       - name: account-base 배포
         working-directory: ./FLOWIN/account-base
         run: ./gradlew publish
-        env:
-          CI: 'true'
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.TEMP_TOKEN }}

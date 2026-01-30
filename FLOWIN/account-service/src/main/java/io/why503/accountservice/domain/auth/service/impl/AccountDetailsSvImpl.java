@@ -1,6 +1,5 @@
 package io.why503.accountservice.domain.auth.service.impl;
 
-
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
 import io.why503.accountservice.domain.accounts.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.entity.Account;

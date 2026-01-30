@@ -31,7 +31,7 @@ repositories {
             url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("TEMP_TOKEN")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     } else {

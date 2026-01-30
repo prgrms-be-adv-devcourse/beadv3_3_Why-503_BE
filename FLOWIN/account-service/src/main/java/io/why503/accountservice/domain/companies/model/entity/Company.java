@@ -34,8 +34,8 @@ public class Company extends BasicEntity {
     @Column(name = "amount", nullable = false)
     private Long amount = 0L;
 
-    @Column(name = "amount_date", nullable = false)
-    private LocalDateTime amountDate;
+    @Column(name = "amount_dt", nullable = false)
+    private LocalDateTime amountDt;
 
     @Builder
     public Company(
@@ -48,7 +48,7 @@ public class Company extends BasicEntity {
             String basicAddr,
             String detailAddr,
             String post,
-            LocalDateTime amountDate
+            LocalDateTime amountDt
     ){
         this.bank = bank;
         this.accountNumber = accountNumber;
@@ -59,7 +59,7 @@ public class Company extends BasicEntity {
         this.basicAddr = basicAddr;
         this.detailAddr = detailAddr;
         this.post = post;
-        this.amountDate = amountDate;
+        this.amountDt = amountDt;
     }
 
     public void increaseAmount(Long increase){

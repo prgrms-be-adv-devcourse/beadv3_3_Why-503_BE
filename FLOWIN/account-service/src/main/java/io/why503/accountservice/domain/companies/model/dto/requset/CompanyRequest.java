@@ -22,5 +22,5 @@ public record CompanyRequest(
         @NotBlank String companyBasicAddr,    // 회사 기본 주소
         @NotBlank String companyDetailAddr,   // 회사 상세 주소
         @NotBlank String companyPost,         // 회사 우편번호
-        @NotNull LocalDateTime amountDate
+        @NotNull LocalDateTime amountDt
 ) { }

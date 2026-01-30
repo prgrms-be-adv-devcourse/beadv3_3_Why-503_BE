@@ -1,9 +1,9 @@
 package io.why503.accountservice.domain.accounts.model.entity;
 
+import io.why503.accountbase.model.enums.Gender;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountbase.model.enums.UserStatus;
 import io.why503.accountservice.common.model.entity.BasicEntity;
-import io.why503.accountservice.domain.accounts.model.enums.Gender;
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.enums.UserStatus;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import jakarta.persistence.*;
 import lombok.*;
@@ -34,15 +34,15 @@ public class Account extends BasicEntity {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @Column(name = "join_date")
-    private final LocalDateTime joinDate = LocalDateTime.now();
+    @Column(name = "join_dt")
+    private final LocalDateTime joinDt = LocalDateTime.now();
 
-    @Column(name = "withdrawal_date")
-    private LocalDateTime withdrawDate; //dbDefault = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+    @Column(name = "withdrawal_dt")
+    private LocalDateTime withdrawDt; //dbDefault = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
 
     @Setter
-    @Column(name = "agree_date")
-    private LocalDateTime agreeDate = LocalDateTime.now();
+    @Column(name = "agree_dt")
+    private LocalDateTime agreeDt = LocalDateTime.now();
 
     @Setter
     @Column(name = "role")
@@ -84,7 +84,7 @@ public class Account extends BasicEntity {
         this.basicAddr = basicAddr;
         this.detailAddr = detailAddr;
         this.post = post;
-        this.withdrawDate = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+        this.withdrawDt = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
     }
     //포인트 증가, 후에 포인트(예치금) 계산을 위해 생성
     public void increasePoint(Long increase){
@@ -104,7 +104,7 @@ public class Account extends BasicEntity {
     }
     //탈퇴
     public void withdraw(){
-        withdrawDate = LocalDateTime.now();
+        withdrawDt = LocalDateTime.now();
         this.stat = UserStatus.WITHDRAW;
     }
 }

@@ -1,4 +1,4 @@
-package io.why503.accountbase.model.response;
+package io.why503.accountservice.domain.accounts.model.response;
 
 import jakarta.validation.constraints.NotNull;
 

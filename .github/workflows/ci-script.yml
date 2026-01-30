@@ -16,6 +16,9 @@ jobs:
       contents: read
       packages: read
 
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: 브랜치로 체크아웃

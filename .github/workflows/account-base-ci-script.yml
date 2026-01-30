@@ -40,4 +40,4 @@ jobs:
         env:
           CI: 'true'
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TEMP_TOKEN }}

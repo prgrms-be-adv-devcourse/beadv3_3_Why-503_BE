@@ -5,10 +5,7 @@ import io.why503.aiservice.model.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
@@ -155,127 +152,6 @@ public class AiService {
                     .map(category ->  new Recommendations(category, ar.reason())
             );
     }
-
-//    //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자)
-//    public float[] embed(String content) {
-//        return embeddingModel.embed(content);
-//    }
-//
-//    //사용자가
-//    public double getSimilarity(String content1, String content2) {
-//        List<float[]> vectorList = embeddingModel.embed(List.of(content1, content2));
-//
-//        return cosineSimilarity(vectorList.get(0), vectorList.get(1));
-//    }
-
-//    // 예측 평점
-//    public double predictScore(int userId, int itemId) {
-//        double sum = 0;
-//        for (int f = 0; f < k; f++) {
-//            sum += P[userId][f] * Q[itemId][f];
-//        }
-//        return sum;
-//    }
-//
-//    public double predictScoreWithCosine(int userId, int itemId, List<Integer> similarItems, double alpha) {
-//        double mfScore = predictScore(userId, itemId);
-//        double cosineSum = 0;
-//
-//        for (int simItemId : similarItems) {
-//            cosineSum += cosineSimilarity(Q[itemId], Q[simItemId]);
-//        }
-//
-//        double cosineScore = cosineSum / similarItems.size();
-//        return alpha * mfScore + (1 - alpha) * cosineScore;
-//    }
-
-//    public double cosineSimilarity(float[] vectorA, float[] vectorB) {
-//
-//        if ( vectorA.length != vectorB.length ) {
-//            throw new IllegalArgumentException("Vectors must be of equal length");
-//        }
-//
-//        double dotProduct = 0.0;
-//        double magnitudeA = 0.0;
-//        double magnitudeB = 0.0;
-//
-//        for ( int i = 0; i < vectorA.length; i++ ) {
-//            dotProduct += vectorA[i] * vectorB[i];
-//            magnitudeA += vectorA[i] * vectorA[i];
-//            magnitudeB += vectorB[i] * vectorB[i];
-//        }
-//
-//
-//        return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
-//
-//    }
-//
-//    public List<Document> searchShows(String query) {
-//
-//        SearchRequest searchRequest = SearchRequest.builder()
-//                .query(query)
-//                .topK(3)
-//                .build();
-//
-//        return vectorStore.similaritySearch(searchRequest);
-//    }
-//
-//    public String generateRagAnswer(String q) {
-//        return chatClient
-//                .prompt(q)
-//                .advisors(QuestionAnswerAdvisor.builder(vectorStore)
-//                        .build())
-//                .call()
-//                .content();
-//    }
-
-
-
-
-//    // Map<Integer, List<Integer>> categoryToItems
-//    // userScores: Map<ItemId, Score>
-//    public Map<Integer, Double> computeCategoryScores(Map<Integer, Double> userScores,
-//                                                      Map<Integer, List<Integer>> categoryToItems) {
-//        Map<Integer, Double> categoryScores = new HashMap<>();
-//
-//        for (Map.Entry<Integer, List<Integer>> entry : categoryToItems.entrySet()) {
-//            int categoryId = entry.getKey();
-//            List<Integer> items = entry.getValue();
-//
-//            double sum = 0;
-//            int count = 0;
-//            for (int itemId : items) {
-//                if (userScores.containsKey(itemId)) {
-//                    sum += userScores.get(itemId);
-//                    count++;
-//                }
-//            }
-//            if (count > 0) categoryScores.put(categoryId, sum / count);
-//        }
-//        return categoryScores;
-//    }
-//
-//    // userEmbedding: P[userId]
-//    // categoryEmbeddings: Map<CategoryId, double[]>
-//    public Map<Integer, Double> computeCategoryScoresByEmbedding(double[] userEmbedding,
-//                                                                 Map<Integer, double[]> categoryEmbeddings) {
-//        Map<Integer, Double> scores = new HashMap<>();
-//        for (Map.Entry<Integer, double[]> entry : categoryEmbeddings.entrySet()) {
-//            int categoryId = entry.getKey();
-//            double score = cosineSimilarity(userEmbedding, entry.getValue());
-//            scores.put(categoryId, score);
-//        }
-//        return scores;
-//    }
-//
-//    public List<Integer> topN(Map<Integer, Double> scores, int N) {
-//        return scores.entrySet().stream()
-//                .sorted((a,b) -> Double.compare(b.getValue(), a.getValue()))
-//                .limit(N)
-//                .map(Map.Entry::getKey)
-//                .collect(Collectors.toList());
-//    }
-
 
 
 

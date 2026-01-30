@@ -2,9 +2,8 @@ package io.why503.aiservice.model.vo;
 
 import java.util.List;
 
-
+//json 형식에서 타입속성 부여된 정보 리스트 모아서 최종 응답
 public record ResultResponse(
-        //json 형식에서 타입속성 부여된 정보 리스트 모아서 최종 응답
         /**
          * 추천 요약 문장
          */

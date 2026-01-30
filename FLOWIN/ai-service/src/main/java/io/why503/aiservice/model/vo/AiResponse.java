@@ -2,9 +2,9 @@ package io.why503.aiservice.model.vo;
 
 import java.util.List;
 
-
+//ai용 문자열 반환하기 위한 응답
 public record AiResponse(
-        //ai용 문자열 반환하기 위한 응답
+
         /**
          * 추천 요약 문장
          */

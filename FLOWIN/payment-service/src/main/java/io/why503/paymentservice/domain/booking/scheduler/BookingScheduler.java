@@ -7,10 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * 예매 자동 취소 스케줄러
- * - 결제 대기 상태로 유효 시간이 지난 예매 건을 주기적으로 정리합니다.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,25 +14,35 @@ public class BookingScheduler {
 
     private final BookingService bookingService;
 
-    // 만료 기준 시간 (yml에서 주입)
-    @Value("${scheduler.booking.expiration-minutes}")
+    @Value("${scheduler.booking.expiration-minutes:10}") // 기본값 10분 설정 (안전장치)
     private int expirationMinutes;
 
-    // 만료된 예매 자동 취소
-    // - 주기: 1분
-    // - 대상: 10분이 지나도 결제되지 않은(PENDING) 예매 건
+    /**
+     * 만료된 예매 자동 취소
+     * - @Scheduled: 정해진 주기마다 실행
+     * - (주의) 서버가 여러 대일 경우 ShedLock 등을 적용하여 중복 실행을 막아야 합니다.
+     */
     @Scheduled(cron = "${scheduler.booking.cron}")
     public void autoCancelExpiredBookings() {
         long startTime = System.currentTimeMillis();
 
-        // 서비스 로직 실행 (만료 시간 파라미터 전달)
-        int deletedCount = bookingService.cancelExpiredBookings(expirationMinutes);
+        try {
+            log.info("[Scheduler] 만료 예매 정리 시작 (기준: {}분 전 생성)", expirationMinutes);
 
-        // 처리된 건이 있을 때만 로그 기록
-        if (deletedCount > 0) {
+            // 서비스 로직 실행
+            int deletedCount = bookingService.cancelExpiredBookings(expirationMinutes);
+
             long duration = System.currentTimeMillis() - startTime;
-            log.info("[Scheduler] 만료된 예매 {}건 자동 취소 완료 (기준: {}분, 소요: {}ms)",
-                    deletedCount, expirationMinutes, duration);
+
+            if (deletedCount > 0) {
+                log.info("[Scheduler] 정리 완료: 총 {}건 취소됨 (소요: {}ms)", deletedCount, duration);
+            } else {
+                log.debug("[Scheduler] 정리 대상 없음 (소요: {}ms)", duration);
+            }
+
+        } catch (Exception e) {
+            // 스케줄러가 죽지 않도록 예외를 잡아서 로깅
+            log.error("[Scheduler] 예매 정리 중 오류 발생: {}", e.getMessage(), e);
         }
     }
 }

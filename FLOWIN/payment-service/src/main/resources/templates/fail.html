@@ -6,7 +6,7 @@
     <title>결제 실패</title>
 </head>
 <style>
-    /* fail-page.css */
+    /* fail-page.css (Gateway 환경 고려하여 인라인 유지) */
     body {
         font-family: 'Suit', sans-serif;
         background-color: #f5f6f7;
@@ -29,7 +29,7 @@
 
     .failure-icon {
         font-size: 48px;
-        color: #e43636; /* 빨간색 경고 */
+        color: #e43636;
         margin-bottom: 20px;
     }
 
@@ -45,11 +45,11 @@
         color: #666;
         margin-bottom: 30px;
         line-height: 1.5;
+        word-break: keep-all; /* 한글 줄바꿈 교정 */
     }
 
-    /* 실패 상세 정보 영역 */
     .order-summary {
-        background-color: #fff5f5; /* 연한 빨간 배경 */
+        background-color: #fff5f5;
         padding: 20px;
         border-radius: 8px;
         margin-bottom: 20px;
@@ -86,7 +86,6 @@
         white-space: nowrap;
     }
 
-    /* 버튼 영역 */
     .action-buttons {
         display: flex;
         gap: 10px;
@@ -128,29 +127,31 @@
     <div class="failure-icon">✕</div>
 
     <h1 class="failure-title">결제에 실패했습니다</h1>
-    <p class="failure-subtitle" th:text="${message} ?: '결제 과정에서 문제가 발생했습니다.'"></p>
+    <p class="failure-subtitle" th:text="${message} ?: '결제 과정에서 알 수 없는 문제가 발생했습니다.'"></p>
 
     <div class="order-summary">
         <h3>상세 정보</h3>
 
         <div class="summary-row">
             <span class="summary-label">에러 코드</span>
-            <span class="summary-value">[[${code}]]</span>
+            <span class="summary-value" th:text="${code}">UNKNOWN</span>
         </div>
 
-        <div class="summary-row">
+        <div class="summary-row" th:if="${orderId}">
             <span class="summary-label">주문번호</span>
-            <span class="summary-value" id="orderId">[[${orderId}]]</span>
+            <span class="summary-value" th:text="${orderId}"></span>
         </div>
 
         <div class="summary-row" th:if="${productName}">
             <span class="summary-label">상품명</span>
-            <span class="summary-value" id="orderName">[[${productName}]]</span>
+            <span class="summary-value" th:text="${productName}"></span>
         </div>
 
         <div class="summary-row" th:if="${amount}">
             <span class="summary-label">결제금액</span>
-            <span class="summary-value" id="amount">[[${amount}]]</span>
+            <span class="summary-value">
+                ₩ <span th:text="${#numbers.formatInteger(amount, 0, 'COMMA')}">0</span>
+            </span>
         </div>
     </div>
 

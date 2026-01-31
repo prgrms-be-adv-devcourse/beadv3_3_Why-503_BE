@@ -4,34 +4,32 @@ import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 예매 레포지토리
- */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    // 예매 상세 조회
-    // N+1 문제 방지를 위해 티켓 목록을 Fetch Join(EntityGraph)으로 함께 가져옵니다.
-    @EntityGraph(attributePaths = {"tickets"})
-    Optional<Booking> findBySq(Long bookingSq);
-
-    // 만료된 예매 조회 (스케줄러용)
-    @Query("SELECT b FROM Booking b JOIN FETCH b.tickets " +
-            "WHERE b.status = :status AND b.reservedAt < :dateTime")
-    List<Booking> findExpired(@Param("status") BookingStatus status,
-                              @Param("dateTime") LocalDateTime dateTime);
-
-    //사용자별 예매 목록 조회
-    @Query("SELECT DISTINCT b FROM Booking b JOIN FETCH b.tickets " +
-            "WHERE b.userSq = :userSq ORDER BY b.reservedAt DESC")
-    List<Booking> findByUserSq(@Param("userSq") Long userSq);
-
-    // 주문 ID로 조회 (결제 검증용)
+    /**
+     * 주문 번호로 예매 조회
+     * - PG 연동 및 상세 조회 시 사용
+     * - [최적화] 티켓 목록까지 한 번에 Join 해서 가져옴
+     */
+    @EntityGraph(attributePaths = "tickets")
     Optional<Booking> findByOrderId(String orderId);
+
+    /**
+     * 사용자별 예매 목록 조회
+     * - [최적화] 목록 조회 시 N+1 문제 방지 (필수)
+     */
+    @EntityGraph(attributePaths = "tickets")
+    List<Booking> findAllByUserSqOrderByCreatedDtDesc(Long userSq);
+
+    /**
+     * 만료된 미결제 예매 조회 (스케줄러용)
+     * - 삭제나 취소 처리를 할 것이므로 티켓 정보도 같이 로드하는 것이 좋음
+     */
+    @EntityGraph(attributePaths = "tickets")
+    List<Booking> findAllByStatusAndCreatedDtBefore(BookingStatus status, LocalDateTime criteriaDt);
 }

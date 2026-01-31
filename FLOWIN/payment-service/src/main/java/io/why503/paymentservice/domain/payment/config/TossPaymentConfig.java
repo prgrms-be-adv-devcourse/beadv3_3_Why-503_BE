@@ -12,10 +12,10 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class TossPaymentConfig {
 
-    @Value("${toss.secret-key}")
+    @Value("${toss.client.secret-key}")
     private String tossSecretKey;
 
-    @Value("${payment.client-key}")
+    @Value("${toss.client.client-key}")
     private String tossClientKey;
 
     // 외부 API 호출을 위한 RestTemplate 등록
@@ -27,7 +27,6 @@ public class TossPaymentConfig {
     public String getSecretKey() {
         return tossSecretKey;
     }
-
 
     public String getClientKey() {
         return tossClientKey;

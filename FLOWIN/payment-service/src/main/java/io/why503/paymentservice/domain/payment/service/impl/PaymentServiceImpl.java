@@ -5,231 +5,274 @@ import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
-import io.why503.paymentservice.domain.payment.config.TossPaymentConfig;
-import io.why503.paymentservice.domain.payment.dto.request.PaymentCancelRequest;
-import io.why503.paymentservice.domain.payment.dto.request.PaymentConfirmRequest;
-import io.why503.paymentservice.domain.payment.dto.request.PointChargeRequest;
-import io.why503.paymentservice.domain.payment.dto.response.PointChargeResponse;
-import io.why503.paymentservice.domain.payment.dto.response.TossPaymentResponse;
+import io.why503.paymentservice.domain.payment.mapper.PaymentMapper;
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
+import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
+import io.why503.paymentservice.domain.payment.model.entity.Payment;
+import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
+import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
+import io.why503.paymentservice.domain.payment.model.enums.PaymentStatus;
+import io.why503.paymentservice.domain.payment.repository.PaymentRepository;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
+import io.why503.paymentservice.domain.point.model.entity.Point;
+import io.why503.paymentservice.domain.point.model.enums.PointStatus;
+import io.why503.paymentservice.domain.point.repository.PointRepository;
+import io.why503.paymentservice.domain.point.service.PointService;
 import io.why503.paymentservice.global.client.AccountClient;
+import io.why503.paymentservice.global.client.PerformanceClient;
+import io.why503.paymentservice.global.client.PgClient;
 import io.why503.paymentservice.global.client.dto.request.PointUseRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
-/**
- * 결제 서비스 구현체
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PaymentServiceImpl implements PaymentService {
 
-    private final BookingRepository bookingRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentMapper paymentMapper;
+
     private final BookingService bookingService;
-    private final TossPaymentConfig tossPaymentConfig;
-    private final RestTemplate restTemplate;
+    private final PointService pointService;
+
+    // 외부 서비스 클라이언트
     private final AccountClient accountClient;
+    private final PgClient pgClient;
+    private final PerformanceClient performanceClient;
 
-    private static final String TOSS_API_URL = "https://api.tosspayments.com/v1/payments/";
-
-    // 결제 승인 (최종)
+    /**
+     * 통합 결제 승인
+     * 1. 주문 번호 중복 검사
+     * 2. 대상(Booking/Point) 식별 및 분기 처리
+     */
     @Override
     @Transactional
-    public void confirmPayment(PaymentConfirmRequest request, Long userSq) {
-        Booking booking = validateBooking(request, userSq);
+    public PaymentResponse pay(Long userSq, PaymentRequest request) {
+        // 1. 중복 검사
+        if (paymentRepository.findByOrderId(request.orderId()).isPresent()) {
+            throw new IllegalStateException("이미 처리된 주문 번호입니다.");
+        }
 
-        try {
-            // 1. PG사 승인 요청
-            TossPaymentResponse result = requestConfirmToToss(request.paymentKey(), request.orderId(), request.amount());
+        Payment payment;
+        String orderId = request.orderId();
 
-            booking.setReceiptUrl(result.receipt().url());
-
-            try {
-                // 2. 내부 비즈니스 로직 수행
-                if ("POINT_CHARGE".equals(booking.getPaymentMethod())) {
-                    processPointCharge(booking, result.paymentKey(), userSq);
-                } else {
-                    // Refactor: bookingSq -> sq
-                    bookingService.confirmBooking(
-                            booking.getSq(),
-                            result.paymentKey(),
-                            result.method(),
-                            userSq
-                    );
-                }
-            } catch (Exception bizEx) {
-                // 보상 트랜잭션 (Compensating Transaction)
-                log.error(">>> [Payment] 내부 로직 실패로 인한 PG 자동 취소 진행: {}", bizEx.getMessage());
-
-                try {
-                    requestCancelToToss(result.paymentKey(), "시스템 오류(내부 로직 실패)로 인한 자동 취소", null);
-                } catch (Exception cancelEx) {
-                    log.error(">>> [CRITICAL] PG 취소 실패! 수동 환불 필요. Key={}", result.paymentKey());
-                }
-                throw bizEx;
+        // 2. 도메인 식별 및 Service 위임 (MSA 규칙 적용)
+        if (orderId.startsWith("BOOKING-")) {
+            // [변경] bookingRepository.findByOrderId -> bookingService.findByOrderId
+            Booking booking = bookingService.findByOrderId(orderId);
+            if (booking == null) {
+                throw new IllegalArgumentException("유효하지 않은 예매 주문 번호입니다.");
             }
+            payment = processBookingPayment(userSq, booking, request);
 
-        } catch (Exception e) {
-            log.error(">>> [Payment] 결제 프로세스 최종 실패: {}", e.getMessage());
-            booking.cancel("결제 프로세스 실패: " + e.getMessage());
-            throw e;
-        }
-    }
-
-    // 결제 취소
-    @Override
-    @Transactional
-    public void cancelPayment(PaymentCancelRequest request, Long userSq) {
-        Booking booking = bookingRepository.findByOrderId(request.orderId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        validateOwner(booking, userSq);
-
-        if (booking.getPaymentKey() == null) {
-            throw new IllegalStateException("결제 완료된 건만 취소할 수 있습니다.");
-        }
-
-        Integer cancelAmount = null;
-
-        // 1. DB 및 내부 상태 취소
-        if (request.ticketSq() != null) {
-            // 부분 취소
-            Ticket targetTicket = booking.getTickets().stream()
-                    .filter(t -> t.getSq().equals(request.ticketSq())) // Refactor: ticketSq -> sq
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("티켓이 존재하지 않습니다."));
-
-            cancelAmount = targetTicket.getFinalPrice();
-            // Refactor: bookingSq -> sq
-            bookingService.cancelTicket(booking.getSq(), request.ticketSq(), userSq);
+        } else if (orderId.startsWith("POINT-")) {
+            // [변경] pointRepository.findByOrderId -> pointService.findByOrderId
+            Point point = pointService.findByOrderId(orderId);
+            if (point == null) {
+                throw new IllegalArgumentException("유효하지 않은 포인트 충전 주문 번호입니다.");
+            }
+            payment = processPointChargePayment(userSq, point, request);
 
         } else {
-            // 전체 취소
-            bookingService.cancelBooking(booking.getSq(), userSq);
+            throw new IllegalArgumentException("지원하지 않는 주문 번호 형식입니다.");
         }
 
-        // 2. PG사 취소 요청
+        return paymentMapper.entityToResponse(payment);
+    }
+
+    /**
+     * [비즈니스 로직 1] 예매(Booking) 결제 처리
+     * - 포인트 차감(decrease) + PG 결제
+     */
+    private Payment processBookingPayment(Long userSq, Booking booking, PaymentRequest request) {
+        // A. 권한 및 상태 검증
+        if (!booking.getUserSq().equals(userSq)) throw new IllegalArgumentException("본인 예매만 결제 가능");
+        if (booking.getStatus() != BookingStatus.PENDING) throw new IllegalStateException("결제 가능 상태 아님");
+
+        // B. 금액 검증 (요청 총액 vs 예매 최종 금액)
+        if (request.amount().longValue() != booking.getFinalAmount().longValue()) {
+            throw new IllegalArgumentException("결제 요청 금액과 예매 금액이 불일치합니다.");
+        }
+
+        // C. 결제 수단 판별
+        long usePoint = request.usePointAmount();
+        long pgAmount = request.amount() - usePoint;
+        PaymentMethod method = determinePaymentMethod(pgAmount, usePoint);
+
+        // D. 포인트 차감 (외부 Account 서비스 호출)
+        if (usePoint > 0) {
+            accountClient.decreasePoint(userSq, new PointUseRequest(usePoint));
+        }
+
+        // E. PG 결제 승인 (외부 PG 서비스 호출)
+        String approvedPgKey = null;
+        if (pgAmount > 0) {
+            try {
+                approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), pgAmount);
+            } catch (Exception e) {
+                if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint)); // 롤백
+                throw new IllegalStateException("PG 결제 승인 실패: " + e.getMessage());
+            }
+        }
+
+        // 3. 좌석 확정 (External)
         try {
-            requestCancelToToss(booking.getPaymentKey(), request.cancelReason(), cancelAmount);
+            List<Long> seatIds = getSeatIdsFromBooking(booking);
+            performanceClient.confirmRoundSeats(userSq, seatIds);
         } catch (Exception e) {
-            log.error("PG사 취소 요청 실패: {}", e.getMessage());
-            throw new IllegalStateException("PG사 결제 취소 실패 (잠시 후 다시 시도해주세요)");
+            // 실패 시 롤백 (PG 취소 + 포인트 환불)
+            if (approvedPgKey != null) pgClient.cancelPayment(approvedPgKey, "시스템 오류: 좌석 확정 실패", pgAmount);
+            if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
+            throw new IllegalStateException("좌석 확정 실패. 결제 취소됨.");
         }
-    }
 
-    // 결제 실패 처리
-    @Override
-    @Transactional
-    public void failPayment(String orderId, String reason, Long userSq) {
-        Booking booking = bookingRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        validateOwner(booking, userSq);
-
-        // Refactor: bookingStatus -> status
-        if (booking.getStatus() == BookingStatus.PENDING) {
-            booking.cancel(reason != null ? reason : "결제 실패");
-        }
-    }
-
-    // 포인트 충전 요청
-    @Override
-    @Transactional
-    public PointChargeResponse requestPointCharge(Long userSq, PointChargeRequest request) {
-        String orderId = "CHG-" + UUID.randomUUID();
-
-        // Refactor: Builder 패턴 내 필드명 변경 반영
-        Booking booking = Booking.builder()
+        // F. 결제 엔티티 생성 및 저장
+        Payment payment = Payment.builder()
                 .userSq(userSq)
-                .status(BookingStatus.PENDING)     // bookingStatus -> status
-                .reservedAt(LocalDateTime.now())   // bookingDt -> reservedAt
-                .originalAmount(0)                 // bookingAmount -> originalAmount
-                .finalAmount(request.amount().intValue()) // totalAmount -> finalAmount
-                .pgAmount(request.amount().intValue())
-                .usedPoint(0)
-                .paymentMethod("POINT_CHARGE")
-                .orderId(orderId)
+                .orderId(request.orderId())
+                .refType(PaymentRefType.BOOKING)
+                .method(method)
+                .totalAmount(request.amount())
+                .pgAmount(pgAmount)
+                .pointAmount(usePoint)
                 .build();
 
-        bookingRepository.save(booking);
+        // pgKey 주입 (Builder에서 빠져있을 수 있으므로 별도 setter 혹은 approve 메서드로 처리)
+        payment.approve(approvedPgKey);
 
-        return new PointChargeResponse(orderId, request.amount(), "포인트 충전");
+        booking.confirm();
+        return paymentRepository.save(payment);
     }
 
-    // --- Private Helper Methods ---
-
-    private Booking validateBooking(PaymentConfirmRequest request, Long userSq) {
-        Booking booking = bookingRepository.findByOrderId(request.orderId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다."));
-
-        validateOwner(booking, userSq);
-
-        if (booking.getStatus() != BookingStatus.PENDING) { // Refactor
-            throw new IllegalStateException("이미 처리된 결제입니다.");
+    /**
+     * [비즈니스 로직 2] 포인트 충전(Point) 결제 처리
+     * - PG 결제 -> 포인트 증가(increase)
+     */
+    private Payment processPointChargePayment(Long userSq, Point point, PaymentRequest request) {
+        // A. 권한 및 상태 검증
+        if (!point.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 충전 요청만 결제할 수 있습니다.");
         }
-        if (!booking.getPgAmount().equals(request.amount())) {
-            throw new IllegalStateException("결제 금액이 일치하지 않습니다.");
+        if (point.getStatus() != PointStatus.READY) {
+            throw new IllegalStateException("충전 가능한 상태가 아닙니다.");
         }
-        return booking;
-    }
 
-    private void validateOwner(Booking booking, Long userSq) {
-        if (!booking.getUserSq().equals(userSq)) {
-            throw new IllegalArgumentException("본인의 주문만 처리할 수 있습니다.");
+        // B. 포인트로 포인트를 살 수 없음
+        if (request.usePointAmount() > 0) {
+            throw new IllegalArgumentException("포인트 충전 시 포인트를 사용할 수 없습니다.");
         }
+
+        // C. 금액 검증
+        if (!request.amount().equals(point.getChargeAmount())) {
+            throw new IllegalArgumentException("요청 금액이 충전 신청 금액과 다릅니다.");
+        }
+
+        // D. PG 결제 승인
+        String approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), request.amount());
+
+        // E. 실제 포인트 적립 (외부 Account 서비스 호출)
+        // [수정] increasePoint 호출 (포인트 충전)
+        accountClient.increasePoint(userSq, new PointUseRequest(point.getChargeAmount()));
+
+        // F. 결제 엔티티 생성
+        Payment payment = Payment.builder()
+                .userSq(userSq)
+                .orderId(request.orderId())
+                .refType(PaymentRefType.POINT)
+                .method(PaymentMethod.CARD)
+                .totalAmount(request.amount())
+                .pgAmount(request.amount())
+                .pointAmount(0L)
+                .build();
+
+        // G. 상태 업데이트
+        payment.approve(approvedPgKey);
+        point.complete();
+
+        return paymentRepository.save(payment);
     }
 
-    private void processPointCharge(Booking booking, String paymentKey, Long userSq) {
-        booking.setPaymentKey(paymentKey);
-        booking.setStatus(BookingStatus.CONFIRMED); // Refactor
-        booking.setApprovedAt(LocalDateTime.now());
+    /**
+     * 결제 상세 조회
+     */
+    @Override
+    public PaymentResponse findPayment(Long userSq, Long paymentSq) {
+        Payment payment = paymentRepository.findById(paymentSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 내역입니다."));
 
-        accountClient.increasePoint(userSq, new PointUseRequest(booking.getPgAmount().longValue()));
-        log.info(">>> 포인트 충전 완료: User={}, Amount={}", userSq, booking.getPgAmount());
+        if (!payment.getUserSq().equals(userSq)) {
+            throw new IllegalArgumentException("본인의 결제 내역만 조회할 수 있습니다.");
+        }
+
+        return paymentMapper.entityToResponse(payment);
     }
 
-    // Toss API Calls (RestTemplate)
-    private TossPaymentResponse requestConfirmToToss(String paymentKey, String orderId, Integer amount) {
-        HttpHeaders headers = getTossHeaders();
-        Map<String, Object> body = new HashMap<>();
-        body.put("paymentKey", paymentKey);
-        body.put("orderId", orderId);
-        body.put("amount", amount);
+    /**
+     * 내 결제 이력 조회
+     */
+    @Override
+    public List<PaymentResponse> findPaymentsByUser(Long userSq) {
+        List<Payment> payments = paymentRepository.findAllByUserSqOrderByCreatedDtDesc(userSq);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        return restTemplate.postForEntity(TOSS_API_URL + "confirm", entity, TossPaymentResponse.class).getBody();
+        // 메서드 참조 금지
+        return payments.stream()
+                .map(p -> paymentMapper.entityToResponse(p))
+                .toList();
     }
 
-    private void requestCancelToToss(String paymentKey, String reason, Integer cancelAmount) {
-        HttpHeaders headers = getTossHeaders();
-        Map<String, Object> body = new HashMap<>();
-        body.put("cancelReason", reason);
-        if (cancelAmount != null) body.put("cancelAmount", cancelAmount);
+    /**
+     * 결제 취소 (환불)
+     */
+    @Override
+    @Transactional
+    public PaymentResponse cancelPayment(Long userSq, Long paymentSq, String reason) {
+        Payment payment = paymentRepository.findById(paymentSq)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결제 내역입니다."));
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        restTemplate.postForEntity(TOSS_API_URL + paymentKey + "/cancel", entity, Map.class);
+        if (!payment.getUserSq().equals(userSq)) throw new IllegalArgumentException("본인의 결제만 취소 가능");
+        if (payment.getStatus() != PaymentStatus.DONE) throw new IllegalStateException("완료된 결제만 취소 가능");
+
+        if (payment.getPointAmount() > 0) {
+            accountClient.increasePoint(userSq, new PointUseRequest(payment.getPointAmount()));
+        }
+        if (payment.getPgAmount() > 0) {
+            pgClient.cancelPayment(payment.getPgKey(), reason, null);
+        }
+
+        if (payment.getRefType() == PaymentRefType.BOOKING) {
+            // [변경] Repository -> Service 위임
+            Booking booking = bookingService.findByOrderId(payment.getOrderId());
+            if (booking == null) throw new IllegalStateException("연결된 예매 정보를 찾을 수 없습니다.");
+
+            List<Long> seatIds = getSeatIdsFromBooking(booking);
+            performanceClient.cancelRoundSeats(seatIds);
+            booking.cancel(reason);
+        }
+
+        payment.cancel();
+        return paymentMapper.entityToResponse(payment);
     }
 
-    private HttpHeaders getTossHeaders() {
-        String authValue = Base64.getEncoder().encodeToString(
-                (tossPaymentConfig.getSecretKey() + ":").getBytes(StandardCharsets.UTF_8)
-        );
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Basic " + authValue);
-        headers.set("Content-Type", "application/json");
-        return headers;
+    /**
+     * Helper: 결제 수단 결정
+     */
+    private PaymentMethod determinePaymentMethod(long pgAmount, long pointAmount) {
+        if (pgAmount > 0 && pointAmount > 0) return PaymentMethod.MIX;
+        if (pgAmount > 0) return PaymentMethod.CARD;
+        if (pointAmount > 0) return PaymentMethod.POINT;
+        throw new IllegalStateException("0원 결제 불가");
+    }
+
+    private List<Long> getSeatIdsFromBooking(Booking booking) {
+        if (booking.getTickets() == null || booking.getTickets().isEmpty()) return Collections.emptyList();
+        return booking.getTickets().stream().map(ticket -> ticket.getRoundSeatSq()).toList();
     }
 }

@@ -1,23 +1,31 @@
 package io.why503.paymentservice.domain.booking.model.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
-
 import java.time.LocalDateTime;
 
 public record TicketResponse(
-        Long ticketSq,
+        Long sq,
         Long roundSeatSq,
-        String uuid,
+        String uuid, // 입장 확인용 QR 코드 값
+
+        // [공연 스냅샷]
         String showName,
-        String concertHallName,
-        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
-        LocalDateTime roundDateTime,
-        String grade,
+        String hallName,
+        LocalDateTime roundDt,
+
+        // [좌석 스냅샷]
+        String seatGrade,
         String seatArea,
-        Integer areaSeatNum,
-        Integer originalPrice,
-        Integer finalPrice,
-        TicketStatus status
+        Integer seatAreaNum,
+
+        // [가격 스냅샷]
+        Long originalPrice,
+        String discountPolicy,            // 할인 정책 코드 (예: YOUTH)
+        String discountPolicyDescription, // 할인 정책 설명 (예: 청소년 할인)
+        Long discountAmount,
+        Long finalPrice,
+
+        // [상태]
+        String status,            // 상태 코드 (예: PAID)
+        String statusDescription  // 상태 설명 (예: 결제됨)
 ) {
 }

@@ -1,64 +1,98 @@
 package io.why503.paymentservice.domain.payment.controller;
 
-import io.why503.paymentservice.domain.payment.dto.request.PaymentCancelRequest;
-import io.why503.paymentservice.domain.payment.dto.request.PaymentConfirmRequest;
-import io.why503.paymentservice.domain.payment.dto.request.PointChargeRequest;
-import io.why503.paymentservice.domain.payment.dto.response.PointChargeResponse;
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
+import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 결제 API 컨트롤러
- * - 내부 서비스 간 통신(Feign)이나 프론트엔드의 비동기 요청(Ajax)을 처리합니다.
- * - [수정] 보안을 위해 모든 요청에 대해 사용자 검증(X-USER-SQ)을 수행합니다.
- */
+import java.util.List;
+import java.util.Map;
+
 @RestController
+@RequestMapping("/payments")
 @RequiredArgsConstructor
-@RequestMapping("/payment-api")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
-    // 결제 승인
-    @PostMapping("/confirm")
-    public ResponseEntity<?> confirmPayment(
+    /**
+     * 통합 결제 승인 요청
+     * - 예매(Booking) 또는 포인트충전(Point) 건에 대한 결제를 수행합니다.
+     * - 복합 결제(카드+포인트) 로직도 이곳에서 시작됩니다.
+     */
+    @PostMapping
+    public ResponseEntity<PaymentResponse> pay(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody PaymentConfirmRequest request
-    ) {
-        paymentService.confirmPayment(request, userSq);
-        return ResponseEntity.ok().build();
+            @RequestBody @Valid PaymentRequest request) {
+
+        // 해피 패스 금지: 헤더 값 검증
+        if (userSq == null || userSq <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
+
+        PaymentResponse response = paymentService.pay(userSq, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // 결제 취소 (전체/부분)
-    @PostMapping("/cancel")
-    public ResponseEntity<?> cancelPayment(
+    /**
+     * 결제 상세 조회
+     * - 본인의 결제 내역만 조회 가능
+     */
+    @GetMapping("/{paymentSq}")
+    public ResponseEntity<PaymentResponse> findPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody PaymentCancelRequest request
-    ) {
-        paymentService.cancelPayment(request, userSq);
-        return ResponseEntity.ok().build();
+            @PathVariable("paymentSq") Long paymentSq) {
+
+        if (userSq == null || userSq <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
+
+        PaymentResponse response = paymentService.findPayment(userSq, paymentSq);
+        return ResponseEntity.ok(response);
     }
 
-    // 결제 실패 처리
-    @PostMapping("/fail")
-    public void failPayment(
-            @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestParam String orderId,
-            @RequestParam(required = false) String message
-    ) {
-        paymentService.failPayment(orderId, message, userSq);
+    /**
+     * 내 결제 이력 조회
+     * - 전체 결제 내역을 최신순으로 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<PaymentResponse>> findPayments(
+            @RequestHeader("X-USER-SQ") Long userSq) {
+
+        if (userSq == null || userSq <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
+
+        List<PaymentResponse> responses = paymentService.findPaymentsByUser(userSq);
+        return ResponseEntity.ok(responses);
     }
 
-    // 포인트 충전 요청
-    @PostMapping("/point/request")
-    public ResponseEntity<PointChargeResponse> requestPointCharge(
+    /**
+     * 결제 취소
+     * - PG 결제 취소 및 포인트 환불을 수행합니다.
+     * - 취소 사유(reason)를 Body로 받습니다. (Map 사용으로 DTO 생성 최소화)
+     */
+    @PostMapping("/{paymentSq}/cancel")
+    public ResponseEntity<PaymentResponse> cancelPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody PointChargeRequest request
-    ) {
-        // PointChargeRequest는 { Long amount } 필드만 가짐
-        PointChargeResponse response = paymentService.requestPointCharge(userSq, request);
+            @PathVariable("paymentSq") Long paymentSq,
+            @RequestBody Map<String, String> requestBody) {
+
+        if (userSq == null || userSq <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
+
+        String reason = requestBody.get("reason");
+        // 해피 패스 금지: 사유 필수 체크
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("취소 사유(reason)는 필수입니다.");
+        }
+
+        PaymentResponse response = paymentService.cancelPayment(userSq, paymentSq, reason);
         return ResponseEntity.ok(response);
     }
 }

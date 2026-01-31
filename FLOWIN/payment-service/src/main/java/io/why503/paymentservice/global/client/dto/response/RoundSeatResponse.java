@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record RoundSeatResponse(
         Long roundSeatSq, // 회차별 좌석 ID
-        Integer price,    // 티켓 가격
+        Long price,    // 티켓 가격
 
         // 공연 정보
         String showName,

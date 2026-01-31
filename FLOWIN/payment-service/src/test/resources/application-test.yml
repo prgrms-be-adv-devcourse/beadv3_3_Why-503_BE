@@ -12,7 +12,7 @@ spring:
         format_sql: true
 
 toss:
-  secret-key: "test_secret_key"
-  
-payment:
-  client-key: "test_client_key"
+  client:
+    api-url: https://api.tosspayments.com/v1/payments
+    secret-key: test-secret-key
+    client-key: test-client-key

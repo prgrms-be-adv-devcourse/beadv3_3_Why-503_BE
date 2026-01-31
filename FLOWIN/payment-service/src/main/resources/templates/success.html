@@ -177,8 +177,8 @@
     };
 
     // 3. 백엔드 승인 API 호출
-    // 현재 PaymentController의 매핑 경로: /internal/payments/confirm
-    fetch('/internal/payments/confirm', {
+    // 현재 PaymentController의 매핑 경로: /payments
+    fetch('/payments', {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

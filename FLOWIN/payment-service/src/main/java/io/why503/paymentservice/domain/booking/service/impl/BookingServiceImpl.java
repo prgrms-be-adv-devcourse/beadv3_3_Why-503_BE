@@ -10,7 +10,6 @@ import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
 import io.why503.paymentservice.domain.booking.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
-import io.why503.paymentservice.domain.booking.repository.TicketRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;

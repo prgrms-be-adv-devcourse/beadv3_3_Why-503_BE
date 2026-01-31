@@ -1,7 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.dto.request;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;

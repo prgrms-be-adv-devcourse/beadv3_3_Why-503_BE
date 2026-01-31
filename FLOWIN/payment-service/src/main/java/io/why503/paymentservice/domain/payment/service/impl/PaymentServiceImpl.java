@@ -1,9 +1,7 @@
 package io.why503.paymentservice.domain.payment.service.impl;
 
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
-import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
-import io.why503.paymentservice.domain.booking.repository.BookingRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import io.why503.paymentservice.domain.payment.mapper.PaymentMapper;
 import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
@@ -16,7 +14,6 @@ import io.why503.paymentservice.domain.payment.repository.PaymentRepository;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import io.why503.paymentservice.domain.point.model.entity.Point;
 import io.why503.paymentservice.domain.point.model.enums.PointStatus;
-import io.why503.paymentservice.domain.point.repository.PointRepository;
 import io.why503.paymentservice.domain.point.service.PointService;
 import io.why503.paymentservice.global.client.AccountClient;
 import io.why503.paymentservice.global.client.PerformanceClient;
@@ -29,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service

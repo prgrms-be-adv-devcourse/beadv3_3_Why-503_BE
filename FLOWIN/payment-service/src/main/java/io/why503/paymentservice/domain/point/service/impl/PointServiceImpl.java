@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException; // [추가] 404 처리를 위해 필요
 import java.util.UUID;
 
 @Service
@@ -29,7 +30,7 @@ public class PointServiceImpl implements PointService {
     @Override
     @Transactional
     public PointResponse createPointCharge(Long userSq, PointRequest request) {
-        // 1. 요청 검증 (해피 패스 금지)
+        // 1. 요청 검증 (잘못된 입력 -> 400 Bad Request 유지)
         if (request.chargeAmount() == null || request.chargeAmount() <= 0) {
             throw new IllegalArgumentException("충전 금액은 양수여야 합니다.");
         }
@@ -54,12 +55,13 @@ public class PointServiceImpl implements PointService {
      */
     @Override
     public PointResponse findPoint(Long userSq, Long pointSq) {
+        // [수정] 조회 실패 -> 404 Not Found
         Point point = pointRepository.findById(pointSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전 요청입니다."));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 충전 요청입니다."));
 
-        // 본인 확인
+        // [수정] 권한 없음 -> 403 Forbidden
         if (!point.getUserSq().equals(userSq)) {
-            throw new IllegalArgumentException("본인의 충전 내역만 조회할 수 있습니다.");
+            throw new SecurityException("본인의 충전 내역만 조회할 수 있습니다.");
         }
 
         return pointMapper.entityToResponse(point);
@@ -85,14 +87,17 @@ public class PointServiceImpl implements PointService {
     @Override
     @Transactional
     public PointResponse cancelPoint(Long userSq, Long pointSq) {
+        // [수정] 조회 실패 -> 404 Not Found
         Point point = pointRepository.findById(pointSq)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 충전 요청입니다."));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 충전 요청입니다."));
 
+        // [수정] 권한 없음 -> 403 Forbidden
         if (!point.getUserSq().equals(userSq)) {
-            throw new IllegalArgumentException("본인의 충전 요청만 취소할 수 있습니다.");
+            throw new SecurityException("본인의 충전 요청만 취소할 수 있습니다.");
         }
 
         // 엔티티 내부 로직을 통해 상태 검증(READY -> CANCELED)
+        // 실패 시 IllegalStateException 발생 -> 409 Conflict (핸들러 자동 처리)
         point.cancel();
 
         return pointMapper.entityToResponse(point);

@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
+/**
+ * 결제 승인 요청 시 필요한 주문 정보와 포인트 사용 금액을 담는 객체
+ */
 public record PaymentRequest(
         @NotBlank(message = "주문 번호는 필수입니다.")
         String orderId,
 
-        // PG사 결제 키 (전액 포인트 결제 시 null 가능)
         String paymentKey,
 
         @NotNull(message = "총 결제 금액은 필수입니다.")
@@ -19,8 +21,7 @@ public record PaymentRequest(
         @PositiveOrZero(message = "포인트 사용 금액은 0원 이상이어야 합니다.")
         Long usePointAmount
 ) {
-    // 생성자에서 null 처리 (Optional)
-    // record는 불변이므로 Compact Constructor를 통해 기본값 설정 가능
+    // 포인트 사용 금액 미입력 시 0원으로 초기화
     public PaymentRequest {
         if (usePointAmount == null) {
             usePointAmount = 0L;

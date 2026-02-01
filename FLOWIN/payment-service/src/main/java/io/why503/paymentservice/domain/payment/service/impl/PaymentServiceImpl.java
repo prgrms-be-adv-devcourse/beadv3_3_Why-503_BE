@@ -26,8 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException; // [추가] 404 처리를 위해 필요
+import java.util.NoSuchElementException;
 
+/**
+ * 예매 및 포인트 충전 건에 대한 결제 승인 요청과 상태 변경을 처리하는 서비스 구현체
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,20 +43,14 @@ public class PaymentServiceImpl implements PaymentService {
     private final BookingService bookingService;
     private final PointService pointService;
 
-    // 외부 서비스 클라이언트
     private final AccountClient accountClient;
     private final PgClient pgClient;
     private final PerformanceClient performanceClient;
 
-    /**
-     * 통합 결제 승인
-     * 1. 주문 번호 중복 검사
-     * 2. 대상(Booking/Point) 식별 및 분기 처리
-     */
+    // 결제 요청 대상에 따른 승인 프로세스 분기 처리
     @Override
     @Transactional
     public PaymentResponse pay(Long userSq, PaymentRequest request) {
-        // 1. 중복 검사 (이미 처리된 건 -> 409 Conflict 유지)
         if (paymentRepository.findByOrderId(request.orderId()).isPresent()) {
             throw new IllegalStateException("이미 처리된 주문 번호입니다.");
         }
@@ -61,11 +58,9 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment;
         String orderId = request.orderId();
 
-        // 2. 도메인 식별 및 Service 위임 (MSA 규칙 적용)
         if (orderId.startsWith("BOOKING-")) {
             Booking booking = bookingService.findByOrderId(orderId);
             if (booking == null) {
-                // [수정] 대상 없음 -> 404 Not Found
                 throw new NoSuchElementException("유효하지 않은 예매 주문 번호입니다.");
             }
             payment = processBookingPayment(userSq, booking, request);
@@ -73,57 +68,50 @@ public class PaymentServiceImpl implements PaymentService {
         } else if (orderId.startsWith("POINT-")) {
             Point point = pointService.findByOrderId(orderId);
             if (point == null) {
-                // [수정] 대상 없음 -> 404 Not Found
                 throw new NoSuchElementException("유효하지 않은 포인트 충전 주문 번호입니다.");
             }
             payment = processPointChargePayment(userSq, point, request);
 
         } else {
-            // 잘못된 형식 -> 400 Bad Request 유지
             throw new IllegalArgumentException("지원하지 않는 주문 번호 형식입니다.");
         }
 
         return paymentMapper.entityToResponse(payment);
     }
 
-    /**
-     * [비즈니스 로직 1] 예매(Booking) 결제 처리
-     */
+    // 예매 데이터에 대한 결제 승인 및 실제 좌석 예약 확정
     private Payment processBookingPayment(Long userSq, Booking booking, PaymentRequest request) {
-        // A. 권한 및 상태 검증
-        // [수정] 권한 없음 -> 403 Forbidden
+        /*
+         * 1. 예매 내역 소유권 및 결제 금액 정합성 검증
+         * 2. 포인트 차감 및 외부 연동을 통한 결제 승인
+         * 3. 좌석 예약 상태를 확정으로 변경
+         * 4. 결제 내역 저장 및 예매 정보 업데이트
+         */
         if (!booking.getUserSq().equals(userSq)) throw new SecurityException("본인 예매만 결제 가능");
-
-        // 상태 충돌 -> 409 Conflict 유지
         if (booking.getStatus() != BookingStatus.PENDING) throw new IllegalStateException("결제 가능 상태 아님");
 
-        // B. 금액 검증 (잘못된 입력 -> 400 Bad Request 유지)
         if (request.amount().longValue() != booking.getFinalAmount().longValue()) {
             throw new IllegalArgumentException("결제 요청 금액과 예매 금액이 불일치합니다.");
         }
 
-        // C. 결제 수단 판별
         long usePoint = request.usePointAmount();
         long pgAmount = request.amount() - usePoint;
         PaymentMethod method = determinePaymentMethod(pgAmount, usePoint);
 
-        // D. 포인트 차감
         if (usePoint > 0) {
             accountClient.decreasePoint(userSq, new PointUseRequest(usePoint));
         }
 
-        // E. PG 결제 승인
         String approvedPgKey = null;
         if (pgAmount > 0) {
             try {
                 approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), pgAmount);
             } catch (Exception e) {
-                if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint)); // 롤백
+                if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
                 throw new IllegalStateException("PG 결제 승인 실패: " + e.getMessage());
             }
         }
 
-        // 3. 좌석 확정
         try {
             List<Long> seatIds = getSeatIdsFromBooking(booking);
             performanceClient.confirmRoundSeats(userSq, seatIds);
@@ -133,7 +121,6 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalStateException("좌석 확정 실패. 결제 취소됨.");
         }
 
-        // F. 결제 엔티티 생성 및 저장
         Payment payment = Payment.builder()
                 .userSq(userSq)
                 .orderId(request.orderId())
@@ -149,21 +136,20 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepository.save(payment);
     }
 
-    /**
-     * [비즈니스 로직 2] 포인트 충전(Point) 결제 처리
-     */
+    // 포인트 충전 요청에 대한 승인 처리 및 계액 서비스 반영
     private Payment processPointChargePayment(Long userSq, Point point, PaymentRequest request) {
-        // A. 권한 및 상태 검증
-        // [수정] 권한 없음 -> 403 Forbidden
+        /*
+         * 1. 충전 요청 유효성 및 금액 일치 여부 확인
+         * 2. 외부 결제 승인 및 실제 포인트 잔액 증가
+         * 3. 결제 내역 생성 및 충전 요청 상태 완료 처리
+         */
         if (!point.getUserSq().equals(userSq)) {
             throw new SecurityException("본인의 충전 요청만 결제할 수 있습니다.");
         }
-        // 상태 충돌 -> 409 Conflict 유지
         if (point.getStatus() != PointStatus.READY) {
             throw new IllegalStateException("충전 가능한 상태가 아닙니다.");
         }
 
-        // B, C. 잘못된 입력 -> 400 Bad Request 유지
         if (request.usePointAmount() > 0) {
             throw new IllegalArgumentException("포인트 충전 시 포인트를 사용할 수 없습니다.");
         }
@@ -171,13 +157,10 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("요청 금액이 충전 신청 금액과 다릅니다.");
         }
 
-        // D. PG 결제 승인
         String approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), request.amount());
 
-        // E. 실제 포인트 적립
         accountClient.increasePoint(userSq, new PointUseRequest(point.getChargeAmount()));
 
-        // F. 결제 엔티티 생성
         Payment payment = Payment.builder()
                 .userSq(userSq)
                 .orderId(request.orderId())
@@ -188,23 +171,18 @@ public class PaymentServiceImpl implements PaymentService {
                 .pointAmount(0L)
                 .build();
 
-        // G. 상태 업데이트
         payment.approve(approvedPgKey);
         point.complete();
 
         return paymentRepository.save(payment);
     }
 
-    /**
-     * 결제 상세 조회
-     */
+    // 결제 내역 상세 정보 조회
     @Override
     public PaymentResponse findPayment(Long userSq, Long paymentSq) {
-        // [수정] 조회 실패 -> 404 Not Found
         Payment payment = paymentRepository.findById(paymentSq)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 결제 내역입니다."));
 
-        // [수정] 권한 없음 -> 403 Forbidden
         if (!payment.getUserSq().equals(userSq)) {
             throw new SecurityException("본인의 결제 내역만 조회할 수 있습니다.");
         }
@@ -212,9 +190,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.entityToResponse(payment);
     }
 
-    /**
-     * 내 결제 이력 조회
-     */
+    // 사용자의 전체 결제 이력 목록 조회
     @Override
     public List<PaymentResponse> findPaymentsByUser(Long userSq) {
         List<Payment> payments = paymentRepository.findAllByUserSqOrderByCreatedDtDesc(userSq);
@@ -224,20 +200,21 @@ public class PaymentServiceImpl implements PaymentService {
                 .toList();
     }
 
-    /**
-     * 결제 취소 (환불)
-     */
+    // 승인 완료된 결제 건의 취소 및 환불 프로세스 수행
     @Override
     @Transactional
     public PaymentResponse cancelPayment(Long userSq, Long paymentSq, String reason) {
-        // [수정] 조회 실패 -> 404 Not Found
+        /*
+         * 1. 취소 가능 여부 및 소유권 검증
+         * 2. 결제 수단별 포인트 환불 및 PG 취소 연동
+         * 3. 원천 대상이 예매인 경우 좌석 및 예매 데이터 원복
+         * 4. 결제 상태 취소로 변경
+         */
         Payment payment = paymentRepository.findById(paymentSq)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 결제 내역입니다."));
 
-        // [수정] 권한 없음 -> 403 Forbidden
         if (!payment.getUserSq().equals(userSq)) throw new SecurityException("본인의 결제만 취소 가능");
 
-        // 상태 충돌 -> 409 Conflict 유지
         if (payment.getStatus() != PaymentStatus.DONE) throw new IllegalStateException("완료된 결제만 취소 가능");
 
         if (payment.getPointAmount() > 0) {
@@ -249,7 +226,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (payment.getRefType() == PaymentRefType.BOOKING) {
             Booking booking = bookingService.findByOrderId(payment.getOrderId());
-            // 로직상 연결된 예매가 없으면 데이터 무결성 문제 -> 409 Conflict 또는 500이 적절 (IllegalStateException 유지)
             if (booking == null) throw new IllegalStateException("연결된 예매 정보를 찾을 수 없습니다.");
 
             List<Long> seatIds = getSeatIdsFromBooking(booking);
@@ -261,9 +237,7 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.entityToResponse(payment);
     }
 
-    /**
-     * Helper: 결제 수단 결정
-     */
+    // 결제 금액 구성에 따른 결제 수단 분류
     private PaymentMethod determinePaymentMethod(long pgAmount, long pointAmount) {
         if (pgAmount > 0 && pointAmount > 0) return PaymentMethod.MIX;
         if (pgAmount > 0) return PaymentMethod.CARD;
@@ -271,6 +245,7 @@ public class PaymentServiceImpl implements PaymentService {
         throw new IllegalStateException("0원 결제 불가");
     }
 
+    // 예매 엔티티에서 좌석 식별자 목록 추출
     private List<Long> getSeatIdsFromBooking(Booking booking) {
         if (booking.getTickets() == null || booking.getTickets().isEmpty()) return Collections.emptyList();
         return booking.getTickets().stream().map(ticket -> ticket.getRoundSeatSq()).toList();

@@ -2,27 +2,20 @@ package io.why503.paymentservice.domain.payment.model.dto.response;
 
 import java.time.LocalDateTime;
 
+/**
+ * 결제 결과와 승인/취소 일시 등 결제 상세 정보를 전달하는 응답 객체
+ */
 public record PaymentResponse(
         Long sq,
         String orderId,
-
-        // 결제 대상 (BOOKING, POINT)
         String refType,
-
-        // 결제 수단 (CARD, POINT, MIX)
         String method,
-        String methodDescription, // 예: 복합결제
-
-        // 결제 상태 (READY, DONE, CANCELED)
+        String methodDescription,
         String status,
-        String statusDescription, // 예: 결제완료
-
-        // 금액 상세
+        String statusDescription,
         Long totalAmount,
         Long pgAmount,
         Long pointAmount,
-
-        // 일시 정보
         LocalDateTime approvedDt,
         LocalDateTime cancelledDt,
         LocalDateTime createdDt

@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 예매 생성, 조회 및 취소 요청을 처리하는 컨트롤러
+ */
 @RestController
 @RequestMapping("/bookings")
 @RequiredArgsConstructor
@@ -19,25 +22,19 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    /**
-     * 예매 생성
-     * POST /bookings
-     */
+    // 새로운 예매 생성 요청 처리
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody @Valid BookingRequest request) {
 
-        validateUserHeader(userSq); // 검증 로직 메서드 추출로 가독성 향상
+        validateUserHeader(userSq);
 
         BookingResponse response = bookingService.createBooking(userSq, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 예매 상세 조회
-     * GET /bookings/{bookingSq}
-     */
+    // 예매 상세 내역 조회
     @GetMapping("/{bookingSq}")
     public ResponseEntity<BookingResponse> findBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -49,10 +46,7 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 내 예매 목록 조회
-     * GET /bookings
-     */
+    // 사용자의 전체 예매 목록 조회
     @GetMapping
     public ResponseEntity<List<BookingResponse>> findBookings(
             @RequestHeader("X-USER-SQ") Long userSq) {
@@ -63,10 +57,7 @@ public class BookingController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * 예매 취소 (부분/전체)
-     * POST /bookings/{bookingSq}/cancel
-     */
+    // 기존 예매의 전체 또는 부분 취소 처리
     @PostMapping("/{bookingSq}/cancel")
     public ResponseEntity<BookingResponse> cancelBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -74,8 +65,6 @@ public class BookingController {
             @RequestBody @Valid BookingCancelRequest request) {
 
         validateUserHeader(userSq);
-
-        // [수정됨] request.reason() 검증 로직 제거 -> @Valid가 처리함
 
         BookingResponse response = bookingService.cancelBooking(
                 userSq,
@@ -86,7 +75,7 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
-    // 헤더 검증용 Private 메서드 (중복 코드 제거)
+    // 요청 헤더의 사용자 식별값 유효성 검증
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
             throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");

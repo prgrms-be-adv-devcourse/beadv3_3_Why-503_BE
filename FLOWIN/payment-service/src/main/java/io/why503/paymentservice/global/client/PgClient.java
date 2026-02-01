@@ -1,20 +1,13 @@
 package io.why503.paymentservice.global.client;
 
+/**
+ * 외부 결제 대행사(PG)와의 결제 승인 및 취소 통신을 정의하는 인터페이스
+ */
 public interface PgClient {
 
-    /**
-     * PG사 결제 승인 요청
-     * @param paymentKey 클라이언트(프론트)에서 받은 결제 키
-     * @param orderId 주문 번호
-     * @param amount 결제 금액
-     * @return pgKey (PG사에서 발급한 최종 거래 고유 번호)
-     */
+    // 결제창 인증 정보를 기반으로 외부 PG사에 최종 승인 요청
     String approvePayment(String paymentKey, String orderId, Long amount);
 
-    /**
-     * PG사 결제 취소 요청
-     * @param pgKey PG사 거래 고유 번호 (approvePayment의 리턴값)
-     * @param reason 취소 사유
-     */
+    // 승인된 거래에 대해 외부 PG사에 취소 및 환불 요청
     void cancelPayment(String pgKey, String reason, Long cancelAmount);
 }

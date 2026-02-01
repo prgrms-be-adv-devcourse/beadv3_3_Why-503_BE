@@ -12,17 +12,14 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.NoSuchElementException;
 
+/**
+ * 애플리케이션 전역에서 발생하는 예외를 포착하여 공통 에러 응답 형식으로 변환하는 클래스
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * [400 Bad Request]
-     * - 잘못된 인자(IllegalArgumentException)
-     * - @Valid 검증 실패
-     * - Enum 변환 실패
-     * - JSON 파싱 실패
-     */
+    // 잘못된 인자 또는 검증 실패 등 클라이언트 요청 오류 처리
     @ExceptionHandler({
             IllegalArgumentException.class,
             MethodArgumentNotValidException.class,
@@ -30,52 +27,33 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException.class
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
-        log.warn("Bad Request: {}", e.getMessage()); // 400은 warn 레벨이 적당
+        log.warn("Bad Request: {}", e.getMessage());
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.getMessage());
     }
 
-    /**
-     * [403 Forbidden]
-     * - 권한 없음 (SecurityException 활용)
-     */
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ErrorResponse> handleForbidden(SecurityException e) {
-        log.warn("Forbidden: {}", e.getMessage());
-        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCESS_DENIED", e.getMessage());
-    }
-
-    /**
-     * [404 Not Found]
-     * - 자원 없음 (NoSuchElementException 활용)
-     */
+    // 존재하지 않는 자원 요청 시 예외 처리
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NoSuchElementException e) {
         log.warn("Not Found: {}", e.getMessage());
         return buildErrorResponse(HttpStatus.NOT_FOUND, "NOT_FOUND", e.getMessage());
     }
 
-    /**
-     * [409 Conflict]
-     * - 비즈니스 상태 충돌 (IllegalStateException)
-     */
+    // 비즈니스 로직 상의 상태 충돌 예외 처리
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleConflict(IllegalStateException e) {
         log.warn("Conflict: {}", e.getMessage());
         return buildErrorResponse(HttpStatus.CONFLICT, "CONFLICT", e.getMessage());
     }
 
-    /**
-     * [500 Internal Server Error]
-     * - 나머지 모든 예외
-     */
+    // 서버 내부에서 처리되지 않은 모든 일반 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllException(Exception e) {
         log.error("Internal Server Error: ", e);
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER_ERROR", "서버 내부 오류가 발생했습니다.");
     }
 
+    // 에러 응답 객체 생성 및 반환
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String code, String message) {
-        // MethodArgumentNotValidException의 경우 메시지 추출 로직이 복잡할 수 있어 단순화
         String finalMessage = message;
         if (message != null && message.contains("Field error")) {
             finalMessage = "입력값이 올바르지 않습니다.";

@@ -199,7 +199,7 @@
     async function main() {
         const button = document.getElementById("payment-button");
 
-        // 서버 데이터 매핑
+        // 서버에서 전달된 결제 필수 정보 매핑
         const amountVal = /*[[${amount}]]*/ 0;
         const clientKey = /*[[${clientKey}]]*/ '';
         const orderId = /*[[${orderId}]]*/ '';
@@ -211,11 +211,13 @@
             customerKey: TossPayments.ANONYMOUS
         });
 
+        // 결제 금액 설정
         await widgets.setAmount({
             currency: "KRW",
             value: amountVal
         });
 
+        // 결제 수단 및 약관 위젯 렌더링
         await Promise.all([
             widgets.renderPaymentMethods({
                 selector: "#payment-method",
@@ -227,6 +229,7 @@
             })
         ]);
 
+        // 토스 결제창 호출 및 결과 페이지 리다이렉트 처리
         button.addEventListener("click", async function () {
             try {
                 await widgets.requestPayment({

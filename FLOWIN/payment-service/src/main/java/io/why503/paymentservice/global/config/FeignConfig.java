@@ -8,6 +8,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Feign 클라이언트 통신 시 인증 헤더 전파를 위한 설정 클래스
+ */
 @Configuration
 public class FeignConfig {
 

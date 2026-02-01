@@ -6,9 +6,7 @@ import lombok.Getter;
 import java.util.Arrays;
 
 /**
- * 할인 정책 VO
- * - 티켓에 적용된 할인 종류를 관리합니다.
- * - 사용자가 요청한 청소년, 노약자, 장애인, 국가유공자 할인을 포함합니다.
+ * 티켓에 적용 가능한 할인 정책 유형을 관리하는 열거형
  */
 @Getter
 @AllArgsConstructor
@@ -21,14 +19,12 @@ public enum DiscountPolicy {
 
     private final String description;
 
-    // String -> Enum 변환 메서드
+    // 정책 코드를 기반으로 할인 정책 상수 반환
     public static DiscountPolicy from(String policy) {
-        // 해피 패스 금지: null 또는 빈 값 검증
         if (policy == null || policy.isBlank()) {
             throw new IllegalArgumentException("DiscountPolicy는 필수 값입니다.");
         }
 
-        // 메서드 참조(::) 금지: 람다식 사용
         return Arrays.stream(DiscountPolicy.values())
                 .filter(p -> p.name().equalsIgnoreCase(policy))
                 .findFirst()

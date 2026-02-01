@@ -6,7 +6,6 @@
     <title>결제 완료</title>
 </head>
 <style>
-    /* 기존 CSS 유지 */
     body {
         font-family: 'Suit', sans-serif;
         background-color: #f5f6f7;
@@ -163,12 +162,11 @@
 </div>
 
 <script>
-    // 1. 로딩 화면 표시
     const loadingDiv = document.getElementById('loading');
     const contentDiv = document.getElementById('success-content');
     loadingDiv.style.display = 'flex';
 
-    // 2. URL 파라미터 파싱 (Toss 위젯이 넘겨준 값)
+    // 토스 페이먼츠 응답 파라미터 추출
     const urlParams = new URLSearchParams(window.location.search);
     const requestData = {
         paymentKey: urlParams.get("paymentKey"),
@@ -176,8 +174,7 @@
         amount: Number(urlParams.get("amount")),
     };
 
-    // 3. 백엔드 승인 API 호출
-    // 현재 PaymentController의 매핑 경로: /payments
+    // 서버 측 최종 결제 승인 API 호출
     fetch('/payments', {
         method: "POST",
         headers: {
@@ -187,19 +184,18 @@
     })
         .then(response => {
             if (!response.ok) {
-                // 실패 시 JSON 에러 메시지 파싱 시도
                 return response.json().then(err => { throw err; });
             }
             return response.json();
         })
         .then(data => {
-            // 4. 성공 시 UI 전환
+            // 승인 성공 시 완료 화면 전환
             loadingDiv.style.display = 'none';
             contentDiv.style.display = 'block';
         })
         .catch(err => {
             console.error("Payment Confirm Error:", err);
-            // 5. 실패 시 실패 페이지로 이동 (통합된 뷰 경로)
+            // 승인 실패 시 에러 사유와 함께 실패 페이지로 이동
             const message = err.message || "결제 승인 중 오류가 발생했습니다.";
             const code = err.code || "CONFIRM_ERROR";
             location.href = `/payment-view/fail?message=${encodeURIComponent(message)}&code=${code}`;

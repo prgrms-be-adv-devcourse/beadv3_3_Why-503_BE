@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 포인트 충전 요청 및 이력 조회를 처리하는 컨트롤러
+ */
 @RestController
 @RequestMapping("/points")
 @RequiredArgsConstructor
@@ -18,16 +21,12 @@ public class PointController {
 
     private final PointService pointService;
 
-    /**
-     * 포인트 충전 요청
-     * - PG 결제 전, 충전 대기 상태의 데이터를 생성합니다.
-     */
+    // 포인트 충전 데이터 생성 요청 처리
     @PostMapping
     public ResponseEntity<PointResponse> createPoint(
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody @Valid PointRequest request) {
 
-        // 해피 패스 금지: 헤더 값 검증
         if (userSq == null || userSq <= 0) {
             throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
         }
@@ -36,10 +35,7 @@ public class PointController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 포인트 충전 요청 상세 조회
-     * - 본인의 내역만 조회 가능
-     */
+    // 특정 충전 요청 상세 조회
     @GetMapping("/{pointSq}")
     public ResponseEntity<PointResponse> findPoint(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -53,10 +49,7 @@ public class PointController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 내 포인트 충전 이력 조회
-     * - 최신순 정렬
-     */
+    // 사용자의 전체 충전 이력 조회
     @GetMapping
     public ResponseEntity<List<PointResponse>> findPoints(
             @RequestHeader("X-USER-SQ") Long userSq) {
@@ -69,11 +62,7 @@ public class PointController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * 포인트 충전 취소
-     * - 결제 대기(READY) 상태일 때만 취소 가능
-     * - 상태 변경이므로 POST 사용
-     */
+    // 결제 전 단계의 충전 요청 취소
     @PostMapping("/{pointSq}/cancel")
     public ResponseEntity<PointResponse> cancelPoint(
             @RequestHeader("X-USER-SQ") Long userSq,

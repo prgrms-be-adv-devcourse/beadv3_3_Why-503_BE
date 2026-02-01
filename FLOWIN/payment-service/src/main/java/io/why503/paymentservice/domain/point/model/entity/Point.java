@@ -13,9 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 포인트 충전 요청 엔티티
- * - 포인트 충전을 위한 결제 요청 정보를 관리합니다.
- * - 실제 포인트 잔액 증감은 별도의 Account(Point) 서비스로 전파됩니다.
+ * 포인트 충전 요청 정보와 진행 상태를 관리하는 엔티티
  */
 @Entity
 @Getter
@@ -40,7 +38,7 @@ public class Point {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private PointStatus status = PointStatus.READY;
+    private PointStatus status;
 
     @CreatedDate
     @Column(name = "created_dt", nullable = false, updatable = false)
@@ -52,12 +50,15 @@ public class Point {
 
     @Builder
     public Point(Long userSq, String orderId, Long chargeAmount) {
-        // 해피 패스 금지: 필수 값 및 유효성 검증
+        /*
+         * 1. 필수 값 및 금액 유효성 검증
+         * 2. 필드 초기화 및 초기 상태 설정
+         */
         if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("회원 번호(userSq)는 필수이며 양수여야 합니다.");
+            throw new IllegalArgumentException("회원 번호는 필수이며 양수여야 합니다.");
         }
         if (orderId == null || orderId.isBlank()) {
-            throw new IllegalArgumentException("주문 번호(orderId)는 필수입니다.");
+            throw new IllegalArgumentException("주문 번호는 필수입니다.");
         }
         if (chargeAmount == null || chargeAmount <= 0) {
             throw new IllegalArgumentException("충전 금액은 0원보다 커야 합니다.");
@@ -66,27 +67,21 @@ public class Point {
         this.userSq = userSq;
         this.orderId = orderId;
         this.chargeAmount = chargeAmount;
-        this.status = PointStatus.READY; // 초기 상태
+        this.status = PointStatus.READY;
     }
 
-    /**
-     * 충전 완료 (결제 성공 시)
-     * - READY 상태에서만 완료 가능
-     */
+    // 결제 성공 시 충전 상태를 완료로 변경
     public void complete() {
         if (this.status != PointStatus.READY) {
-            throw new IllegalStateException("대기(READY) 상태의 요청만 완료 처리할 수 있습니다. 현재: " + this.status);
+            throw new IllegalStateException("대기 상태의 요청만 완료 처리할 수 있습니다. 현재: " + this.status);
         }
         this.status = PointStatus.DONE;
     }
 
-    /**
-     * 충전 취소 (결제 실패 또는 취소 시)
-     * - READY 상태에서만 취소 가능 (이미 완료된 건은 별도 환불 로직 필요)
-     */
+    // 사용자 요청 또는 결제 실패 시 충전 취소 처리
     public void cancel() {
-        if (this.status != PointStatus.READY) {
-            throw new IllegalStateException("대기(READY) 상태의 요청만 취소 처리할 수 있습니다. 현재: " + this.status);
+        if (this.status == PointStatus.DONE) {
+            throw new IllegalStateException("이미 완료된 충전은 취소할 수 없습니다.");
         }
         this.status = PointStatus.CANCELED;
     }

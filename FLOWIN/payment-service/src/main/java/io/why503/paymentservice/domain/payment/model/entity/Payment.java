@@ -13,6 +13,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * 결제 수단, 금액 정보 및 승인 상태를 관리하는 결제 엔티티
+ */
 @Entity
 @Getter
 @Table(name = "payment")
@@ -28,28 +31,21 @@ public class Payment {
     @Column(name = "user_sq", nullable = false)
     private Long userSq;
 
-    // Booking 또는 Point 엔티티의 orderId와 매핑
     @Column(name = "order_id", nullable = false, unique = true, length = 64)
     private String orderId;
 
-    // 결제 대상 구분 (BOOKING, POINT)
     @Enumerated(EnumType.STRING)
     @Column(name = "ref_type", nullable = false, length = 20)
     private PaymentRefType refType;
 
-    // 결제 수단 (CARD, POINT, MIX)
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)
     private PaymentMethod method;
-
-    @Column(name = "pg_key", length = 200)
-    private String pgKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private PaymentStatus status;
 
-    // [금액 상세]
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
@@ -59,63 +55,62 @@ public class Payment {
     @Column(name = "point_amount", nullable = false)
     private Long pointAmount;
 
-    // [일시]
-    @Column(name = "approved_dt")
-    private LocalDateTime approvedDt;
-
-    @Column(name = "cancelled_dt")
-    private LocalDateTime cancelledDt;
+    @Column(name = "pg_key", length = 255)
+    private String pgKey;
 
     @CreatedDate
     @Column(name = "created_dt", nullable = false, updatable = false)
     private LocalDateTime createdDt;
 
+    @Column(name = "approved_dt")
+    private LocalDateTime approvedDt;
+
+    @Column(name = "cancelled_dt")
+    private LocalDateTime canceledDt;
+
     @Builder
     public Payment(Long userSq, String orderId, PaymentRefType refType, PaymentMethod method,
                    Long totalAmount, Long pgAmount, Long pointAmount) {
+        /*
+         * 1. 필수 데이터 존재 여부 검증
+         * 2. 결제 수단별 금액 정합성 확인
+         * 3. 초기 결제 대기 상태로 설정
+         */
+        if (userSq == null || userSq <= 0) throw new IllegalArgumentException("회원 번호는 필수입니다.");
+        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("주문 번호는 필수입니다.");
+        if (refType == null) throw new IllegalArgumentException("결제 대상 구분은 필수입니다.");
+        if (method == null) throw new IllegalArgumentException("결제 수단은 필수입니다.");
+        if (totalAmount == null || totalAmount < 0) throw new IllegalArgumentException("총 금액은 필수입니다.");
 
-        // 1. 필수 값 검증
-        if (userSq == null || userSq <= 0) throw new IllegalArgumentException("userSq는 필수입니다.");
-        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("orderId는 필수입니다.");
-        if (refType == null) throw new IllegalArgumentException("refType은 필수입니다.");
-        if (method == null) throw new IllegalArgumentException("method는 필수입니다.");
+        long safePgAmount = (pgAmount != null) ? pgAmount : 0L;
+        long safePointAmount = (pointAmount != null) ? pointAmount : 0L;
 
-        // 2. 금액 무결성 검증 (해피 패스 금지)
-        long safePgAmount = (pgAmount == null) ? 0L : pgAmount;
-        long safePointAmount = (pointAmount == null) ? 0L : pointAmount;
-
-        if (totalAmount == null || totalAmount <= 0) {
-            throw new IllegalArgumentException("총 결제 금액은 0원보다 커야 합니다.");
-        }
         if (safePgAmount < 0 || safePointAmount < 0) {
             throw new IllegalArgumentException("결제 금액은 음수일 수 없습니다.");
         }
         if (safePgAmount + safePointAmount != totalAmount) {
-            throw new IllegalArgumentException("PG 금액과 포인트 금액의 합이 총 금액과 일치하지 않습니다.");
+            throw new IllegalArgumentException("결제 금액 합계가 총 금액과 일치하지 않습니다.");
         }
 
         this.userSq = userSq;
         this.orderId = orderId;
         this.refType = refType;
         this.method = method;
-        this.status = PaymentStatus.READY; // 초기 상태
+        this.status = PaymentStatus.READY;
         this.totalAmount = totalAmount;
         this.pgAmount = safePgAmount;
         this.pointAmount = safePointAmount;
     }
 
-    /**
-     * 결제 승인 완료
-     */
+    // 외부 결제 기관의 승인 키를 등록하고 상태를 완료로 변경
     public void approve(String pgKey) {
         if (this.status != PaymentStatus.READY) {
-            throw new IllegalStateException("READY 상태에서만 승인 가능합니다.");
+            throw new IllegalStateException("대기 상태에서만 승인 가능합니다.");
         }
 
-        // CARD나 MIX 인데 pgKey가 없으면 안됨
         boolean isPgInvolved = this.method == PaymentMethod.CARD || this.method == PaymentMethod.MIX;
         if (isPgInvolved && (pgKey == null || pgKey.isBlank())) {
-            throw new IllegalArgumentException("카드/복합 결제 시 pgKey는 필수입니다.");
+            throw new IllegalArgumentException("외부 결제 승인 키가 누락되었습니다.");
         }
 
         this.pgKey = pgKey;
@@ -123,14 +118,12 @@ public class Payment {
         this.approvedDt = LocalDateTime.now();
     }
 
-    /**
-     * 결제 취소
-     */
+    // 결제 건을 취소 상태로 변경하고 취소 시각 기록
     public void cancel() {
-        if (this.status != PaymentStatus.DONE) {
-            throw new IllegalStateException("완료(DONE)된 결제만 취소할 수 있습니다.");
+        if (this.status == PaymentStatus.CANCELED) {
+            throw new IllegalStateException("이미 취소된 결제입니다.");
         }
         this.status = PaymentStatus.CANCELED;
-        this.cancelledDt = LocalDateTime.now();
+        this.canceledDt = LocalDateTime.now();
     }
 }

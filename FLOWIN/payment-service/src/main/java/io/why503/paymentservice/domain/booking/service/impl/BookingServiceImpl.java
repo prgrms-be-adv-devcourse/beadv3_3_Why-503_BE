@@ -22,11 +22,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException; // [추가] 404 처리를 위해 필요
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * 좌석 선점 및 예매 데이터의 생명주기와 상태 변경을 관리하는 서비스
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -37,22 +40,25 @@ public class BookingServiceImpl implements BookingService {
     private final PerformanceClient performanceClient;
     private final BookingMapper bookingMapper;
 
+    // 좌석 선점 처리 및 예매 정보 저장
     @Override
     @Transactional
     public BookingResponse createBooking(Long userSq, BookingRequest request) {
-        // 1. 요청 검증 (입력값 오류 -> 400 Bad Request 유지)
+        /*
+         * 1. 요청 검증 및 외부 좌석 선점 요청
+         * 2. 선점 실패 시 보상 트랜잭션 수행
+         * 3. 예매 시점의 정보를 스냅샷 형태로 티켓에 저장
+         */
         if (request.tickets().isEmpty()) {
             throw new IllegalArgumentException("티켓 정보가 없습니다.");
         }
 
-        // 2. 외부 서비스 좌석 선점 요청
         List<Long> seatSqs = request.tickets().stream()
                 .map(ticketRequest -> ticketRequest.roundSeatSq())
                 .toList();
 
         List<RoundSeatResponse> reservedSeats = performanceClient.reserveRoundSeats(userSq, seatSqs);
 
-        // 3. 선점 결과 검증 및 보상 트랜잭션 (상태 충돌 -> 409 Conflict 유지)
         if (reservedSeats.size() != seatSqs.size()) {
             List<Long> reservedIds = reservedSeats.stream()
                     .map(roundSeatResponse -> roundSeatResponse.roundSeatSq())
@@ -63,14 +69,12 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalStateException("요청한 좌석 중 일부를 선점할 수 없습니다.");
         }
 
-        // 4. Booking 엔티티 생성
         String orderId = "BOOKING-" + UUID.randomUUID();
         Booking booking = Booking.builder()
                 .userSq(userSq)
                 .orderId(orderId)
                 .build();
 
-        // 5. Ticket 생성 및 Booking에 추가
         Map<Long, TicketRequest> requestMap = request.tickets().stream()
                 .collect(Collectors.toMap(ticketRequest -> ticketRequest.roundSeatSq(), Function.identity()));
 
@@ -101,13 +105,12 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.entityToResponse(savedBooking);
     }
 
+    // 예매 단건 상세 정보 조회
     @Override
     public BookingResponse findBooking(Long userSq, Long bookingSq) {
-        // [수정] 조회 실패 시 NoSuchElementException -> 404 Not Found
         Booking booking = bookingRepository.findById(bookingSq)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 예매입니다."));
 
-        // [수정] 권한 없음 시 SecurityException -> 403 Forbidden
         if (!booking.getUserSq().equals(userSq)) {
             throw new SecurityException("본인의 예매 내역만 조회할 수 있습니다.");
         }
@@ -115,6 +118,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.entityToResponse(booking);
     }
 
+    // 사용자의 과거 예매 목록 전체 조회
     @Override
     public List<BookingResponse> findBookingsByUser(Long userSq) {
         List<Booking> bookings = bookingRepository.findAllByUserSqOrderByCreatedDtDesc(userSq);
@@ -124,33 +128,34 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
+    // 예매 취소 및 선점된 좌석 해제
     @Override
     @Transactional
     public BookingResponse cancelBooking(Long userSq, Long bookingSq, List<Long> ticketSqs, String reason) {
-        // [수정] 조회 실패 시 NoSuchElementException -> 404 Not Found
+        /*
+         * 1. 소유권 및 결제 여부 확인
+         * 2. 전체 또는 선택한 티켓 단위의 부분 취소 수행
+         * 3. 외부 서비스에 취소된 좌석 해제 요청
+         */
         Booking booking = bookingRepository.findById(bookingSq)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 예매입니다."));
 
-        // [수정] 권한 없음 시 SecurityException -> 403 Forbidden
         if (!booking.getUserSq().equals(userSq)) {
             throw new SecurityException("본인의 예매만 취소할 수 있습니다.");
         }
 
-        // 이미 완료된 건 취소 불가 -> 409 Conflict 유지
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             throw new IllegalStateException("이미 결제된 예매는 결제 취소를 이용해주세요.");
         }
 
         List<Long> canceledSeatSqs = new ArrayList<>();
 
-        // 1. 전체 취소
         if (ticketSqs == null || ticketSqs.isEmpty()) {
             booking.cancel(reason);
             booking.getTickets().stream()
                     .map(ticket -> ticket.getRoundSeatSq())
                     .forEach(e -> canceledSeatSqs.add(e));
         }
-        // 2. 부분 취소
         else {
             long currentCancelAmount = 0;
 
@@ -164,7 +169,6 @@ public class BookingServiceImpl implements BookingService {
                 }
             }
 
-            // 잘못된 티켓 ID 요청 -> 400 Bad Request 유지
             if (canceledSeatSqs.isEmpty()) {
                 throw new IllegalArgumentException("취소 가능한 티켓이 없거나 잘못된 요청입니다.");
             }
@@ -179,7 +183,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.entityToResponse(booking);
     }
 
-    // 스케줄러용 메서드 (내부 로직)
+    // 결제 기한이 지난 대기 상태의 예매 건 일괄 취소
     @Override
     @Transactional
     public int cancelExpiredBookings(int expirationMinutes) {
@@ -215,6 +219,7 @@ public class BookingServiceImpl implements BookingService {
         return expiredBookings.size();
     }
 
+    // 선택된 할인 정책 기반의 할인액 계산
     private long calculateDiscountAmount(long originalPrice, DiscountPolicy policy) {
         if (policy == null || policy == DiscountPolicy.NONE) return 0;
 
@@ -228,6 +233,7 @@ public class BookingServiceImpl implements BookingService {
         return (long) (originalPrice * rate);
     }
 
+    // 주문 식별자를 통한 단건 예매 조회
     @Override
     public Booking findByOrderId(String orderId) {
         return bookingRepository.findByOrderId(orderId)

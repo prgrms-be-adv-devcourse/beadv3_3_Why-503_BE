@@ -55,7 +55,7 @@ public class Payment {
     @Column(name = "point_amount", nullable = false)
     private Long pointAmount;
 
-    @Column(name = "pg_key", length = 255)
+    @Column(name = "pg_key")
     private String pgKey;
 
     @CreatedDate

@@ -17,10 +17,10 @@ public interface RoundRepository extends JpaRepository<RoundEntity,Long> {
     List<RoundEntity> findByShowAndStatus(ShowEntity showSq, RoundStatus roundStatus);
 
     // 특정 공연의 특정 날짜 구간에 있는 모든 회차를 조회 (재정렬용)
-    List<RoundEntity> findAllByShowAndDateTimeBetween(ShowEntity showSq, LocalDateTime start, LocalDateTime end);
+    List<RoundEntity> findAllByShowAndStartDtBetween(ShowEntity showSq, LocalDateTime start, LocalDateTime end);
 
     //특정 공연이 해당 시간에 이미 존재하는지 확인
-    boolean existsByShowAndDateTime(ShowEntity showSq, LocalDateTime roundDt);
+    boolean existsByShowAndStartDt(ShowEntity showSq, LocalDateTime roundDt);
 }
 
 

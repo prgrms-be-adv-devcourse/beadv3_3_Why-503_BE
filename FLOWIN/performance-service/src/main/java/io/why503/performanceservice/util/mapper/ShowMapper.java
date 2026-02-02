@@ -1,9 +1,11 @@
 package io.why503.performanceservice.util.mapper;
 
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 
+import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,17 +19,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class ShowMapper {
 
-    public ShowEntity requestToEntity(ShowRequest request, Long companySq) {
+    public ShowEntity requestToEntity(ShowRequest request, Long companySq, HallEntity hallEntity) {
         return ShowEntity.builder()
                 .name(request.showName())
-                .startDate(request.showStartDate())
-                .endDate(request.showEndDate())
-                .openDate(request.showOpenDate())
+                .startDt(request.showStartDt())
+                .endDt(request.showEndDt())
+                .openDt(request.showOpenDt())
                 .runningTime(request.showRunningTime())
                 .viewingAge(request.showViewingAge())
-                .concertHallSq(request.concertHallSq())
+                .hall(hallEntity)
                 .category(request.showCategory())
                 .companySq(companySq)
+                .status(ShowStatus.valueOf(request.showStatus()))
                 .build();
     }
 
@@ -38,14 +41,14 @@ public class ShowMapper {
         return new ShowResponse(
                 entity.getSq(),
                 entity.getName(),
-                entity.getStartDate(),
-                entity.getEndDate(),
-                entity.getOpenDate(),
+                entity.getStartDt(),
+                entity.getEndDt(),
+                entity.getOpenDt(),
                 entity.getRunningTime(),
                 entity.getViewingAge(),
                 entity.getCategory(),
                 entity.getStatus(),
-                entity.getConcertHallSq(),
+                entity.getHall().getSq(),
                 entity.getCompanySq()
         );
     }

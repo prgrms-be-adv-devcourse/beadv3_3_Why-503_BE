@@ -1,6 +1,8 @@
 package io.why503.performanceservice.domain.show.service.impl;
 
 import feign.FeignException;
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
+import io.why503.performanceservice.domain.hall.repository.HallRepository;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWithSeatPolicyRequest;
@@ -34,6 +36,7 @@ public class ShowServiceImpl implements ShowService {
     private final ShowRepository showRepository;
     private final SeatRepository seatRepository;
     private final ShowSeatService showSeatService;
+    private final HallRepository hallRepository;
     private final AccountServiceClient accountServiceClient;
     private final ShowMapper showMapper;
 
@@ -51,14 +54,20 @@ public class ShowServiceImpl implements ShowService {
             ShowCreateWithSeatPolicyRequest request,
             Long userSq
     ) {
+
         Long companySq = resolveCompanySq(userSq);
 
-        ShowEntity show = showMapper.requestToEntity(request.showRequest(), companySq);
+        //공연장 id로 hallEntity 조회
+        HallEntity hallEntity = hallRepository.findById(request.showRequest().hallSq())
+                .orElseThrow(() -> new BusinessException(ErrorCode.HALL_NOT_FOUND));
+
+        //mapper에 hallEntity 전달
+        ShowEntity show = showMapper.requestToEntity(request.showRequest(), companySq, hallEntity);
         ShowEntity savedShow = showRepository.save(show);
 
         List<SeatEntity> allSeats =
-                seatRepository.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(
-                        savedShow.getConcertHallSq()
+                seatRepository.findAllByHallSqOrderByAreaAscNumInAreaAsc(
+                        savedShow.getHall().getSq()
                 );
 
         if (allSeats.isEmpty()) {
@@ -81,7 +90,12 @@ public class ShowServiceImpl implements ShowService {
     @Transactional
     public ShowResponse createShow(ShowRequest request, Long userSq) {
         Long companySq = resolveCompanySq(userSq);
-        ShowEntity show = showMapper.requestToEntity(request, companySq);
+        //공연장 id로 hallEntity 조회
+        HallEntity hallEntity = hallRepository.findById(request.hallSq())
+                .orElseThrow(() -> new BusinessException(ErrorCode.HALL_NOT_FOUND));
+
+        //mapper에 hallEntity 전달
+        ShowEntity show = showMapper.requestToEntity(request, companySq, hallEntity);
         showRepository.save(show);
         return showMapper.entityToResponse(show);
     }

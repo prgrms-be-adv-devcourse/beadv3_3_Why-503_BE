@@ -23,8 +23,8 @@ public class RoundEntity {
     @JoinColumn(name = "show_sq", nullable = false)
     private ShowEntity show;    //공연시퀀스
 
-    @Column(name = "started_dt",nullable = false)
-    private LocalDateTime startedDate; //회차 일시
+    @Column(name = "start_dt",nullable = false)
+    private LocalDateTime startDt; //회차 일시
 
     @Column(name = "num",nullable = false)
     private Integer num; // 회차 번호
@@ -39,12 +39,12 @@ public class RoundEntity {
     @Builder
     public RoundEntity(
             ShowEntity show,
-            LocalDateTime startedDate,
+            LocalDateTime startDt,
             Integer num,
             String casting,
             RoundStatus status) {
         this.show = show;
-        this.startedDate = startedDate;
+        this.startDt = startDt;
         this.num = num;
         this.casting = casting;
         this.status = status;

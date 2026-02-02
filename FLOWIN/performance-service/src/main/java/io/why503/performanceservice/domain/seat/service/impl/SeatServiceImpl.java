@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.seat.service.impl;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.seat.model.dto.response.SeatResponse;
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
@@ -27,13 +27,13 @@ public class SeatServiceImpl implements SeatService {
     private final SeatRepository seatRepository;
     private final SeatMapper seatMapper;
 
-    private List<SeatEntity> findByConcertHall(Long concertHallSq) {
-        return seatRepository.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(concertHallSq);
+    private List<SeatEntity> findByHall(Long hallSq) {
+        return seatRepository.findAllByHallSqOrderByAreaAscNumInAreaAsc(hallSq);
     }
 
     @Override
-    public List<SeatResponse> readByConcertHall(Long concertHallSq) {
-        return findByConcertHall(concertHallSq).stream()
+    public List<SeatResponse> readByHall(Long hallSq) {
+        return findByHall(hallSq).stream()
                 .map(i -> seatMapper.entityToResponse(i))
                 .toList();
     }
@@ -44,7 +44,7 @@ public class SeatServiceImpl implements SeatService {
     @Override
     @Transactional
     public void createCustomSeats(
-            ConcertHallEntity concertHall,
+            HallEntity hall,
             List<SeatAreaCreateVo> areaCreateVos
     ) {
         List<SeatEntity> seats = new ArrayList<>();
@@ -59,7 +59,7 @@ public class SeatServiceImpl implements SeatService {
                         .num(globalSeatNo++)
                         .area(vo.seatArea())
                         .numInArea(num)
-                        .concertHall(concertHall)
+                        .hall(hall)
                         .build());
             }
         }

@@ -8,5 +8,5 @@ public record SeatResponse (
         @NotNull Long seatSq,
         @NotNull Integer seatNo,
         @NotBlank String seatArea,
-        @NotNull Integer areaSeatNo
+        @NotNull Integer numInArea
     ){ }

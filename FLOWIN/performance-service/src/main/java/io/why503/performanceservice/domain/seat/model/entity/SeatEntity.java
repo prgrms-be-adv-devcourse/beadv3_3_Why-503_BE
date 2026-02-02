@@ -18,7 +18,7 @@
  */
 package io.why503.performanceservice.domain.seat.model.entity;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -58,7 +58,7 @@ public class SeatEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "hall_sq", nullable = false)
-    private ConcertHallEntity HallSq;
+    private HallEntity hall;
 
     /* =======================
        생성자 (비즈니스용)
@@ -68,11 +68,11 @@ public class SeatEntity {
             Integer num,
             String area,
             Integer numInArea,
-            ConcertHallEntity HallSq
+            HallEntity hall
     ) {
         this.num = num;
         this.area = area;
         this.numInArea = numInArea;
-        this.HallSq = HallSq;
+        this.hall = hall;
     }
 }

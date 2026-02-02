@@ -26,11 +26,12 @@ public enum ErrorCode {
 
     // ConcertHall
     // HTTP 404
-    CONCERT_HALL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공연장입니다."),
+    HALL_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 공연장입니다."),
 
     // Round
     //HTTP 400
     ROUND_BAD_REQUEST(HttpStatus.BAD_REQUEST, "회차 상태가 올바르지 않습니다."),
+    ROUND_INITIAL_STATUS_MUST_BE_WAIT(HttpStatus.BAD_REQUEST, "회차 생성 시 초기 상태는 '예매대기(WAIT)'여야 합니다."),
     // HTTP 404
     ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회차입니다."),
     // HTTP 409

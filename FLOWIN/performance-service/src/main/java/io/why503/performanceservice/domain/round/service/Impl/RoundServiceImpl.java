@@ -43,11 +43,11 @@ public class RoundServiceImpl implements RoundService {
 
         // 초기 생성 시엔 상태가 예매 대기여야 함
         if (request.roundStatus() != RoundStatus.WAIT) {
-            throw new BusinessException(ErrorCode.ROUND_BAD_REQUEST);
+            throw new BusinessException(ErrorCode.ROUND_INITIAL_STATUS_MUST_BE_WAIT);
         }
 
         // 이미 등록된 시간인지 확인
-        if (roundRepository.existsByShowAndDateTime(show, request.roundDt())) {
+        if (roundRepository.existsByShowAndStartDt(show, request.roundDt())) {
             throw new BusinessException(ErrorCode.ROUND_CONFLICT);
         }
 
@@ -58,12 +58,12 @@ public class RoundServiceImpl implements RoundService {
         LocalDateTime endOfDay = targetDate.atTime(LocalTime.MAX);
 
         // 해당 날짜의 기존 회차 리스트 조회 및 새 회차 추가
-        List<RoundEntity> roundList = roundRepository.findAllByShowAndDateTimeBetween(show, startOfDay, endOfDay);
+        List<RoundEntity> roundList = roundRepository.findAllByShowAndStartDtBetween(show, startOfDay, endOfDay);
         RoundEntity newEntity = roundMapper.dtoToEntity(request, show, 0);
         roundList.add(newEntity);
 
         // 시간 순서대로 정렬
-        roundList.sort((r1, r2) -> r1.getStartedDate().compareTo(r2.getStartedDate()));
+        roundList.sort((r1, r2) -> r1.getStartDt().compareTo(r2.getStartDt()));
 
         // 회차 번호 재부여
         for (int i = 0; i < roundList.size(); i++) {

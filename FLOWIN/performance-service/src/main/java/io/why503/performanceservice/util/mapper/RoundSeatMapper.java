@@ -2,10 +2,10 @@ package io.why503.performanceservice.util.mapper;
 
 
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
-import io.why503.performanceservice.domain.roundSeats.model.dto.request.RoundSeatRequest;
-import io.why503.performanceservice.domain.roundSeats.model.dto.response.RoundSeatResponse;
-import io.why503.performanceservice.domain.roundSeats.model.dto.response.SeatReserveResponse;
-import io.why503.performanceservice.domain.roundSeats.model.entity.RoundSeatEntity;
+import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatRequest;
+import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
+import io.why503.performanceservice.domain.roundSeat.model.dto.response.SeatReserveResponse;
+import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import org.springframework.stereotype.Component;
@@ -25,7 +25,7 @@ public class RoundSeatMapper {
                 .round(roundEntity)
                 .showSeatSq(request.showSeatSq())
                 .status(request.roundSeatStatus())
-                .status_dt(LocalDateTime.now())
+                .statusDt(LocalDateTime.now())
                 .build();
 
     }
@@ -38,7 +38,7 @@ public class RoundSeatMapper {
                 .showSeatSq(entity.getShowSeatSq())
                 .roundSeatStatus(entity.getStatus())
                 .roundSeatStatusName(entity.getStatus().getDescription())
-                .roundSeatStatusTime(entity.getStatus_dt())
+                .roundSeatStatusTime(entity.getStatusDt())
                 .build();
     }
     //entity리스트를 dto리스트로 일괄 변환
@@ -75,8 +75,8 @@ public class RoundSeatMapper {
 
                 // 공연 및 공연장 정보
                 .showName(show.getName())
-                .concertHallName(concertHallName)
-                .roundDate(round.getStarted_dt())
+                .hallName(concertHallName)
+                .roundDt(round.getStartDt())
                 .build();
     }
 }

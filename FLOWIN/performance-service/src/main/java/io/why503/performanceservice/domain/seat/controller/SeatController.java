@@ -24,7 +24,7 @@ import io.why503.performanceservice.domain.seat.model.dto.response.SeatResponse;
 import io.why503.performanceservice.domain.seat.service.SeatService;
 
 @RestController
-@RequestMapping("/concert-halls")
+@RequestMapping("/hall")
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 public class SeatController {
 
@@ -44,6 +44,6 @@ public class SeatController {
     public List<SeatResponse> getSeatsByConcertHall(
             @PathVariable Long concertHallSq
     ) {
-        return seatService.readByConcertHall(concertHallSq);
+        return seatService.readByHall(concertHallSq);
     }
 }

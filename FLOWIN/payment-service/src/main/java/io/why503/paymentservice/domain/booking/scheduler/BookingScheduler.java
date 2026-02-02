@@ -3,12 +3,12 @@ package io.why503.paymentservice.domain.booking.scheduler;
 import io.why503.paymentservice.domain.booking.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 예매 자동 취소 스케줄러
- * - 결제 대기 상태로 유효 시간이 지난 예매 건을 주기적으로 정리합니다.
+ * 정해진 주기마다 미결제된 예매 건을 정리하는 스케줄러
  */
 @Slf4j
 @Component
@@ -16,24 +16,29 @@ import org.springframework.stereotype.Component;
 public class BookingScheduler {
 
     private final BookingService bookingService;
-    private static final long SCAN_INTERVAL_MS = 60 * 1000; // 1분
 
-    /**
-     * 만료된 예매 자동 취소
-     * - 주기: 1분
-     * - 대상: 10분이 지나도 결제되지 않은(PENDING) 예매 건
-     */
-    @Scheduled(fixedDelay = SCAN_INTERVAL_MS)
+    @Value("${scheduler.booking.expiration-minutes:10}")
+    private int expirationMinutes;
+
+    // 일정 시간 동안 결제가 진행되지 않은 예매 건을 자동 취소
+    @Scheduled(cron = "${scheduler.booking.cron}")
     public void autoCancelExpiredBookings() {
         long startTime = System.currentTimeMillis();
 
-        // 서비스 로직 실행
-        int deletedCount = bookingService.cancelExpiredBookings();
+        try {
+            log.info("[Scheduler] 만료 예매 정리 시작 (기준: {}분 전 생성)", expirationMinutes);
 
-        // 처리된 건이 있을 때만 로그 기록
-        if (deletedCount > 0) {
+            int deletedCount = bookingService.cancelExpiredBookings(expirationMinutes);
+
             long duration = System.currentTimeMillis() - startTime;
-            log.info("[Scheduler] 만료된 예매 {}건 자동 취소 완료 (소요시간: {}ms)", deletedCount, duration);
+
+            if (deletedCount > 0) {
+                log.info("[Scheduler] 정리 완료: 총 {}건 취소됨 (소요: {}ms)", deletedCount, duration);
+            } else {
+                log.debug("[Scheduler] 정리 대상 없음");
+            }
+        } catch (Exception e) {
+            log.error("[Scheduler] 만료 예매 정리 중 오류 발생: {}", e.getMessage());
         }
     }
 }

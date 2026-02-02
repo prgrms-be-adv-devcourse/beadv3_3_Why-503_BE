@@ -6,7 +6,6 @@
     <title>결제 완료</title>
 </head>
 <style>
-    /* success-page.css */
     body {
         font-family: 'Suit', sans-serif;
         background-color: #f5f6f7;
@@ -46,7 +45,6 @@
         margin-bottom: 30px;
     }
 
-    /* 주문 정보 영역 스타일 */
     .order-info {
         background-color: #f9f9f9;
         padding: 20px;
@@ -101,9 +99,8 @@
         background-color: #1b64da;
     }
 
-    /* [추가됨] 로딩 스피너 스타일 */
     .loading {
-        display: none; /* JS에서 제어 */
+        display: none;
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -132,7 +129,7 @@
 <div class="success-container">
 
     <div class="loading" id="loading">
-        결제 정보를 확인 중입니다...
+        <div class="message">결제 승인 요청 중입니다...</div>
     </div>
 
     <div id="success-content" style="display: none;">
@@ -142,47 +139,43 @@
         <p class="success-subtitle">주문이 정상적으로 처리되었습니다.</p>
 
         <div class="order-info">
-
             <h3>주문 정보</h3>
-
             <div class="info-row">
                 <span class="info-label">주문번호</span>
                 <span class="info-value" id="orderId"> [[ ${orderId} ]] </span>
             </div>
-
             <div class="info-row">
                 <span class="info-label">상품명</span>
                 <span class="info-value" id="orderName"> [[ ${productName} ]] </span>
             </div>
-
             <div class="info-row">
                 <span class="info-label">결제금액</span>
                 <span class="info-value" id="amount"> [[ ${amount} ]] </span>
             </div>
-
         </div>
 
         <div class="action-buttons">
-            <a href="/" class="btn btn-primary">확인</a>
+            <a href="/" class="btn btn-primary">메인으로 돌아가기</a>
         </div>
-
     </div>
 
 </div>
 
 <script>
-    document.getElementById('loading').style.display = 'block';
+    const loadingDiv = document.getElementById('loading');
+    const contentDiv = document.getElementById('success-content');
+    loadingDiv.style.display = 'flex';
 
+    // 토스 페이먼츠 응답 파라미터 추출
     const urlParams = new URLSearchParams(window.location.search);
-
-    var requestData = {
+    const requestData = {
         paymentKey: urlParams.get("paymentKey"),
         orderId: urlParams.get("orderId"),
-        amount: Number(urlParams.get("amount")), // 숫자로 변환 권장
+        amount: Number(urlParams.get("amount")),
     };
 
-    // [수정] 백엔드 Controller의 경로와 일치시킴 (/internal/payments/confirm)
-    fetch('/internal/payments/confirm', {
+    // 서버 측 최종 결제 승인 API 호출
+    fetch('/payments', {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -190,23 +183,23 @@
         body: JSON.stringify(requestData)
     })
         .then(response => {
-            // [수정] 백엔드 응답이 200 OK이면 성공으로 간주
-            if (response.ok) {
-                return response;
-            } else {
-                throw new Error("Payment Confirm Failed");
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
             }
+            return response.json();
         })
-        .then(() => {
-            // 성공 UI 노출
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('success-content').style.display = 'block';
+        .then(data => {
+            // 승인 성공 시 완료 화면 전환
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
         })
         .catch(err => {
-            // 실패 시 실패 페이지로 이동 (메시지 포함)
-            location.href = "/fail?message=PaymentConfirmFailed&code=CONFIRM_ERROR";
+            console.error("Payment Confirm Error:", err);
+            // 승인 실패 시 에러 사유와 함께 실패 페이지로 이동
+            const message = err.message || "결제 승인 중 오류가 발생했습니다.";
+            const code = err.code || "CONFIRM_ERROR";
+            location.href = `/payment-view/fail?message=${encodeURIComponent(message)}&code=${code}`;
         });
-
 </script>
 </body>
 </html>

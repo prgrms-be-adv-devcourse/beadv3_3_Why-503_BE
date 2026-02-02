@@ -1,19 +1,19 @@
 package io.why503.paymentservice.domain.booking.controller;
 
-import io.why503.paymentservice.domain.booking.model.dto.ApplyPointRequest;
-import io.why503.paymentservice.domain.booking.model.dto.BookingRequest;
-import io.why503.paymentservice.domain.booking.model.dto.BookingResponse;
+import io.why503.paymentservice.domain.booking.model.dto.request.BookingCancelRequest;
+import io.why503.paymentservice.domain.booking.model.dto.request.BookingRequest;
+import io.why503.paymentservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.paymentservice.domain.booking.service.BookingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * 예매 API 컨트롤러
- * - 예매 생성, 조회, 취소, 확정 기능을 제공합니다.
- * - [수정] 모든 메서드에 사용자 검증(X-USER-SQ) 추가
+ * 예매 생성, 조회 및 취소 요청을 처리하는 컨트롤러
  */
 @RestController
 @RequestMapping("/bookings")
@@ -22,87 +22,63 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    /**
-     * 예매 생성
-     * - 결제 전 'PENDING' 상태의 예매 데이터를 생성합니다.
-     */
+    // 새로운 예매 생성 요청 처리
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody BookingRequest bookingRequest
-    ) {
-        return ResponseEntity.ok(bookingService.createBooking(bookingRequest, userSq));
+            @RequestBody @Valid BookingRequest request) {
+
+        validateUserHeader(userSq);
+
+        BookingResponse response = bookingService.createBooking(userSq, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 포인트 적용
-     * - 예매 생성 후, 결제 직전에 포인트를 적용하여 최종 금액을 확정합니다.
-     */
-    @PatchMapping("/{bookingSq}/points")
-    public ResponseEntity<BookingResponse> applyPoint(
-            @PathVariable Long bookingSq,
-            @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody ApplyPointRequest request
-    ) {
-        return ResponseEntity.ok(bookingService.applyPointToBooking(bookingSq, userSq, request.userPoint()));
-    }
-
-    /**
-     * 예매 상세 조회
-     */
+    // 예매 상세 내역 조회
     @GetMapping("/{bookingSq}")
-    public ResponseEntity<BookingResponse> getBooking(
+    public ResponseEntity<BookingResponse> findBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @PathVariable Long bookingSq
-    ) {
-        return ResponseEntity.ok(bookingService.getBooking(bookingSq, userSq));
+            @PathVariable("bookingSq") Long bookingSq) {
+
+        validateUserHeader(userSq);
+
+        BookingResponse response = bookingService.findBooking(userSq, bookingSq);
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * 내 예매 내역 조회
-     */
-    @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(@RequestHeader("X-USER-SQ") Long userSq) {
-        return ResponseEntity.ok(bookingService.getBookingsByUser(userSq));
+    // 사용자의 전체 예매 목록 조회
+    @GetMapping
+    public ResponseEntity<List<BookingResponse>> findBookings(
+            @RequestHeader("X-USER-SQ") Long userSq) {
+
+        validateUserHeader(userSq);
+
+        List<BookingResponse> responses = bookingService.findBookingsByUser(userSq);
+        return ResponseEntity.ok(responses);
     }
 
-    /**
-     * 예매 확정
-     * - PG사 결제 승인 후 호출되며, 예매 상태를 'CONFIRMED' 변경합니다.
-     */
-    @PatchMapping("/{bookingSq}/confirm")
-    public ResponseEntity<Void> confirmBooking(
+    // 기존 예매의 전체 또는 부분 취소 처리
+    @PostMapping("/{bookingSq}/cancel")
+    public ResponseEntity<BookingResponse> cancelBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @PathVariable Long bookingSq,
-            @RequestParam String paymentKey,
-            @RequestParam String paymentMethod
-    ) {
-        bookingService.confirmBooking(bookingSq, paymentKey, paymentMethod, userSq);
-        return ResponseEntity.ok().build();
+            @PathVariable("bookingSq") Long bookingSq,
+            @RequestBody @Valid BookingCancelRequest request) {
+
+        validateUserHeader(userSq);
+
+        BookingResponse response = bookingService.cancelBooking(
+                userSq,
+                bookingSq,
+                request.ticketSqs(),
+                request.reason()
+        );
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * 예매 전체 취소
-     */
-    @PatchMapping("/{bookingSq}/cancel")
-    public ResponseEntity<Void> cancelBooking(
-            @RequestHeader("X-USER-SQ") Long userSq,
-            @PathVariable Long bookingSq
-    ) {
-        bookingService.cancelBooking(bookingSq, userSq);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 티켓 개별(부분) 취소
-     */
-    @PatchMapping("/{bookingSq}/tickets/{ticketSq}/cancel")
-    public ResponseEntity<Void> cancelTicket(
-            @RequestHeader("X-USER-SQ") Long userSq,
-            @PathVariable Long bookingSq,
-            @PathVariable Long ticketSq
-    ) {
-        bookingService.cancelTicket(bookingSq, ticketSq, userSq);
-        return ResponseEntity.ok().build();
+    // 요청 헤더의 사용자 식별값 유효성 검증
+    private void validateUserHeader(Long userSq) {
+        if (userSq == null || userSq <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
     }
 }

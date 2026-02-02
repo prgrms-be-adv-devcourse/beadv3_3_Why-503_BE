@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.booking.model.entity;
 
+import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -110,7 +111,7 @@ public class Booking {
         this.cancelReason = reason;
 
         for (Ticket ticket : this.tickets) {
-            if (ticket.getStatus() != io.why503.paymentservice.domain.booking.model.enums.TicketStatus.CANCELLED) {
+            if (ticket.getStatus() != TicketStatus.CANCELLED) {
                 ticket.cancel();
             }
         }

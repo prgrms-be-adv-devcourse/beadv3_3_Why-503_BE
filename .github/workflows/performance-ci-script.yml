@@ -1,0 +1,16 @@
+name: Performance CI 스크립트
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths: #얘 수정 밑에 이거
+      - 'FLOWIN/performance-service/**'
+
+jobs:
+   execute-test:
+    uses: ./.github/workflows/ci-script.yml
+    secrets: inherit
+    with:
+      service-name: performance-service #얘 수정

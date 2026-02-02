@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 완료</title>
+</head>
+<style>
+    body {
+        font-family: 'Suit', sans-serif;
+        background-color: #f5f6f7;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .success-container {
+        background-color: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .success-icon {
+        font-size: 48px;
+        color: #3182f6;
+        margin-bottom: 20px;
+    }
+
+    .success-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .success-subtitle {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .order-info {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .order-info h3 {
+        font-size: 14px;
+        color: #888;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 15px;
+    }
+
+    .info-label {
+        color: #666;
+    }
+
+    .info-value {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 0;
+        width: 100%;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #3182f6;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #1b64da;
+    }
+
+    .loading {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        color: #666;
+        font-size: 16px;
+    }
+
+    .loading::after {
+        content: '';
+        width: 40px;
+        height: 40px;
+        margin-top: 20px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3182f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+<body>
+<div class="success-container">
+
+    <div class="loading" id="loading">
+        <div class="message">결제 승인 요청 중입니다...</div>
+    </div>
+
+    <div id="success-content" style="display: none;">
+        <div class="success-icon">✓</div>
+
+        <h1 class="success-title">결제가 완료되었습니다</h1>
+        <p class="success-subtitle">주문이 정상적으로 처리되었습니다.</p>
+
+        <div class="order-info">
+            <h3>주문 정보</h3>
+            <div class="info-row">
+                <span class="info-label">주문번호</span>
+                <span class="info-value" id="orderId"> [[ ${orderId} ]] </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">상품명</span>
+                <span class="info-value" id="orderName"> [[ ${productName} ]] </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">결제금액</span>
+                <span class="info-value" id="amount"> [[ ${amount} ]] </span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/" class="btn btn-primary">메인으로 돌아가기</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const loadingDiv = document.getElementById('loading');
+    const contentDiv = document.getElementById('success-content');
+    loadingDiv.style.display = 'flex';
+
+    // 토스 페이먼츠 응답 파라미터 추출
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestData = {
+        paymentKey: urlParams.get("paymentKey"),
+        orderId: urlParams.get("orderId"),
+        amount: Number(urlParams.get("amount")),
+    };
+
+    // 서버 측 최종 결제 승인 API 호출
+    fetch('/payments', {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
+    })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // 승인 성공 시 완료 화면 전환
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
+        })
+        .catch(err => {
+            console.error("Payment Confirm Error:", err);
+            // 승인 실패 시 에러 사유와 함께 실패 페이지로 이동
+            const message = err.message || "결제 승인 중 오류가 발생했습니다.";
+            const code = err.code || "CONFIRM_ERROR";
+            location.href = `/payment-view/fail?message=${encodeURIComponent(message)}&code=${code}`;
+        });
+</script>
+</body>
+</html>

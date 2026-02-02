@@ -1,0 +1,70 @@
+name: CI 스크립트
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        required: true
+        type: string
+
+jobs:
+  code-test:
+    name: 코드 테스트
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      GITHUB_ACTOR: ${{ github.actor }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: 브랜치로 체크아웃
+        uses: actions/checkout@v5
+
+      - name: JDK 세팅
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: account test yml pem 세팅
+        if: ${{ inputs.service-name == 'account-service' }}
+        run: |
+          mkdir -p ./FLOWIN/account-service/src/main/resources
+          echo '${{ secrets.ACCOUNT_TEST_YML }}' > ./FLOWIN/account-service/src/main/resources/application.yml
+          echo '${{ secrets.PRIVATE_KEY_TEST_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key-test.pem
+          mkdir -p ./FLOWIN/account-service/src/test/resources
+          echo '${{ secrets.ACCOUNT_TEST_YML }}' > ./FLOWIN/account-service/src/test/resources/application-test.yml
+          echo '${{ secrets.PRIVATE_KEY_TEST_PEM }}' > ./FLOWIN/account-service/src/test/resources/private-key-test.pem
+
+      - name: gateway test yml pem 세팅
+        if: ${{ inputs.service-name == 'gateway-service' }}
+        run: |
+          mkdir -p ./FLOWIN/gateway-service/src/main/resources
+          echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/main/resources/application.yml
+          echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/main/resources/public-key-test.pem
+          mkdir -p ./FLOWIN/gateway-service/src/test/resources
+          echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/test/resources/application-test.yml
+          echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/test/resources/public-key-test.pem
+
+      - name: payment test yml pem 세팅
+        if: ${{ inputs.service-name == 'payment-service' }}
+        run: |
+          mkdir -p ./FLOWIN/payment-service/src/main/resources
+          echo '${{ secrets.PAYMENT_TEST_YML }}' > ./FLOWIN/payment-service/src/main/resources/application.yml
+          mkdir -p ./FLOWIN/payment-service/src/test/resources
+          echo '${{ secrets.PAYMENT_TEST_YML }}' > ./FLOWIN/payment-service/src/test/resources/application-test.yml
+
+#      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.
+#      - name: gradlew 권한 세팅
+#        run: chmod +x ./gradlew
+
+      - name: gradlew 권한 세팅
+        run: chmod +x ./FLOWIN/${{ inputs.service-name }}/gradlew
+
+      - name: 테스트 실행
+        working-directory: ./FLOWIN/${{ inputs.service-name }}
+        run: ./gradlew test --no-daemon

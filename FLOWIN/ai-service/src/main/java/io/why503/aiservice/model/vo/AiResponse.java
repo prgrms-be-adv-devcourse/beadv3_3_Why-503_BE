@@ -11,5 +11,6 @@ public record AiResponse(
         List<String> explanations,
         //추천 결과 정보
         List<AiRecommendation> recommendations
+
 ) {
 }

@@ -5,6 +5,7 @@ public record AiRecommendation(
         //장르
         String category,
         //추천 이유
-        String reason
+        String reason,
+        String mood
 ) {
 }

@@ -2,10 +2,10 @@
 @Component
 public class {팩토리 이름} { //이건 앞으로 예외를 만들어줄 팩토리
 
-    private final ServerPortHolder portHolder;
+    private final PortConfig portConfig;
 
-    public AccountServerExceptionFactory(ServerPortHolder portHolder) {
-        this.portHolder = portHolder;
+    public {팩토리 이름}(PortConfig portConfig) {
+        this.portConfig = portConfig;
     }
 
     
@@ -13,7 +13,7 @@ public class {팩토리 이름} { //이건 앞으로 예외를 만들어줄 팩�
         return new AccountServerException(
             message,
             status <- 늘 쓰는 그거(HttpStatus)
-            portHolder.getPort()
+            portConfig.getPort()
         );
     }
 }

@@ -1,17 +1,16 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
-
-import io.why503.accountservice.domain.accounts.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
-import io.why503.accountservice.util.AccountMapper;
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.util.AccountMapper;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.accounts.repository.AccountJpaRepository;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +19,14 @@ import java.util.List;
 /*
 account service 인터페이스 실체화 클래스
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AccountServiceImpl implements AccountService {
     private final AccountJpaRepository accountJpaRepository;
     private final AccountMapper accountMapper;
     //생성, accountMapper로 password암호화
     //내부 함수 sq기반 조회
-    @Transactional(readOnly = true)
     public Account findBySq(Long sq) {
         return accountJpaRepository.findBySq(sq).orElseThrow(
                 () -> new IllegalArgumentException("sq = " + sq + " Account is not found")
@@ -36,7 +34,6 @@ public class AccountServiceImpl implements AccountService {
 
     }
     //내부 함수 id기반 조회
-    @Transactional(readOnly = true)
     public Account findById(String id) {
         return accountJpaRepository.findById(id).orElseThrow(
                 () -> new IllegalArgumentException("id = " + id + " Account is not found")
@@ -44,66 +41,44 @@ public class AccountServiceImpl implements AccountService {
     }
     @Override
     @Transactional
-    public UserRoleResponse create(UpsertAccountRequest request){
+    public UserRoleResponse create(CreateAccountRequest request){
 
-        Account account = new Account(
-                accountMapper.upsertDtoToUpsertVo(request)
-        );
+        Account account = accountMapper.upsertRequestToEntity(request);
         accountJpaRepository.save(account);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
     //모든 회원 조회
     @Override
-    @Transactional(readOnly = true)
     public List<UserRoleResponse> readAll() {
         return accountJpaRepository.findAll().stream()
-                .map((account) -> accountMapper.entityToSummaryResponse(account))
+                .map((account) -> accountMapper.entityToRoleResponse(account))
                 .toList();
     }
     //sq기반 조회
     @Override
-    @Transactional(readOnly = true)
     public UserRoleResponse readBySq(Long sq) {
         Account account = findBySq(sq);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
     //id기반 조회
     @Override
-    @Transactional(readOnly = true)
     public UserRoleResponse readById(String id) {
         Account account = findById(id);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
     //sq로 UserRole 조회
     @Override
-    @Transactional(readOnly = true)
     public UserRole readUserRoleBySq(Long sq) {
         return findBySq(sq).getRole();
     }
 
-    //sq기반 수정
-    @Override
-    @Transactional
-    public UserRoleResponse updateBySq(Long sq, UpsertAccountRequest request) {
-        Account account = findBySq(sq);
-        account.update(accountMapper.upsertDtoToUpsertVo(request));
-        return accountMapper.entityToSummaryResponse(account);
-    }
-    //id기반 수정
-    @Override
-    @Transactional
-    public UserRoleResponse updateById(String id, UpsertAccountRequest request) {
-        Account account = findById(id);
-        account.update(accountMapper.upsertDtoToUpsertVo(request));
-        return accountMapper.entityToSummaryResponse(account);
-    }
     //sq기반 삭제
     @Override
     @Transactional
     public UserRoleResponse deleteBySq(Long sq) {
         Account account = findBySq(sq);
         accountJpaRepository.delete(account);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
     //id기반 삭제
     @Override
@@ -111,11 +86,10 @@ public class AccountServiceImpl implements AccountService {
     public UserRoleResponse deleteById(String id) {
         Account account = findById(id);
         accountJpaRepository.delete(account);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
     //아이디가 존재하는 지 확인
     @Override
-    @Transactional(readOnly = true)
     public boolean existId(String id) {
         try{
             Account account = findById(id);
@@ -124,9 +98,8 @@ public class AccountServiceImpl implements AccountService {
             return true;
         }
     }
-    //포인트 이름 반환
+    //포인트, 이름 반환
     @Override
-    @Transactional(readOnly = true)
     public UserPointResponse readPointBySq(Long sq) {
         Account account = findBySq(sq);
         return accountMapper.entityToPointResponse(account);
@@ -134,7 +107,6 @@ public class AccountServiceImpl implements AccountService {
 
     //유저에 연결된 회사 시퀸스 넘버 반환
     @Override
-    @Transactional(readOnly = true)
     public UserCompanyResponse readCompanyBySq(Long sq) {
         Account account = findBySq(sq);
         if(account.getRole() == UserRole.COMPANY) {
@@ -144,30 +116,56 @@ public class AccountServiceImpl implements AccountService {
             return null;
         }
     }
-
+    //포인트 증가
     @Override
     @Transactional
     public UserRoleResponse increasePoint(Long sq, Long point) {
         Account account = findBySq(sq);
         account.increasePoint(point);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
-
+    //포인트 감소
     @Override
     @Transactional
     public UserRoleResponse decreasePoint(Long sq, Long point) {
         Account account = findBySq(sq);
         account.decreasePoint(point);
-        return accountMapper.entityToSummaryResponse(account);
+        return accountMapper.entityToRoleResponse(account);
     }
 
     //sq로 UserRole 수정
     @Override
     @Transactional
-    public UserRoleResponse updateUserRoleBySq(Long sq, UserRole role) {
+    public void grantCompany(Long sq) {
         Account account = findBySq(sq);
-        account.setRole(role);
-        return accountMapper.entityToSummaryResponse(account);
+        account.setRole(UserRole.COMPANY);
     }
+    //회사 주입
+    @Override
+    @Transactional
+    public UserRoleResponse joinCompany(Long userSq, Company company, UserRole role) {
+        Account account = findBySq(userSq);
+        account.joinCompany(company, role);
+        return accountMapper.entityToRoleResponse(account);
+    }
+    //회사 탈퇴
+    @Override
+    @Transactional
+    public UserRoleResponse leaveCompany(Long userSq) {
+        Account account = findBySq(userSq);
+        account.leaveCompany();
+        account.setRole(UserRole.USER);
+        return accountMapper.entityToRoleResponse(account);
+    }
+    //회사에서 company = {companySq} 가입된 유저를 검색할 때 사용
+    @Override
+    public List<UserRoleResponse> readCompanyMember(Long companySq) {
+        return accountJpaRepository.findByCompany_Sq(companySq)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("companySq = " + companySq + " Member is not found"))
+                .stream()
+                .map(i -> accountMapper.entityToRoleResponse(i))
+                .toList();
 
+    }
 }

@@ -1,7 +1,7 @@
 package io.why503.accountservice.domain.auth.controller;
 
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
+import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ public class LoginController {
     //회원가입
     @PostMapping("/sign-up")
     public ResponseEntity<UserRoleResponse> signUp(
-            @RequestBody UpsertAccountRequest request
+            @RequestBody CreateAccountRequest request
     ){
         UserRoleResponse savedAccount = accountService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)

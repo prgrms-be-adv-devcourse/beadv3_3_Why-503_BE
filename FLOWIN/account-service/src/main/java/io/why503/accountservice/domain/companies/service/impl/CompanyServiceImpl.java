@@ -6,46 +6,53 @@
  */
 package io.why503.accountservice.domain.companies.service.impl;
 
-import io.why503.accountservice.domain.accounts.model.entity.Account;
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
-import io.why503.accountservice.domain.companies.model.dto.response.CompanyResponse;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.repository.CompanyRepository;
 import io.why503.accountservice.domain.companies.service.CompanyService;
-import io.why503.accountservice.util.CompanyMapper;
-import jakarta.persistence.EntityManager;
+import io.why503.accountservice.domain.companies.util.CompanyMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class CompanyServiceImpl implements CompanyService {
 
+    private final AccountService accountService;
     private final CompanyRepository companyRepository;// 회사 Entity DB 접근 Repository
     private final CompanyMapper companyMapper;
-    private final EntityManager em;
 
+    //내부 중복 간소화 메소드
+    private Company findBySq(Long sq){
+        return companyRepository.findBySq(sq)
+                .orElseThrow(() -> new IllegalArgumentException("회사 정보를 찾을 수 없습니다.")
+                ); // 회사 미존재 시 예외 처리
+    }
     /*
-    생성할 때 무조건 어차피 개인이 생성하니까 그대로 개인과 연결
+    생성할 때 생성한 유저의 외래키에 company삽입
      */
     @Override
+    @Transactional
     public void registerCompany(Long userSq, CompanyRequest request) {
-        // 회사 Entity 생성
-        Company company = new Company(em.getReference(Account.class, userSq), companyMapper.ReqDtoToCmd(request));
+        Company company = companyMapper.RequestToEntity(request);// 회사 Entity 생성
         companyRepository.save(company);// 회사 정보 DB 저장
+        accountService.joinCompany(userSq, company, UserRole.COMPANY); //회사 주입
     }
 
+    @Override // 조회 전용 트랜잭션
+    public CompanySummaryResponse getCompanyBySq(Long sq) {
+
+        Company company = findBySq(sq);
+        return companyMapper.EntityToSummaryResponse(company); // Entity → Response DTO 변환 후 반환
+    }
+    //엔티티 반환, 내부 통신용
     @Override
-    @Transactional(readOnly = true) // 조회 전용 트랜잭션
-    public CompanyResponse getCompanyByCompanySq(Long companySq) {
-
-        Company company = companyRepository.findById(companySq)
-                .orElseThrow(() -> new IllegalArgumentException("회사 정보를 찾을 수 없습니다.")); // 회사 미존재 시 예외 처리
-
-        return companyMapper.EttToResDto(company); // Entity → Response DTO 변환 후 반환
+    public Company readCompanyBySq(Long sq) {
+        return findBySq(sq);
     }
-
 }

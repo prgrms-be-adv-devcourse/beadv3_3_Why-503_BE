@@ -1,8 +1,7 @@
 package io.why503.accountservice.domain.auth.service.impl;
 
-
 import io.why503.accountservice.domain.auth.model.dto.AccountDetails;
-import io.why503.accountservice.util.AccountMapper;
+import io.why503.accountservice.domain.accounts.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.accounts.repository.AccountJpaRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +29,4 @@ public class AccountDetailsSvImpl implements UserDetailsService {
         );
         return accountMapper.entityToDetail(account);
     }
-
 }

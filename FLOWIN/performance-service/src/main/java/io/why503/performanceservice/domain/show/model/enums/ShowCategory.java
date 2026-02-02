@@ -26,7 +26,7 @@ public enum ShowCategory {
      * 코드 값 기반 ShowCategory 변환
      *
      * 사용 위치 :
-     * - ShowReqDto에서 전달받은 category 값 변환 시 사용
+     * - ShowReqDto에서 전달받은 showCategory 값 변환 시 사용
      *
      * @param code 카테고리 코드
      * @return ShowCategory Enum
@@ -38,6 +38,6 @@ public enum ShowCategory {
                 return value;
             }
         }
-        throw new IllegalArgumentException("invalid show category code: " + code);
+        throw new IllegalArgumentException("invalid showRequest showCategory code: " + code);
     }
 }

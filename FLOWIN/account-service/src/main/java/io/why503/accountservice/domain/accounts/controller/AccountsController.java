@@ -1,33 +1,34 @@
 package io.why503.accountservice.domain.accounts.controller;
 
 
+import io.why503.accountbase.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.dto.requests.PointUseRequest;
-import io.why503.accountservice.domain.accounts.model.dto.requests.UpsertAccountRequest;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
+import io.why503.accountservice.domain.accounts.model.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.companies.model.entity.Company;
+import io.why503.accountservice.domain.companies.service.CompanyService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
-// HATEOAS
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/accounts")
 public class AccountsController {
 
     private final AccountService accountService;
+
+    private final CompanyService companyService;
     //생성
     @PostMapping
     public ResponseEntity<UserRoleResponse> create(
-            @RequestBody UpsertAccountRequest request
+            @RequestBody CreateAccountRequest request
     ){
         UserRoleResponse savedAccount = accountService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -76,26 +77,25 @@ public class AccountsController {
         }
         return ResponseEntity.ok(foundCompanySq);
     }
-
-
-    //sq기준 수정
-    @PatchMapping("/sq/{sq}")
-    public ResponseEntity<UserRoleResponse> updateBySq(
-            @PathVariable Long sq,
-            @RequestBody UpsertAccountRequest request
+    //회사 가입(이걸로 가입하면 무조건 STAFF)
+    @PatchMapping("/company/join/{companySq}")
+    public ResponseEntity<UserRoleResponse> joinCompany(
+            @PathVariable Long companySq,
+            @RequestHeader("X-USER-SQ") Long userSq
     ){
-        UserRoleResponse updatedAccount = accountService.updateBySq(sq, request);
-        return ResponseEntity.ok(updatedAccount);
+        Company company = companyService.readCompanyBySq(companySq);
+        UserRoleResponse response = accountService.joinCompany(userSq, company, UserRole.STAFF);
+        return ResponseEntity.ok(response);
     }
-    //id기준 수정
-    @PatchMapping("/id/{id}")
-    public ResponseEntity<UserRoleResponse> updateById(
-            @PathVariable String id,
-            @RequestBody UpsertAccountRequest request
+    //회사 탈퇴
+    @PatchMapping("/company/leave")
+    public ResponseEntity<UserRoleResponse> leaveCompany(
+            @RequestHeader("X-USER-SQ") Long userSq
     ){
-        UserRoleResponse updatedAccount = accountService.updateById(id, request);
-        return ResponseEntity.ok(updatedAccount);
+        UserRoleResponse response = accountService.leaveCompany(userSq);
+        return ResponseEntity.ok(response);
     }
+
     //point 증가
     @PostMapping("/point/increase/{sq}")
     public ResponseEntity<UserRoleResponse> increasePoint(
@@ -123,7 +123,6 @@ public class AccountsController {
         UserRoleResponse deletedAccount = accountService.deleteBySq(sq);
         return ResponseEntity.ok(deletedAccount);
     }
-
 
     //id기준 삭제
     @DeleteMapping("/id/{id}")

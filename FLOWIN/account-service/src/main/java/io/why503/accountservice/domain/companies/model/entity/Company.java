@@ -7,10 +7,9 @@
 package io.why503.accountservice.domain.companies.model.entity;
 
 import io.why503.accountservice.common.model.entity.BasicEntity;
-import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.companies.model.enums.CompanyBank;
-import io.why503.accountservice.domain.companies.model.dto.vo.CompanyVo;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,13 +20,6 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class Company extends BasicEntity {
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_sq",
-            nullable = false,
-            unique = true
-    )
-    private Account owner;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "bank", nullable = false)
@@ -42,22 +34,34 @@ public class Company extends BasicEntity {
     @Column(name = "amount", nullable = false)
     private Long amount = 0L;
 
-    @Column(name = "amount_date", nullable = false)
-    private LocalDateTime amountDate;
+    @Column(name = "amount_dt", nullable = false)
+    private LocalDateTime amountDt;
 
-    public Company(Account owner, CompanyVo vo) {
-        this.owner = owner;
-        this.bank = vo.companyBank();
-        this.accountNumber = vo.accountNumber();
-        this.name = vo.companyName();
-        this.ownerName = vo.ownerName();
-        this.phone = vo.companyPhone();
-        this.email = vo.companyEmail();
-        this.basicAddr = vo.companyBasicAddr();
-        this.detailAddr = vo.companyDetailAddr();
-        this.post = vo.companyPost();
-        this.amountDate = LocalDateTime.now();      //교체 예정
+    @Builder
+    public Company(
+            CompanyBank bank,
+            String accountNumber,
+            String name,
+            String ownerName,
+            String phone,
+            String email,
+            String basicAddr,
+            String detailAddr,
+            String post,
+            LocalDateTime amountDt
+    ){
+        this.bank = bank;
+        this.accountNumber = accountNumber;
+        this.name = name;
+        this.ownerName = ownerName;
+        this.phone = phone;
+        this.email = email;
+        this.basicAddr = basicAddr;
+        this.detailAddr = detailAddr;
+        this.post = post;
+        this.amountDt = amountDt;
     }
+
     public void increaseAmount(Long increase){
         this.amount += increase;
     }

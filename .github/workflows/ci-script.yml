@@ -55,7 +55,7 @@ jobs:
         run: |
           mkdir -p ./FLOWIN/payment-service/src/main/resources
           echo '${{ secrets.PAYMENT_TEST_YML }}' > ./FLOWIN/payment-service/src/main/resources/application.yml
-          mkdir -p ./FLOWIN/gateway-service/src/test/resources
+          mkdir -p ./FLOWIN/payment-service/src/test/resources
           echo '${{ secrets.PAYMENT_TEST_YML }}' > ./FLOWIN/payment-service/src/test/resources/application-test.yml
 
 #      - 최상위 폴더에 스프링 구축 시 해결 됨. 현재는 없음.

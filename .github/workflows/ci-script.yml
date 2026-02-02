@@ -51,7 +51,7 @@ jobs:
           echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/test/resources/public-key-test.pem
 
       - name: payment test yml pem 세팅
-        if: ${{ inputs.service-type == 'payment-service' }}
+        if: ${{ inputs.service-name == 'payment-service' }}
         run: |
           mkdir -p ./FLOWIN/payment-service/src/main/resources
           echo '${{ secrets.PAYMENT_TEST_YML }}' > ./FLOWIN/payment-service/src/main/resources/application.yml

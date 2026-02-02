@@ -30,28 +30,28 @@ public interface SeatRepository extends JpaRepository<SeatEntity, Long> {
      * 공연장 기준 좌석 전체 조회
      * - 정렬 기준: 구역(seat_area) → 구역 내 좌석번호(area_seat_no)
      */
-    List<SeatEntity> findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(
-            Long concertHallSq
+    List<SeatEntity> findAllByHallSqOrderByAreaAscNumInAreaAsc(
+            Long hallSq
     );
 
     /**
      * 공연장 + 구역 + 구역 내 좌석번호 기준 좌석 존재 여부 확인
      * - 좌석 중복 생성 방지 보조용
      */
-    boolean existsByConcertHall_SqAndAreaAndNumInArea(
-            Long concertHallSq,
+    boolean existsByHallSqAndAreaAndNumInArea(
+            Long hallSq,
             String seatArea,
-            Integer areaSeatNo
+            Integer numInArea
     );
 
     /**
      * 공연장 기준 좌석 개수 조회
      * - 좌석 초기 생성 여부 검증 / 관리용
      */
-    long countByConcertHall_Sq(Long concertHallSq);
+    long countByHallSq(Long hallSq);
     
-    List<SeatEntity> findByConcertHall_SqAndArea(
-        Long concertHallSq,
+    List<SeatEntity> findByHall_SqAndArea(
+        Long hallSq,
         String seatArea
         );
 

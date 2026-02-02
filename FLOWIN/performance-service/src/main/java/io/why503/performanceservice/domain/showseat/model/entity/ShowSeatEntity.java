@@ -22,7 +22,7 @@ public class ShowSeatEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "show_seat_sq")
+    @Column(name = "sq")
     private Long sq;
 
     @Enumerated(EnumType.STRING)

@@ -16,9 +16,9 @@ public class RoundMapper {
     public RoundEntity dtoToEntity(RoundRequest request, ShowEntity showEntity, Integer calculatedNo) {
         return RoundEntity.builder()
                 .show(showEntity)
-                .dateTime(request.roundDt())
+                .startDt(request.roundDt())
                 .num(calculatedNo)
-                .cast(request.roundCast())
+                .casting(request.roundCast())
                 .status(request.roundStatus())
                 .build();
     }
@@ -28,9 +28,9 @@ public class RoundMapper {
         return new RoundResponse(
                 entity.getSq(),
                 entity.getShow().getSq(),
-                entity.getDateTime(),
+                entity.getStartDt(),
                 entity.getNum(),
-                entity.getCast(),
+                entity.getCasting(),
                 entity.getStatus().getDescription(),
                 entity.getStatus()
         );

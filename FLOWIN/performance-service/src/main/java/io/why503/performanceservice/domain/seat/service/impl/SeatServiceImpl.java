@@ -1,16 +1,17 @@
 package io.why503.performanceservice.domain.seat.service.impl;
 
-import io.why503.performanceservice.domain.concerthall.model.entity.ConcertHallEntity;
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.seat.model.dto.response.SeatResponse;
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.service.SeatService;
+import io.why503.performanceservice.global.error.ErrorCode;
+import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.util.mapper.SeatMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,16 +24,16 @@ import java.util.List;
 @RequiredArgsConstructor(access = AccessLevel.PUBLIC)
 public class SeatServiceImpl implements SeatService {
 
-    private final SeatRepository seatRepo;
+    private final SeatRepository seatRepository;
     private final SeatMapper seatMapper;
 
-    private List<SeatEntity> findByConcertHall(Long concertHallSq) {
-        return seatRepo.findAllByConcertHall_SqOrderByAreaAscNumInAreaAsc(concertHallSq);
+    private List<SeatEntity> findByHall(Long hallSq) {
+        return seatRepository.findAllByHallSqOrderByAreaAscNumInAreaAsc(hallSq);
     }
 
     @Override
-    public List<SeatResponse> readByConcertHall(Long concertHallSq) {
-        return findByConcertHall(concertHallSq).stream()
+    public List<SeatResponse> readByHall(Long hallSq) {
+        return findByHall(hallSq).stream()
                 .map(i -> seatMapper.entityToResponse(i))
                 .toList();
     }
@@ -43,7 +44,7 @@ public class SeatServiceImpl implements SeatService {
     @Override
     @Transactional
     public void createCustomSeats(
-            ConcertHallEntity concertHall,
+            HallEntity hall,
             List<SeatAreaCreateVo> areaCreateVos
     ) {
         List<SeatEntity> seats = new ArrayList<>();
@@ -58,17 +59,12 @@ public class SeatServiceImpl implements SeatService {
                         .num(globalSeatNo++)
                         .area(vo.seatArea())
                         .numInArea(num)
-                        .concertHall(concertHall)
+                        .hall(hall)
                         .build());
             }
         }
 
-        try {
-            seatRepo.saveAll(seats);
-        } catch (DataIntegrityViolationException e) {
-            log.error("커스텀 좌석 생성 중 중복 오류 발생", e);
-            throw e;
-        }
+        seatRepository.saveAll(seats);
     }
 
     /* =======================
@@ -77,11 +73,9 @@ public class SeatServiceImpl implements SeatService {
 
     private void validateAreaVo(SeatAreaCreateVo vo) {
         if (vo.seatArea() == null || vo.seatArea().isBlank()) {
-            throw new IllegalArgumentException("seatArea is required");
-        }
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);        }
 
         if (vo.seatCount() <= 0) {
-            throw new IllegalArgumentException("seatCount must be greater than 0");
-        }
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);        }
     }
 }

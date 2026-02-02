@@ -10,6 +10,7 @@
  */
 package io.why503.performanceservice.domain.show.model.entity;
 
+import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,37 +29,38 @@ public class ShowEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "show_sq")
+    @Column(name = "sq")
     private Long sq;               // 공연 시퀀스 (PK)
 
-    @Column(name = "show_name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;           // 공연명
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDateTime startDate;   // 공연 시작일
+    @Column(name = "start_dt", nullable = false)
+    private LocalDateTime startDt;   // 공연 시작일
 
-    @Column(name = "end_date", nullable = false)
-    private LocalDateTime endDate;     // 공연 종료일
+    @Column(name = "end_dt", nullable = false)
+    private LocalDateTime endDt;     // 공연 종료일
 
     @Column(name = "open_dt", nullable = false)
-    private LocalDateTime openDate;      // 티켓 오픈 일시
+    private LocalDateTime openDt;      // 티켓 오픈 일시
 
-    @Column(name = "show_time", nullable = false, length = 50)
+    @Column(name = "running_time", nullable = false, length = 50)
     private String runningTime;           // 러닝타임
 
     @Column(name = "viewing_age", nullable = false, length = 20)
     private String viewingAge;         // 관람 등급
 
-    // ===== Enum 값은 DB에 int 코드로 저장 =====
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false)
-    private int category;              // 공연 카테고리 코드
+    private ShowCategory category;              // 공연 카테고리 코드
 
-    @Column(name = "show_stat", nullable = false)
-    private int status;              // 공연 상태 코드
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ShowStatus status;              // 공연 상태 코드
 
-    @Column(name = "concert_hall_sq", nullable = false)
-    private Long concertHallSq;        // 공연장 식별자 (FK)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hall_sq", nullable = false)
+    private HallEntity hall;        // 공연장 식별자 (FK)
 
     @Column(name = "company_sq", nullable = false)
     private Long companySq;             // 회사 식별자 (FK)
@@ -66,45 +68,30 @@ public class ShowEntity {
     @Builder
     public ShowEntity(
             String name,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            LocalDateTime openDate,
+            LocalDateTime startDt,
+            LocalDateTime endDt,
+            LocalDateTime openDt,
             String runningTime,
             String viewingAge,
-            int category,
-            Long concertHallSq,
+            ShowCategory category, // int category -> ShowCategory category
+            HallEntity hall,
             Long companySq) {
         this.name = name;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.openDate = openDate;
+        this.startDt = startDt;
+        this.endDt = endDt;
+        this.openDt = openDt;
         this.runningTime = runningTime;
         this.viewingAge = viewingAge;
         this.category = category;
-        this.status = ShowStatus.SCHEDULED.getCode();
-        this.concertHallSq = concertHallSq;
+        this.status = ShowStatus.SCHEDULED; // 기본값 설정 (Enum 직접 할당)
+        this.hall = hall;
         this.companySq = companySq;
     }
 
-// ===== Enum 변환 메서드 =====
+    // JPA가 알아서 변환해주고, Lombok @Getter가 값을 꺼내주므로
+    // getCategoryEnum(), getShowStatus(), setCategory() 등은 이제 필요 없음
 
-    //카테고리 코드 → Enum 변환
-    public ShowCategory getCategoryEnum() {
-        return ShowCategory.fromCode(this.category);
-    }
-
-    //공연 상태 코드 → Enum 변환
-    public ShowStatus getShowStatus() {
-        return ShowStatus.fromCode(this.status);
-    }
-
-    //카테고리 Enum → 코드 값 저장
-    public void setCategory(ShowCategory category) {
-        this.category = category.getCode();
-    }
-
-    //공연 상태 Enum → 코드 값 저장
-    public void setShowStatus(ShowStatus status) {
-        this.status = status.getCode();
+    public void changeStatus(ShowStatus newStatus) {
+        this.status = newStatus;
     }
 }

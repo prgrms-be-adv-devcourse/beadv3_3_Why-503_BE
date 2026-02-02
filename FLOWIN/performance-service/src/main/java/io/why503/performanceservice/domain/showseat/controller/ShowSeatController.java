@@ -8,6 +8,8 @@
  */
 package io.why503.performanceservice.domain.showseat.controller;
 
+import io.why503.performanceservice.domain.showseat.model.dto.response.ShowSeatResponse;
+import io.why503.performanceservice.util.mapper.ShowSeatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,16 +28,21 @@ import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 public class ShowSeatController {
 
     private final ShowSeatService showSeatService;
-
+    private final ShowSeatMapper showSeatMapper;
     /**
-     * 공연별 좌석 정책 조회
+     * 공연별 좌석 등급/가격 조회
      */
     @GetMapping("/shows/{showSq}")
-    public ResponseEntity<List<ShowSeatEntity>> getByShow(
+    // [변경] 반환 타입: Entity -> Response DTO
+    public ResponseEntity<List<ShowSeatResponse>> getByShow(
             @PathVariable Long showSq
     ) {
+        // Service에서 Entity 리스트를 가져옴
+        List<ShowSeatEntity> entities = showSeatService.getByShow(showSq);
+
+        // [변경] Mapper를 통해 DTO로 변환하여 반환
         return ResponseEntity.ok(
-                showSeatService.getByShow(showSq)
+                showSeatMapper.entityListToResponseList(entities)
         );
     }
 

@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record RoundRequest(
-        @NotBlank Long showSq,
+        @NotNull Long showSq,
         @NotNull LocalDateTime roundDt,
         @NotBlank String roundCast,
         @NotNull RoundStatus roundStatus

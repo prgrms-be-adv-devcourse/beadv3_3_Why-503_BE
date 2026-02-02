@@ -1,147 +1,27 @@
 package io.why503.performanceservice.domain.round.service;
 
-import io.why503.performanceservice.domain.show.service.ShowService;
-import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.domain.round.model.dto.request.RoundRequest;
 import io.why503.performanceservice.domain.round.model.dto.response.RoundResponse;
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
-import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
-import io.why503.performanceservice.domain.round.repository.RoundRepository;
-import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
-import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
-import io.why503.performanceservice.global.client.accountservice.dto.UserRoleResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class RoundService {
 
-    private final RoundRepository roundRepository;
-    private final RoundMapper roundMapper;
-    private final AccountServiceClient accountServiceClient;
-    private final ShowService showService;
-
-
-
-    //회차 엔티티 조회 및 예외 처리
-    private RoundEntity findRoundBySq(Long roundSq) {
-        return roundRepository.findById(roundSq)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 회차를 찾을 수 없습니다."));
-    }
-
-
-    //기업 여부 확인
-    private void validateAdminRole(Long userSq) {
-        UserRoleResponse roleResponse = accountServiceClient.getUserRole(userSq);
-        if (roleResponse == null || roleResponse.userRole() != 2) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "기업 권한이 필요합니다.");
-        }
-    }
+public interface RoundService {
 
     //회차 생성
-    @Transactional
-    public RoundResponse createRound(Long userSq,RoundRequest request) {
+    RoundResponse createRound(Long userSq, RoundRequest request);
 
-        validateAdminRole(userSq);
+    //특정 공연의 모든 회차 조회
+    //예매 가능 여부와 상관없이 해당 공연의 전체 스케줄 확인
+    List<RoundResponse> getRoundListByShow(Long userSq, Long showSq);
 
-        ShowEntity show = showService.findShowBySq(request.showSq());
+    //예매 가능한 회차만 조회
+    List<RoundResponse> getAvailableRoundList(Long showSq);
 
-        //초기 생성 시엔 상태가 예매 가능이여야만 함
-        if (request.roundStatus() != RoundStatus.AVAILABLE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "회차 생성 시 상태는 '예매가능(AVAILABLE)'만 가능합니다.");
-        }
-
-        // 레포지토리 조회 시 showRequest 객체 전달
-        if (roundRepository.existsByShowAndDateTime(show, request.roundDt())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 해당 시간에 등록된 회차가 존재합니다.");
-        }
-
-        // 날짜 범위 계산
-        LocalDateTime targetDateTime = request.roundDt();
-        LocalDate targetDate = targetDateTime.toLocalDate();
-        LocalDateTime startOfDay = targetDate.atStartOfDay();
-        LocalDateTime endOfDay = targetDate.atTime(LocalTime.MAX);
-
-        // 해당 날짜의 기존 회차 리스트 조회
-        List<RoundEntity> roundList = roundRepository.findAllByShowAndDateTimeBetween(show, startOfDay, endOfDay);
-        // 새 회차 엔티티 생성 (번호는 0이나 임시값으로 생성)
-        RoundEntity newEntity = roundMapper.dtoToEntity(request, show, 0);
-        // 리스트에 새 회차 추가
-        roundList.add(newEntity);
-
-        // 리스트 내부의 회차들을 시간(RoundDt) 순서대로 오름차순 정렬
-        roundList.sort((r1, r2) -> r1.getDateTime().compareTo(r2.getDateTime()));
-
-        // 정렬된 순서대로 회차 번호(roundNum) 다시 부여 (1번부터 시작)
-        for (int i = 0; i < roundList.size(); i++) {
-            roundList.get(i).updateRoundNum(i + 1);
-        }
-
-        //일괄 저장 (기존 엔티티는 Update, 새 엔티티는 Insert 됨)
-        roundRepository.saveAll(roundList);
-
-        return roundMapper.entityToDto(newEntity);
-    }
-
-    /**
-     * 특정 공연의 모든 회차 조회 (관리자, 기업회원용)
-     * - 예매 가능 여부와 상관없이, 해당 공연의 전체 스케줄을 확인할 때 사용
-     */
-    public List<RoundResponse> getRoundListByShow(Long userSq, Long showSq) {
-
-        validateAdminRole(userSq);
-
-        ShowEntity show = showService.findShowBySq(showSq);
-
-        //DB에서 리스트를 꺼냄
-        List<RoundEntity> entities = roundRepository.findByShow(show);
-
-        return roundMapper.entityListToDtoList(entities);
-    }
-
-    /**
-     * 특정 공연의 예매 가능한 회차만 조회 (User 용)
-     * - 사용자가 예매를 위해 날짜/회차를 선택할 때 사용
-     * - 예매 종료나 취소된 회차는 제외
-     */
-    public List<RoundResponse> getAvailableRoundList(Long showSq) {
-        ShowEntity show = showService.findShowBySq(showSq);
-        // DB에서 예매가능 상태인 것만 꺼냄
-        List<RoundEntity> entities = roundRepository.findByShowAndStatus(show, RoundStatus.AVAILABLE);
-
-        return roundMapper.entityListToDtoList(entities);
-    }
-
-    /**
-     * 회차 단건 상세 조회
-     * - 특정 회차의 상세 정보를 보여줌
-     * - 결제 전 최종 확인 페이지나, 좌석 선택 진입 전 정보 확인에 사용
-     * - 데이터가 없으면 404 Not Found 에러를 발생
-     */
-    public RoundResponse getRoundDetail(Long roundSq) {
-        return roundMapper.entityToDto(findRoundBySq(roundSq));
-    }
+    //회차 단건 상세 조회
+    RoundResponse getRoundDetail(Long roundSq);
 
     //회차 상태 변경
-    @Transactional
-    public RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus) {
+    RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus);
 
-        validateAdminRole(userSq);
-
-        RoundEntity entity = findRoundBySq(roundSq);
-
-        entity.updateStat(newStatus);
-
-        return roundMapper.entityToDto(entity);
-    }
 }

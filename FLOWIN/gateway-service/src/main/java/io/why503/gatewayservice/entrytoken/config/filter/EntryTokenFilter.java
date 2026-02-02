@@ -1,21 +1,13 @@
 package io.why503.gatewayservice.entrytoken.config.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.why503.gatewayservice.queue.model.dto.QueueRejectResponseBody;
 import io.why503.gatewayservice.entrytoken.exception.EntryTokenRequiredException;
 import io.why503.gatewayservice.entrytoken.exception.InvalidEntryRequestException;
 import io.why503.gatewayservice.entrytoken.service.EntryTokenValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
 
 /**
  * Queue 통과 후 발급받은 EntryToken이 없으면 예매 API 접근 차단

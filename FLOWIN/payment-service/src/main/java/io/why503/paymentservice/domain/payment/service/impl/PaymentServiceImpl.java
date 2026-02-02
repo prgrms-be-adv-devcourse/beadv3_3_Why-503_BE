@@ -121,15 +121,9 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalStateException("좌석 확정 실패. 결제 취소됨.");
         }
 
-        Payment payment = Payment.builder()
-                .userSq(userSq)
-                .orderId(request.orderId())
-                .refType(PaymentRefType.BOOKING)
-                .method(method)
-                .totalAmount(request.amount())
-                .pgAmount(pgAmount)
-                .pointAmount(usePoint)
-                .build();
+        Payment payment = paymentMapper.responseToBookingEntity(
+                userSq, request.orderId(), method, request.amount(), pgAmount, usePoint
+        );
 
         payment.approve(approvedPgKey);
         booking.confirm();
@@ -161,15 +155,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         accountClient.increasePoint(userSq, new PointUseRequest(point.getChargeAmount()));
 
-        Payment payment = Payment.builder()
-                .userSq(userSq)
-                .orderId(request.orderId())
-                .refType(PaymentRefType.POINT)
-                .method(PaymentMethod.CARD)
-                .totalAmount(request.amount())
-                .pgAmount(request.amount())
-                .pointAmount(0L)
-                .build();
+        Payment payment = paymentMapper.responseToPointEntity(userSq, request.orderId(), request.amount());
 
         payment.approve(approvedPgKey);
         point.complete();

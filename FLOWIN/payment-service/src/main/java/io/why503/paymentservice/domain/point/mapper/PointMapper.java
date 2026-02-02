@@ -25,4 +25,12 @@ public class PointMapper {
                 point.getCreatedDt()
         );
     }
+
+    public Point responseToEntity(Long userSq, String orderId, Long chargeAmount) {
+        return Point.builder()
+                .userSq(userSq)
+                .orderId(orderId)
+                .chargeAmount(chargeAmount)
+                .build();
+    }
 }

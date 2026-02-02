@@ -2,6 +2,8 @@ package io.why503.paymentservice.domain.payment.mapper;
 
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
+import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
+import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,5 +33,29 @@ public class PaymentMapper {
                 payment.getCanceledDt(),
                 payment.getCreatedDt()
         );
+    }
+
+    public Payment responseToBookingEntity(Long userSq, String orderId, PaymentMethod method, Long totalAmount, Long pgAmount, Long pointAmount) {
+        return Payment.builder()
+                .userSq(userSq)
+                .orderId(orderId)
+                .refType(PaymentRefType.BOOKING)
+                .method(method)
+                .totalAmount(totalAmount)
+                .pgAmount(pgAmount)
+                .pointAmount(pointAmount)
+                .build();
+    }
+
+    public Payment responseToPointEntity(Long userSq, String orderId, Long amount) {
+        return Payment.builder()
+                .userSq(userSq)
+                .orderId(orderId)
+                .refType(PaymentRefType.POINT)
+                .method(PaymentMethod.CARD)
+                .totalAmount(amount)
+                .pgAmount(amount)
+                .pointAmount(0L)
+                .build();
     }
 }

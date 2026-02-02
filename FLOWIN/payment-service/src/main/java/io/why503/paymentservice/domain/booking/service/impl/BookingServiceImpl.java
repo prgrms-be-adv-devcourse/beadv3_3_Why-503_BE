@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.booking.service.impl;
 
 import io.why503.paymentservice.domain.booking.mapper.BookingMapper;
+import io.why503.paymentservice.domain.booking.mapper.TicketMapper;
 import io.why503.paymentservice.domain.booking.model.dto.request.BookingRequest;
 import io.why503.paymentservice.domain.booking.model.dto.request.TicketRequest;
 import io.why503.paymentservice.domain.booking.model.dto.response.BookingResponse;
@@ -39,6 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final PerformanceClient performanceClient;
     private final BookingMapper bookingMapper;
+    private final TicketMapper ticketMapper;
 
     // 좌석 선점 처리 및 예매 정보 저장
     @Override
@@ -83,19 +85,7 @@ public class BookingServiceImpl implements BookingService {
             DiscountPolicy policy = DiscountPolicy.from(ticketReq.discountPolicy());
             long discountAmount = calculateDiscountAmount(seatInfo.price(), policy);
 
-            Ticket ticket = Ticket.builder()
-                    .booking(booking)
-                    .roundSeatSq(seatInfo.roundSeatSq())
-                    .showName(seatInfo.showName())
-                    .hallName(seatInfo.concertHallName())
-                    .roundDt(seatInfo.roundDateTime())
-                    .seatGrade(seatInfo.grade())
-                    .seatArea(seatInfo.seatArea())
-                    .seatAreaNum(seatInfo.areaSeatNum())
-                    .originalPrice(seatInfo.price())
-                    .discountPolicy(policy)
-                    .discountAmount(discountAmount)
-                    .build();
+            Ticket ticket = ticketMapper.responseToEntity(booking, seatInfo, policy, discountAmount);
 
             booking.addTicket(ticket);
         }

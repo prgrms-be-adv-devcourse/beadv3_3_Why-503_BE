@@ -55,15 +55,12 @@ public class GlobalExceptionHandler {
     // 에러 응답 객체 생성 및 반환
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String code, String message) {
         String finalMessage = message;
+        // Validation 에러 메시지가 너무 길거나 복잡할 경우 단순화
         if (message != null && message.contains("Field error")) {
             finalMessage = "입력값이 올바르지 않습니다.";
         }
 
         return ResponseEntity.status(status)
-                .body(ErrorResponse.builder()
-                        .success(false)
-                        .errorCode(code)
-                        .message(finalMessage)
-                        .build());
+                .body(new ErrorResponse(false, code, finalMessage));
     }
 }

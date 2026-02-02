@@ -1,7 +1,10 @@
 package io.why503.paymentservice.domain.booking.mapper;
 
 import io.why503.paymentservice.domain.booking.model.dto.response.TicketResponse;
+import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
+import io.why503.paymentservice.domain.booking.model.enums.DiscountPolicy;
+import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,5 +37,21 @@ public class TicketMapper {
                 ticket.getStatus().name(),
                 ticket.getStatus().getDescription()
         );
+    }
+
+    public Ticket responseToEntity(Booking booking, RoundSeatResponse seatInfo, DiscountPolicy policy, long discountAmount) {
+        return Ticket.builder()
+                .booking(booking)
+                .roundSeatSq(seatInfo.roundSeatSq())
+                .showName(seatInfo.showName())
+                .hallName(seatInfo.concertHallName())
+                .roundDt(seatInfo.roundDateTime())
+                .seatGrade(seatInfo.grade())
+                .seatArea(seatInfo.seatArea())
+                .seatAreaNum(seatInfo.areaSeatNum())
+                .originalPrice(seatInfo.price())
+                .discountPolicy(policy)
+                .discountAmount(discountAmount)
+                .build();
     }
 }

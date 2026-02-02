@@ -31,11 +31,7 @@ public class PointServiceImpl implements PointService {
     public PointResponse createPointCharge(Long userSq, PointRequest request) {
         String orderId = "POINT-" + UUID.randomUUID();
 
-        Point point = Point.builder()
-                .userSq(userSq)
-                .orderId(orderId)
-                .chargeAmount(request.chargeAmount())
-                .build();
+        Point point = pointMapper.responseToEntity(userSq, orderId, request.chargeAmount());
 
         Point savedPoint = pointRepository.save(point);
         return pointMapper.entityToResponse(savedPoint);

@@ -2,7 +2,6 @@ package io.why503.accountservice.domain.auth.config;
 
 import io.why503.accountservice.domain.auth.service.impl.AuthenticationSuccessHandlerImpl;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.round.model.dto.enumconverter;
 
-import io.why503.performanceservice.domain.round.model.dto.RoundStatus;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

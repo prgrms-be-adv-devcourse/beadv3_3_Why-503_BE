@@ -177,8 +177,7 @@ public class AiService {
 
     //출력에 빈 리스트를 받지 않기 위한 json에 불필요한 정보 지우기
     private String cleanJson(String content) {
-        if (content == null) return "";
-        String trimmed = content.trim();
+        if (content == null) return "{}";
         int start = content.indexOf("{");
         int end = content.lastIndexOf("}");
         return (start >= 0 && end > start) ? content.substring(start, end + 1) : "{}";
@@ -238,7 +237,7 @@ public class AiService {
                     1. 반드시 JSON만 출력한다.
                     2. category 값은 다음 중 하나만 사용한다:
                        MUSICAL, CONCERT, PLAY, CLASSIC (소문자 사용 금지)
-                    3. mood 값은 다음중 하나만 사용한다: 
+                    3. mood 값은 다음중 하나만 사용한다:
                         FANTASY, HORROR, ROMANCE, COMEDY, ACTION
                     4. summary, explanations, recommendations 외 다른 텍스트 금지
                     JSON은 ``` 같은 코드블록으로 감싸지 말고

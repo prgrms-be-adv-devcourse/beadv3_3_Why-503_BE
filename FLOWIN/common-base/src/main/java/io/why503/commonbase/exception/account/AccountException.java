@@ -10,4 +10,7 @@ public class AccountException extends CustomException {
     protected AccountException(String message, String code, HttpStatus status) {
         super(message, "AC-" + code, status);
     }
+    protected AccountException(Throwable cause, String code, HttpStatus status){
+        super(cause, "AC-" + code, status);
+    }
 }

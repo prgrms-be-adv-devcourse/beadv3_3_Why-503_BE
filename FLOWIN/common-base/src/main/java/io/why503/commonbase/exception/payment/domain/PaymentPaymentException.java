@@ -10,4 +10,7 @@ public class PaymentPaymentException extends PaymentException {
     public PaymentPaymentException(String message, HttpStatus status) {
         super(message, "PA-" + status.value(), status);
     }
+    public PaymentPaymentException(Throwable cause, HttpStatus status) {
+        super(cause, "PA-" + status.value(), status);
+    }
 }

@@ -10,4 +10,7 @@ public class PerformanceException extends CustomException {
     protected PerformanceException(String message, String code, HttpStatus status) {
         super(message, "PE-" + code, status);
     }
+    protected PerformanceException(Throwable cause, String code, HttpStatus status) {
+        super(cause, "PE-" + code, status);
+    }
 }

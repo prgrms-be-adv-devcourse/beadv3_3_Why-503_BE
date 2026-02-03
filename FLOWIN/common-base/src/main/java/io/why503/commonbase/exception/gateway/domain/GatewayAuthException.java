@@ -10,4 +10,7 @@ public class GatewayAuthException extends GatewayException {
     public GatewayAuthException(String message, HttpStatus status) {
         super(message, "AU-" + status.value(), status);
     }
+    public GatewayAuthException(Throwable cause, HttpStatus status) {
+        super(cause, "AU-" + status.value(), status);
+    }
 }

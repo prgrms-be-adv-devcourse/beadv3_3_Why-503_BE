@@ -2,6 +2,8 @@ package io.why503.accountservice;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,9 +20,5 @@ class AccountServiceApplicationTests {
     void contextLoads() {
     }
 
-    @Test
-    void http_printer(){
-        log.info(Integer.toString(HttpStatus.OK.value()));
-    }
 
 }

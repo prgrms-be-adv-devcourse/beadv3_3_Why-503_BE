@@ -10,4 +10,7 @@ public class GatewayQueueException extends GatewayException {
     public GatewayQueueException(String message, HttpStatus status) {
         super(message, "QU-" + status.value(), status);
     }
+    public GatewayQueueException(Throwable cause, HttpStatus status) {
+        super(cause, "QU-" + status.value(), status);
+    }
 }

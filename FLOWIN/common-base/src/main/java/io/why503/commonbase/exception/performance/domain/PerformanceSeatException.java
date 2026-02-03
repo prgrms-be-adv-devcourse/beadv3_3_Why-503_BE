@@ -10,4 +10,7 @@ public class PerformanceSeatException extends PerformanceException {
     public PerformanceSeatException(String message, HttpStatus status) {
         super(message, "SE-" + status.value(), status);
     }
+    public PerformanceSeatException(Throwable cause, HttpStatus status) {
+        super(cause, "SE-" + status.value(), status);
+    }
 }

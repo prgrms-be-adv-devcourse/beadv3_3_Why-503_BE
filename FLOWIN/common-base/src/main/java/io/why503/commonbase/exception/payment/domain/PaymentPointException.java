@@ -10,4 +10,7 @@ public class PaymentPointException extends PaymentException {
     public PaymentPointException(String message, HttpStatus status) {
         super(message, "PO-" + status.value(), status);
     }
+    public PaymentPointException(Throwable cause, HttpStatus status) {
+        super(cause, "PO-" + status.value(), status);
+    }
 }

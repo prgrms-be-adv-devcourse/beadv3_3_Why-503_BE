@@ -10,4 +10,7 @@ public class AccountAccountException extends AccountException {
     public AccountAccountException(String message, HttpStatus status) {
         super(message, "AC-" + status.value(), status);
     }
+    public AccountAccountException(Throwable cause, HttpStatus status) {
+        super(cause, "AC-" + status.value(), status);
+    }
 }

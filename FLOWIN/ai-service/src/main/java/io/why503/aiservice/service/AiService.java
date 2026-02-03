@@ -150,7 +150,7 @@ public class AiService {
         String query = topCategory.stream().map(category -> category.name()).collect(Collectors.joining(" "));
         SearchRequest searchRequest = SearchRequest.builder()
                 .query(query)
-                .topK(topCategory.size()) // 장르별 문서 가져오기
+                .topK(topCategory.size())
                 .build();
         return vectorStore.similaritySearch(searchRequest);
     }

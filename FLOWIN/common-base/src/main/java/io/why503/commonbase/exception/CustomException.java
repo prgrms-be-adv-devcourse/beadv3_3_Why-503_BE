@@ -1,5 +1,6 @@
 package io.why503.commonbase.exception;
 
+
 import org.springframework.http.HttpStatus;
 
 /**
@@ -8,9 +9,11 @@ import org.springframework.http.HttpStatus;
  */
 public abstract class CustomException extends RuntimeException{
     protected final String code;
-    protected CustomException(String message, String code) {
+    protected final HttpStatus status;
+    protected CustomException(String message, String code, HttpStatus status) {
         super(message);
         this.code = code;
+        this.status = status;
     }
     public String getCode(){
         return code;

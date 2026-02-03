@@ -17,18 +17,12 @@ public final class AccountFactory {
     private AccountFactory(){}
 
     public static CustomException accountException(String message, HttpStatus status){
-        return new AccountAccountException(
-                message, Integer.toString(status.value())
-        );
+        return new AccountAccountException(message, status);
     }
     public static CustomException companyException(String message, HttpStatus status){
-        return new AccountCompanyException(
-                message, Integer.toString(status.value())
-        );
+        return new AccountCompanyException(message, status);
     }
     public static CustomException authException(String message, HttpStatus status){
-        return new AccountAuthException(
-                message, Integer.toString(status.value())
-        );
+        return new AccountAuthException(message, status);
     }
 }

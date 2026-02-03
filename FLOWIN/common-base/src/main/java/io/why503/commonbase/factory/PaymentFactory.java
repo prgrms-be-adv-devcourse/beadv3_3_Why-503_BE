@@ -1,8 +1,6 @@
 package io.why503.commonbase.factory;
 
 import io.why503.commonbase.exception.CustomException;
-import io.why503.commonbase.exception.gateway.domain.GatewayAuthException;
-import io.why503.commonbase.exception.gateway.domain.GatewayQueueException;
 import io.why503.commonbase.exception.payment.domain.PaymentBookingException;
 import io.why503.commonbase.exception.payment.domain.PaymentPaymentException;
 import io.why503.commonbase.exception.payment.domain.PaymentPointException;
@@ -19,18 +17,12 @@ public final class PaymentFactory {
     private PaymentFactory(){}
 
     public static CustomException paymentException(String message, HttpStatus status){
-        return new PaymentPaymentException(
-                message, Integer.toString(status.value())
-        );
+        return new PaymentPaymentException(message, status);
     }
     public static CustomException bookingException(String message, HttpStatus status){
-        return new PaymentBookingException(
-                message, Integer.toString(status.value())
-        );
+        return new PaymentBookingException(message, status);
     }
     public static CustomException pointException(String message, HttpStatus status){
-        return new PaymentPointException(
-                message, Integer.toString(status.value())
-        );
+        return new PaymentPointException(message, status);
     }
 }

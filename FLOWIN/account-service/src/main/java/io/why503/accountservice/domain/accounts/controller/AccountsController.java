@@ -10,6 +10,7 @@ import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.service.CompanyService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class AccountsController {
     //생성
     @PostMapping
     public ResponseEntity<UserRoleResponse> create(
-            @RequestBody CreateAccountRequest request
+            @RequestBody @Valid CreateAccountRequest request
     ){
         UserRoleResponse savedAccount = accountService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -100,7 +101,7 @@ public class AccountsController {
     @PostMapping("/point/increase/{sq}")
     public ResponseEntity<UserRoleResponse> increasePoint(
             @PathVariable Long sq,
-            @RequestBody PointUseRequest request
+            @RequestBody @Valid PointUseRequest request
     ){
         UserRoleResponse updatedAccount = accountService.increasePoint(sq, request.amount());
         return ResponseEntity.ok(updatedAccount);
@@ -109,7 +110,7 @@ public class AccountsController {
     @PostMapping("/point/decrease/{sq}")
     public ResponseEntity<UserRoleResponse> decreasePoint(
             @PathVariable Long sq,
-            @RequestBody PointUseRequest request
+            @RequestBody @Valid PointUseRequest request
     ){
         UserRoleResponse updatedAccount = accountService.decreasePoint(sq, request.amount());
         return ResponseEntity.ok(updatedAccount);

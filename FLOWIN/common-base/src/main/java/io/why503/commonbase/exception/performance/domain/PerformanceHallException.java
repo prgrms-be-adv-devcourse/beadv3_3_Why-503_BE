@@ -10,4 +10,7 @@ public class PerformanceHallException extends PerformanceException {
     public PerformanceHallException(String message, HttpStatus status) {
         super(message, "HA-" + status.value(), status);
     }
+    public PerformanceHallException(Throwable cause, HttpStatus status) {
+        super(cause, "HA-" + status.value(), status);
+    }
 }

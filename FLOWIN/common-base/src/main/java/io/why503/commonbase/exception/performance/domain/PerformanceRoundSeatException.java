@@ -10,4 +10,7 @@ public class PerformanceRoundSeatException extends PerformanceException {
     public PerformanceRoundSeatException(String message, HttpStatus status) {
         super(message, "RS-" + status.value(), status);
     }
+    public PerformanceRoundSeatException(Throwable cause, HttpStatus status) {
+        super(cause, "RS-" + status.value(), status);
+    }
 }

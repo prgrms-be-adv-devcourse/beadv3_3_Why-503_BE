@@ -10,4 +10,7 @@ public class PerformanceShowException extends PerformanceException {
     public PerformanceShowException(String message, HttpStatus status) {
         super(message, "SH-" + status.value(), status);
     }
+    public PerformanceShowException(Throwable cause, HttpStatus status) {
+        super(cause, "SH-" + status.value(), status);
+    }
 }

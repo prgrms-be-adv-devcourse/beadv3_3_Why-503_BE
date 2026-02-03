@@ -10,4 +10,7 @@ public class GatewayException extends CustomException {
     protected GatewayException(String message, String code, HttpStatus status) {
         super(message, "GE-" + code, status);
     }
+    protected GatewayException(Throwable cause, String code, HttpStatus status) {
+        super(cause, "GE-" + code, status);
+    }
 }

@@ -10,4 +10,7 @@ public class PaymentException extends CustomException {
     protected PaymentException(String message, String code, HttpStatus status) {
         super(message, "PA-" + code, status);
     }
+    protected PaymentException(Throwable cause, String code, HttpStatus status) {
+        super(cause, "PA-" + code, status);
+    }
 }

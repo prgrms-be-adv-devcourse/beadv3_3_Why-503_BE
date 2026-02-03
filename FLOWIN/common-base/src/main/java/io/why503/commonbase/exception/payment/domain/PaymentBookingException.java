@@ -10,4 +10,7 @@ public class PaymentBookingException extends PaymentException {
     public PaymentBookingException(String message, HttpStatus status) {
         super(message, "BO-" + status.value(), status);
     }
+    public PaymentBookingException(Throwable cause, HttpStatus status) {
+        super(cause, "BO-" + status.value(), status);
+    }
 }

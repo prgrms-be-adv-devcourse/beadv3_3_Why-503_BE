@@ -6,12 +6,18 @@ import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.round.service.RoundService;
+import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
+import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
+import io.why503.performanceservice.domain.roundSeat.repository.RoundSeatRepository;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.service.ShowService;
+import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
+import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 import io.why503.performanceservice.global.error.ErrorCode;
 import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
+import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +33,11 @@ import java.util.List;
 public class RoundServiceImpl implements RoundService {
 
     private final RoundRepository roundRepository;
+    private final RoundSeatRepository roundSeatRepository;
     private final RoundMapper roundMapper;
+    private final RoundSeatMapper roundSeatMapper;
     private final ShowService showService;
+    private final ShowSeatService showSeatService;
     private final UserValidator userValidator;
 
     //회차 생성
@@ -74,6 +83,34 @@ public class RoundServiceImpl implements RoundService {
         roundRepository.saveAll(roundList);
 
         return roundMapper.entityToDto(newEntity);
+    }
+
+    //회차, 회차 좌석 일괄 생성
+    @Override
+    @Transactional
+    public RoundResponse createRoundWithSeats(Long userSq, RoundRequest request) {
+
+        // createRound를 재사용하여 회차를 먼저 만듦
+        RoundResponse roundResponse = this.createRound(userSq, request);
+
+        //회차 엔티티를 조회
+        RoundEntity round = roundRepository.findById(roundResponse.roundSq())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
+
+        //ShowSeatService 이용해 공연 좌석 등급/가격을 가져옴
+        List<ShowSeatEntity> showSeats = showSeatService.getSeatsByShowSq(request.showSq());
+
+        if (showSeats.isEmpty()) {
+            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
+        }
+
+        //ShowSeat -> RoundSeat 변환
+        List<RoundSeatEntity> roundSeats = roundSeatMapper.showSeatListToRoundSeatList(showSeats, round);
+
+        // 좌석 일괄 저장
+        roundSeatRepository.saveAll(roundSeats);
+
+        return roundResponse;
     }
 
     //특정 공연의 모든 회차 조회

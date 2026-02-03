@@ -17,6 +17,7 @@ import io.why503.performanceservice.global.error.ErrorCode;
 import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
+import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class RoundServiceImpl implements RoundService {
     private final RoundRepository roundRepository;
     private final RoundSeatRepository roundSeatRepository;
     private final RoundMapper roundMapper;
+    private final RoundSeatMapper roundSeatMapper;
     private final ShowService showService;
     private final ShowSeatService showSeatService;
     private final UserValidator userValidator;
@@ -103,15 +105,7 @@ public class RoundServiceImpl implements RoundService {
         }
 
         //ShowSeat -> RoundSeat 변환
-        List<RoundSeatEntity> roundSeats = showSeats.stream()
-                .map(showSeat -> RoundSeatEntity.builder()
-                        .round(round)
-                        .showSeatSq(showSeat.getSq())
-                        .status(RoundSeatStatus.AVAILABLE)
-                        .statusDt(LocalDateTime.now())
-                        .version(0L)
-                        .build())
-                .toList();
+        List<RoundSeatEntity> roundSeats = roundSeatMapper.showSeatListToRoundSeatList(showSeats, round);
 
         // 좌석 일괄 저장
         roundSeatRepository.saveAll(roundSeats);

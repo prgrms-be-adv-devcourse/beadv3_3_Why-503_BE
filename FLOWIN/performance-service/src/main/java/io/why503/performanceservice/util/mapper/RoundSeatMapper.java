@@ -71,7 +71,7 @@ public class RoundSeatMapper {
 
                 // ShowSeat -> Seat 정보 (구역, 번호)
                 .seatArea(showSeat.getSeat().getArea())
-                .areaSeatNumber(showSeat.getSeat().getNumInArea())
+                .seatAreaNumber(showSeat.getSeat().getNumInArea())
 
                 // 공연 및 공연장 정보
                 .showName(show.getName())

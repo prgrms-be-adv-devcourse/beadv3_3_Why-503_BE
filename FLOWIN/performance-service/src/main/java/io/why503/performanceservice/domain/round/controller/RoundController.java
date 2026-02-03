@@ -27,6 +27,15 @@ public class RoundController {
         return ResponseEntity.ok(roundService.createRound(userSq, request));
     }
 
+    //회차 생성 + 좌석 자동 생성
+    @PostMapping("/with-seats")
+    public ResponseEntity<RoundResponse> createRoundWithSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @Valid @RequestBody RoundRequest request) {
+
+        return ResponseEntity.ok(roundService.createRoundWithSeats(userSq, request));
+    }
+
     // 특정 공연의 모든 회차 조회 (관리자만)
     @GetMapping("/all/{showSq}")
     public ResponseEntity<List<RoundResponse>> getAllRounds(

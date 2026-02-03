@@ -30,7 +30,7 @@ public class ShowSeatEntity {
     private ShowSeatGrade grade;
 
     @Column(name = "price", nullable = false)
-    private int price;
+    private Long price;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "seat_sq", nullable = false)
@@ -43,7 +43,7 @@ public class ShowSeatEntity {
     /* 생성자 */
     public ShowSeatEntity(
             ShowSeatGrade grade,
-            int price,
+            Long price,
             ShowEntity show,
             SeatEntity seat
     ) {
@@ -58,7 +58,7 @@ public class ShowSeatEntity {
         this.grade = grade;
     }
 
-    public void changePrice(int price) {
+    public void changePrice(Long price) {
         this.price = price;
     }
 }

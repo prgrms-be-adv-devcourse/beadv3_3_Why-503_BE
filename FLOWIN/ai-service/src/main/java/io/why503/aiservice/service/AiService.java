@@ -87,7 +87,7 @@ public class AiService {
 
             double maxSim = docs.stream()
                     .map(doc -> cosineSimilarity(userVector, embeddingModel.embed(doc.getText().toString())))
-                    .max(Double::compare)
+                    .max((d1, d2) -> Double.compare(d1, d2))
                     .orElse(0.0);
             scoreMap.merge(c, maxSim * 5, (a, b) -> Double.sum(a, b));
             }
@@ -116,7 +116,7 @@ public class AiService {
 
             double maxSim = docs.stream()
                     .map(doc -> cosineSimilarity(moodVector, embeddingModel.embed(doc.getText().toString())))
-                    .max(Double::compare)
+                    .max((d1, d2) -> Double.compare(d1, d2))
                     .orElse(0.0);
             scoreMap.merge(m, maxSim * 5, (a, b) -> Double.sum(a, b));
 
@@ -129,7 +129,7 @@ public class AiService {
         Map<Category, Double> scores = calculateCategoryScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<Category, Double>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
+                .map(categoryDoubleEntry -> categoryDoubleEntry.getKey())
                 .limit(2)
                 .toList();
     }
@@ -139,7 +139,7 @@ public class AiService {
         Map<MoodCategory, Double> scores = calculateMoodScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<MoodCategory, Double>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
+                .map(moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getKey())
                 .limit(2)
                 .toList();
     }
@@ -202,12 +202,12 @@ public class AiService {
 
     private Map<String, Double> convertCategoryScore(Map<Category, Double> scores) {
         return scores.entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue));
+                .collect(Collectors.toMap(e -> e.getKey().name(), categoryDoubleEntry -> categoryDoubleEntry.getValue()));
     }
 
     private Map<String, Double> convertMoodScore(Map<MoodCategory, Double> scores) {
         return scores.entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey().name(), Map.Entry::getValue));
+                .collect(Collectors.toMap(e -> e.getKey().name(), moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getValue()));
     }
 
 
@@ -302,8 +302,8 @@ public class AiService {
                     recommendations,
                     Optional.ofNullable(aiResponse.categoryScore()).orElse(convertCategoryScore(categoryScores)),
                     Optional.ofNullable(aiResponse.moodScore()).orElse(convertMoodScore(moodScores)),
-                    Optional.ofNullable(aiResponse.topCategory()).orElse(topCategories.stream().map(Category::name).toList()),
-                    Optional.ofNullable(aiResponse.topMood()).orElse(topMoods.stream().map(MoodCategory::name).toList())
+                    Optional.ofNullable(aiResponse.topCategory()).orElse(topCategories.stream().map(category -> category.name()).toList()),
+                    Optional.ofNullable(aiResponse.topMood()).orElse(topMoods.stream().map(moodCategory -> moodCategory.name()).toList())
             );
 
             //AiRecommendation -> 스트림, Recommendations -> 스트림
@@ -340,8 +340,8 @@ public class AiService {
         Map<String, Double> categoryScore = convertCategoryScore(calculateCategoryScores(r));
         Map<String, Double> moodScore = convertMoodScore(calculateMoodScores(r));
 
-        List<String> topCategory = decideTopCategoryByEmbedding(r).stream().map(Category::name).toList();
-        List<String> topMood = decideTopMoods(r).stream().map(MoodCategory::name).toList();
+        List<String> topCategory = decideTopCategoryByEmbedding(r).stream().map(category -> category.name()).toList();
+        List<String> topMood = decideTopMoods(r).stream().map(moodCategory -> moodCategory.name()).toList();
 
         return new ResultResponse(
                 "기본 추천 결과입니다.",

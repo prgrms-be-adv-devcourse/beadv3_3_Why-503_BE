@@ -212,9 +212,6 @@ public class AiService {
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
     public ResultResponse getRecommendations(ResultRequest r) {
 
-        if (aiPort != null) {
-            return aiPort.recommend(r);
-            }
 
         try {
 

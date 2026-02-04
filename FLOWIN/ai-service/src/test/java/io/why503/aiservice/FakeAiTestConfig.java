@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("test")
 @TestConfiguration
+@ActiveProfiles("test")
 public class FakeAiTestConfig {
 
     @Bean

@@ -4,7 +4,7 @@
  * - 이메일 인증 성공/실패 여부 전달
  * - 인증 결과 메시지 반환
  */
-package io.why503.accountservice.domain.auth.model.response;
+package io.why503.accountservice.domain.auth.model.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -14,6 +14,7 @@ import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.repository.CompanyRepository;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import io.why503.accountservice.domain.companies.util.CompanyMapper;
+import io.why503.accountservice.domain.companies.util.exception.CompanyNotFound;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class CompanyServiceImpl implements CompanyService {
     //내부 중복 간소화 메소드
     private Company findBySq(Long sq){
         return companyRepository.findBySq(sq)
-                .orElseThrow(() -> new IllegalArgumentException("회사 정보를 찾을 수 없습니다.")
+                .orElseThrow(() -> new CompanyNotFound(sq + " company is not found")
                 ); // 회사 미존재 시 예외 처리
     }
     /*

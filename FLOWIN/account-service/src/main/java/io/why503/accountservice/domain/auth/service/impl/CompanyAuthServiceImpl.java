@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.why503.accountservice.domain.auth.service.CompanyAuthService;
 import io.why503.accountservice.domain.auth.util.AuthCodeGenerator;
+import io.why503.accountservice.domain.auth.util.AuthExceptionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -63,11 +64,11 @@ public class CompanyAuthServiceImpl implements CompanyAuthService {
         String savedCode = redisTemplate.opsForValue().get(key); // Redis에 저장된 인증 코드 조회
 
         if (savedCode == null) {
-            return false; // 인증 코드 만료 또는 존재하지 않음
+            throw AuthExceptionFactory.authUnauthorized("The code has expired"); // 인증 코드 만료 또는 존재하지 않음
         }
 
         if (!savedCode.equals(inputCode)) {
-            return false; // 입력된 인증 코드 불일치
+            throw AuthExceptionFactory.authUnauthorized("invalided code"); // 입력된 인증 코드 불일치
         }
 
         // 인증 성공 처리

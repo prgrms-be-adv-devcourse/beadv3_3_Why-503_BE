@@ -1,14 +1,16 @@
 package io.why503.accountservice.domain.accounts.service.impl;
 
 import io.why503.accountbase.model.enums.UserRole;
-import io.why503.accountservice.domain.accounts.model.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.util.AccountExceptionFactory;
 import io.why503.accountservice.domain.accounts.util.AccountMapper;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.accounts.repository.AccountJpaRepository;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.accounts.util.exception.AccountNotFound;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,16 +29,18 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
     //생성, accountMapper로 password암호화
     //내부 함수 sq기반 조회
+    @Override
     public Account findBySq(Long sq) {
         return accountJpaRepository.findBySq(sq).orElseThrow(
-                () -> new IllegalArgumentException("sq = " + sq + " Account is not found")
+                () -> AccountExceptionFactory.accountAccountNotFound("sq = "+ sq +" Account is not found")
         );
 
     }
     //내부 함수 id기반 조회
+    @Override
     public Account findById(String id) {
         return accountJpaRepository.findById(id).orElseThrow(
-                () -> new IllegalArgumentException("id = " + id + " Account is not found")
+                () -> AccountExceptionFactory.accountAccountNotFound("id = " + id + " Account is not found")
         );
     }
     @Override
@@ -91,12 +95,7 @@ public class AccountServiceImpl implements AccountService {
     //아이디가 존재하는 지 확인
     @Override
     public boolean existId(String id) {
-        try{
-            Account account = findById(id);
-            return account == null;
-        }catch (IllegalArgumentException a){
-            return true;
-        }
+        return accountJpaRepository.existsById(id);
     }
     //포인트, 이름 반환
     @Override
@@ -162,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
     public List<UserRoleResponse> readCompanyMember(Long companySq) {
         return accountJpaRepository.findByCompany_Sq(companySq)
                 .orElseThrow(
-                        () -> new IllegalArgumentException("companySq = " + companySq + " Member is not found"))
+                        () -> AccountExceptionFactory.accountAccountNotFound("companySq = " + companySq + " Member is not found"))
                 .stream()
                 .map(i -> accountMapper.entityToRoleResponse(i))
                 .toList();

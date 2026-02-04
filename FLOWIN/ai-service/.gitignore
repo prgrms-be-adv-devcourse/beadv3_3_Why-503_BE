@@ -4,7 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-!**/src/test/resources/*.yml
+
 
 ### STS ###
 .apt_generated
@@ -27,6 +27,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+!**/src/test/resources/*.yml
 
 ### NetBeans ###
 /nbproject/private/

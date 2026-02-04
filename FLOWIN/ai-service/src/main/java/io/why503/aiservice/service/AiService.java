@@ -1,6 +1,7 @@
 package io.why503.aiservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.why503.aiservice.model.test.AiPort;
 import io.why503.aiservice.model.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,15 +17,19 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AiService {
+public class AiService implements AiPort {
 
     private final ChatClient chatClient;
     private final ObjectMapper mapper;
     private final VectorStore vectorStore;
     private final EmbeddingModel embeddingModel;
     private final Random random = new Random();
+    private final AiPort aiPort;
 
-
+    @Override
+    public ResultResponse recommend(ResultRequest request) {
+        return aiPort.recommend(request);
+    }
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest r) {
@@ -213,7 +218,13 @@ public class AiService {
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
     public ResultResponse getRecommendations(ResultRequest r) {
 
+        if (aiPort != null) {
+            return aiPort.recommend(r);
+            }
+
         try {
+
+
 
             Map<Category, Double> categoryScores = calculateCategoryScores(r);
             Map<MoodCategory, Double> moodScores = calculateMoodScores(r);
@@ -295,6 +306,7 @@ public class AiService {
                     ))
                     .toList();
 
+            //null 객체 처리
             AiResponse fixedResponse = new AiResponse(
                     Optional.ofNullable(aiResponse.summary()).orElse(""),
                     Optional.ofNullable(aiResponse.explanations()).orElse(List.of()),
@@ -311,6 +323,7 @@ public class AiService {
                             .map(ar1 -> toDomain(ar1))
                             .toList();
 
+
             return new ResultResponse(
                     fixedResponse.summary(),
                     fixedResponse.explanations(),
@@ -323,6 +336,7 @@ public class AiService {
         } catch (Exception e) {
             return fallbackRecommendation(r);
         }
+
     }
 
     //ai 요청 실패시 기본결과 값으로 호출

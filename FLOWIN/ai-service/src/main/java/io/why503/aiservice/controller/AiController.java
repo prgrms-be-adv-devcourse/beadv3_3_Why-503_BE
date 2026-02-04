@@ -10,11 +10,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
-
 
 @Slf4j
 @RestController

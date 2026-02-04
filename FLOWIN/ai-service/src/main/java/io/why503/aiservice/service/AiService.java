@@ -17,19 +17,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AiService implements AiPort {
+public class AiService {
 
     private final ChatClient chatClient;
     private final ObjectMapper mapper;
     private final VectorStore vectorStore;
     private final EmbeddingModel embeddingModel;
     private final Random random = new Random();
-    private final AiPort aiPort;
 
-    @Override
-    public ResultResponse recommend(ResultRequest request) {
-        return aiPort.recommend(request);
-    }
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest r) {

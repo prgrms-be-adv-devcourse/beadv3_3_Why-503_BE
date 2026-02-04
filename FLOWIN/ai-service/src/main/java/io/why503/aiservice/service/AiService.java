@@ -1,7 +1,6 @@
 package io.why503.aiservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.why503.aiservice.model.test.AiPort;
 import io.why503.aiservice.model.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

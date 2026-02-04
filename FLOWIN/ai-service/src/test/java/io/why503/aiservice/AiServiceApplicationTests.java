@@ -14,5 +14,22 @@ import java.util.List;
 class AiServiceApplicationTests {
 
 
+    @Autowired
+    private AiService aiService;
+
+    @Test
+    void contextLoads() {
+        ResultRequest request = new ResultRequest(
+                List.of(Category.MUSICAL),
+                List.of(Category.CONCERT),
+                List.of(MoodCategory.COMEDY)
+        );
+
+        ResultResponse response = aiService.getRecommendations(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.recommendations()).isNotEmpty();
+        assertThat(response.summary()).isNotBlank();
+    }
 
 }

@@ -9,6 +9,8 @@ import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWith
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import io.why503.performanceservice.domain.show.repository.ShowRepository;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.domain.showseat.model.dto.request.SeatPolicyRequest;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -143,5 +146,30 @@ public class ShowServiceImpl implements ShowService {
             // 그 외 Feign 통신 에러 (서버 다운 등) -> 502 Bad Gateway
             throw new BusinessException(ErrorCode.USER_SERVICE_UNAVAILABLE);
         }
+    }
+    // 카테고리별 조회
+    @Override
+    public List<ShowResponse> findShowsByCategory(ShowCategory category) {
+        List<ShowEntity> shows = showRepository.findByCategory(category);
+
+        List<ShowResponse> list = new ArrayList<>();
+        for (ShowEntity show : shows) {
+            ShowResponse showResponse = showMapper.entityToResponse(show);
+            list.add(showResponse);
+        }
+        return list;
+    }
+
+    // 카테고리 + 장르 조회
+    @Override
+    public List<ShowResponse> findShowsByCategoryAndGenre(ShowCategory category, ShowGenre genre) {
+        List<ShowEntity> shows = showRepository.findByCategoryAndGenre(category, genre);
+
+        List<ShowResponse> list = new ArrayList<>();
+        for (ShowEntity show : shows) {
+            ShowResponse showResponse = showMapper.entityToResponse(show);
+            list.add(showResponse);
+        }
+        return list;
     }
 }

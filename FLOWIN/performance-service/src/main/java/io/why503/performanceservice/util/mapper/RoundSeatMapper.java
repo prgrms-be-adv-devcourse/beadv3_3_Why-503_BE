@@ -76,6 +76,7 @@ public class RoundSeatMapper {
 
                 // 공연 및 공연장 정보
                 .showName(show.getName())
+                .genre(show.getGenre().name())
                 .hallName(concertHallName)
                 .roundDt(round.getStartDt())
                 .build();

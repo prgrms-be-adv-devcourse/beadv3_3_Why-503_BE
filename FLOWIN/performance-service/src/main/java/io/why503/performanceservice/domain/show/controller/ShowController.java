@@ -3,6 +3,8 @@ package io.why503.performanceservice.domain.show.controller;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowCreateWithSeatPolicyRequest;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.global.error.ErrorCode;
 import io.why503.performanceservice.global.error.exception.BusinessException;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Show Controller
@@ -75,4 +79,25 @@ public class ShowController {
         if (authorization == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);        }
     }
+
+
+    // 카테고리별 조회
+    // shows/category?category=CONCERT
+    @GetMapping("/category")
+    public ResponseEntity<List<ShowResponse>> getShowsByCategory(
+            @RequestParam("category") ShowCategory category
+    ) {
+        return ResponseEntity.ok(showService.findShowsByCategory(category));
+    }
+
+    // 카테고리 + 장르 조회
+    // shows/search?category=MUSICAL&genre=THRILLER
+    @GetMapping("/search")
+    public ResponseEntity<List<ShowResponse>> getShowsByCategoryAndGenre(
+            @RequestParam("category") ShowCategory category,
+            @RequestParam("genre") ShowGenre genre
+    ) {
+        return ResponseEntity.ok(showService.findShowsByCategoryAndGenre(category, genre));
+    }
+
 }

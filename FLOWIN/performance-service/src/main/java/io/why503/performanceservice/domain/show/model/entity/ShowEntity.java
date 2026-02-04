@@ -11,6 +11,7 @@
 package io.why503.performanceservice.domain.show.model.entity;
 
 import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -55,6 +56,10 @@ public class ShowEntity {
     private ShowCategory category;              // 공연 카테고리 코드
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "genre", nullable = false)
+    private ShowGenre genre;            //공연 장르
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ShowStatus status;              // 공연 상태 코드
 
@@ -74,6 +79,7 @@ public class ShowEntity {
             String runningTime,
             String viewingAge,
             ShowCategory category, // int category -> ShowCategory category
+            ShowGenre genre,
             HallEntity hall,
             Long companySq) {
         this.name = name;
@@ -83,6 +89,7 @@ public class ShowEntity {
         this.runningTime = runningTime;
         this.viewingAge = viewingAge;
         this.category = category;
+        this.genre = genre;
         this.status = ShowStatus.SCHEDULED; // 기본값 설정 (Enum 직접 할당)
         this.hall = hall;
         this.companySq = companySq;
@@ -94,4 +101,5 @@ public class ShowEntity {
     public void changeStatus(ShowStatus newStatus) {
         this.status = newStatus;
     }
+    public void changeGenre(ShowGenre newGenre){ this.genre=newGenre;}
 }

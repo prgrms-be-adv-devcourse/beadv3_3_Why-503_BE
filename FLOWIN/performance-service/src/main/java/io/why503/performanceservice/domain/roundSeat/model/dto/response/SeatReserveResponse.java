@@ -15,6 +15,7 @@ public record SeatReserveResponse(
 
         String showName,        // 공연명
         String hallName, // 공연장명
-        LocalDateTime roundDt // 회차일시
+        LocalDateTime roundDt, // 회차일시
+        String genre            //장르
 ) {
 }

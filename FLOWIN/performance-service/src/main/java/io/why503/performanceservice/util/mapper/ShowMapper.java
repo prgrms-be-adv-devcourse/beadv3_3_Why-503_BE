@@ -29,6 +29,7 @@ public class ShowMapper {
                 .viewingAge(request.showViewingAge())
                 .hall(hallEntity)
                 .category(request.showCategory())
+                .genre(request.showGenre())
                 .companySq(companySq)
                 .status(ShowStatus.valueOf(request.showStatus()))
                 .build();
@@ -47,6 +48,7 @@ public class ShowMapper {
                 entity.getRunningTime(),
                 entity.getViewingAge(),
                 entity.getCategory(),
+                entity.getGenre(),
                 entity.getStatus(),
                 entity.getHall().getSq(),
                 entity.getCompanySq()

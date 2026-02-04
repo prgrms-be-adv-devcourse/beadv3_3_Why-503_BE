@@ -1,4 +1,4 @@
-package io.why503.accountservice.domain.accounts.model.response;
+package io.why503.accountservice.domain.accounts.model.dto.response;
 
 import io.why503.accountbase.model.enums.UserRole;
 import jakarta.validation.constraints.NotBlank;

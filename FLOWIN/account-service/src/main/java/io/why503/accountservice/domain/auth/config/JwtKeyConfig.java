@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -35,8 +36,8 @@ public class JwtKeyConfig {
         return privateKey;
     }
 
-    //private-key를 해석하고 반환, 위 함수와 달리 한번만 실행한 이유는 i/o처리를 줄이기 위해서
-    private PrivateKey getPrivateKey(){
+    //private-key를 해석하고 반환, i/o처리를 줄이기 위해서 시스템 시작 시 한번만 실행
+    private PrivateKey getPrivateKey() {
         try{
             //빌드 후 Resource에 있는 파일의 경로
             ClassPathResource privatePemFile = new ClassPathResource(privatePath);

@@ -3,9 +3,10 @@ package io.why503.accountservice.domain.accounts.service;
 
 import io.why503.accountbase.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
-import io.why503.accountservice.domain.accounts.model.response.UserCompanyResponse;
-import io.why503.accountservice.domain.accounts.model.response.UserPointResponse;
-import io.why503.accountservice.domain.accounts.model.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
+import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
+import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 
 import java.util.List;
@@ -31,6 +32,9 @@ public interface AccountService {
     UserPointResponse readPointBySq(Long sq);
 
     UserRole readUserRoleBySq(Long sq);
+
+    Account findBySq(Long sq);
+    Account findById(String id);
 
     void grantCompany(Long sq);
 

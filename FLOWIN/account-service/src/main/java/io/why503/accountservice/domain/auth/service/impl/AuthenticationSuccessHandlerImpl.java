@@ -33,7 +33,7 @@ public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHa
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
-            Authentication authentication) throws IOException {
+            Authentication authentication) {
 
         //성공 후 만들어져 넘어온 AccountDetails
         AccountDetails details = (AccountDetails) authentication.getPrincipal();

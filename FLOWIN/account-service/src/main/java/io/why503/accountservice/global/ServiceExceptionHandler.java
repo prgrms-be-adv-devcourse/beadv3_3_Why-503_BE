@@ -7,6 +7,7 @@ import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -70,7 +71,7 @@ public class ServiceExceptionHandler {
         return ResponseEntity.status(e.getStatus())
                 .body(new ExceptionResponse(e));
     }
-
+    //로그 출력
     private void loggingCustomException(CustomException e){
         log.error("{}/{}/{}/{}/{}",
                 e.getCause(),
@@ -79,6 +80,7 @@ public class ServiceExceptionHandler {
                 e.getClass(),
                 e.getUUID());
     }
+    //uri로 도메인 찾기(BadRequest 전용)
     private CustomException makeBadRequestByURI(String s, String message){
         return switch (s) {
             case "accounts" -> AccountExceptionFactory.accountBadRequest(message);
@@ -86,5 +88,14 @@ public class ServiceExceptionHandler {
             case "auth" -> AuthExceptionFactory.authBadRequest(message);
             default -> null;
         };
+    }
+    //나머지 모르는 거 전체 핸들러
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> unknownExceptionHandler(
+            Exception e
+    ){
+        log.error("UnknownError\n", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("UnknownError");
     }
 }

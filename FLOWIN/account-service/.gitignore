@@ -7,7 +7,6 @@ build/
 *.yml
 *.pem
 *.jar
-!**/src/test/**/resources/**
 
 
 ### STS ###

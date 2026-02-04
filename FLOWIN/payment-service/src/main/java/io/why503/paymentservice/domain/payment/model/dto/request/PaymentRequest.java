@@ -12,12 +12,14 @@ public record PaymentRequest(
         @NotBlank(message = "주문 번호는 필수입니다.")
         String orderId,
 
+        @NotBlank(message = "결제 키는 필수입니다.")
         String paymentKey,
 
         @NotNull(message = "총 결제 금액은 필수입니다.")
         @Positive(message = "총 결제 금액은 양수여야 합니다.")
         Long amount,
 
+        @NotNull(message = "포인트는 필수입니다.(최소 0원)")
         @PositiveOrZero(message = "포인트 사용 금액은 0원 이상이어야 합니다.")
         Long usePointAmount
 ) {

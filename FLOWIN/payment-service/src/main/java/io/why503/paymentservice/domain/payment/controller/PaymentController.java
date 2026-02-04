@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.payment.controller;
 
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
@@ -28,9 +29,7 @@ public class PaymentController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody @Valid PaymentRequest request) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         PaymentResponse response = paymentService.pay(userSq, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -42,9 +41,7 @@ public class PaymentController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable("paymentSq") Long paymentSq) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         PaymentResponse response = paymentService.findPayment(userSq, paymentSq);
         return ResponseEntity.ok(response);
@@ -55,9 +52,7 @@ public class PaymentController {
     public ResponseEntity<List<PaymentResponse>> findPayments(
             @RequestHeader("X-USER-SQ") Long userSq) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         List<PaymentResponse> responses = paymentService.findPaymentsByUser(userSq);
         return ResponseEntity.ok(responses);
@@ -70,12 +65,17 @@ public class PaymentController {
             @PathVariable("paymentSq") Long paymentSq,
             @RequestBody Map<String, String> requestBody) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         String reason = requestBody.get("reason");
         PaymentResponse response = paymentService.cancelPayment(userSq, paymentSq, reason);
         return ResponseEntity.ok(response);
+    }
+
+    // 요청 헤더의 사용자 식별값 유효성 검증
+    private void validateUserHeader(Long userSq) {
+        if (userSq == null || userSq <= 0) {
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
     }
 }

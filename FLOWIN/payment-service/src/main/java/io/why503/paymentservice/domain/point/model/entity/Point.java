@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.point.model.entity;
 
 import io.why503.paymentservice.domain.point.model.enums.PointStatus;
+import io.why503.paymentservice.domain.point.util.PointExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -55,13 +56,13 @@ public class Point {
          * 2. 필드 초기화 및 초기 상태 설정
          */
         if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("회원 번호는 필수이며 양수여야 합니다.");
+            throw PointExceptionFactory.pointBadRequest("회원 번호는 필수이며 양수여야 합니다.");
         }
         if (orderId == null || orderId.isBlank()) {
-            throw new IllegalArgumentException("주문 번호는 필수입니다.");
+            throw PointExceptionFactory.pointBadRequest("주문 번호는 필수입니다.");
         }
         if (chargeAmount == null || chargeAmount <= 0) {
-            throw new IllegalArgumentException("충전 금액은 0원보다 커야 합니다.");
+            throw PointExceptionFactory.pointBadRequest("충전 금액은 0원보다 커야 합니다.");
         }
 
         this.userSq = userSq;
@@ -73,7 +74,7 @@ public class Point {
     // 결제 성공 시 충전 상태를 완료로 변경
     public void complete() {
         if (this.status != PointStatus.READY) {
-            throw new IllegalStateException("대기 상태의 요청만 완료 처리할 수 있습니다. 현재: " + this.status);
+            throw PointExceptionFactory.pointConflict("대기 상태의 요청만 완료 처리할 수 있습니다. 현재: " + this.status);
         }
         this.status = PointStatus.DONE;
     }
@@ -81,7 +82,7 @@ public class Point {
     // 사용자 요청 또는 결제 실패 시 충전 취소 처리
     public void cancel() {
         if (this.status == PointStatus.DONE) {
-            throw new IllegalStateException("이미 완료된 충전은 취소할 수 없습니다.");
+            throw PointExceptionFactory.pointConflict("이미 완료된 충전은 취소할 수 없습니다.");
         }
         this.status = PointStatus.CANCELED;
     }

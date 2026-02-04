@@ -7,6 +7,7 @@ import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.domain.point.util.PointExceptionFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -80,6 +81,7 @@ public class ServiceExceptionHandler {
                 e.getClass(),
                 e.getUUID());
     }
+
     private CustomException makeBadRequestByURI(String s, String message){
         return switch (s) {
             case "booking" -> BookingExceptionFactory.bookingBadRequest(message);
@@ -87,5 +89,14 @@ public class ServiceExceptionHandler {
             case "point" -> PointExceptionFactory.pointBadRequest(message);
             default -> null;
         };
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> unknownExceptionHandler(
+            Exception e
+    ){
+        log.error("UnknownError\n", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("UnknownError");
     }
 }

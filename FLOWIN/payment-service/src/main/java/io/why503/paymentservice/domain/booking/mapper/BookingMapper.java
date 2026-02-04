@@ -3,6 +3,7 @@ package io.why503.paymentservice.domain.booking.mapper;
 import io.why503.paymentservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.paymentservice.domain.booking.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +22,7 @@ public class BookingMapper {
     // 예매 엔티티를 하위 티켓 목록을 포함한 응답 객체로 변환
     public BookingResponse entityToResponse(Booking booking) {
         if (booking == null) {
-            throw new IllegalArgumentException("변환할 Booking Entity는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("변환할 Booking Entity는 필수입니다.");
         }
 
         var ticketEntities = booking.getTickets();

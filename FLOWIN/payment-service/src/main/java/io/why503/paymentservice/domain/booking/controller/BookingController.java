@@ -4,6 +4,7 @@ import io.why503.paymentservice.domain.booking.model.dto.request.BookingCancelRe
 import io.why503.paymentservice.domain.booking.model.dto.request.BookingRequest;
 import io.why503.paymentservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.paymentservice.domain.booking.service.BookingService;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -78,7 +79,7 @@ public class BookingController {
     // 요청 헤더의 사용자 식별값 유효성 검증
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
         }
     }
 }

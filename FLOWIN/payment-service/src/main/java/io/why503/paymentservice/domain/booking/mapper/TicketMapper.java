@@ -4,6 +4,7 @@ import io.why503.paymentservice.domain.booking.model.dto.response.TicketResponse
 import io.why503.paymentservice.domain.booking.model.entity.Booking;
 import io.why503.paymentservice.domain.booking.model.entity.Ticket;
 import io.why503.paymentservice.domain.booking.model.enums.DiscountPolicy;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,7 @@ public class TicketMapper {
     // 개별 티켓 엔티티의 스냅샷 정보를 응답 객체로 변환
     public TicketResponse entityToResponse(Ticket ticket) {
         if (ticket == null) {
-            throw new IllegalArgumentException("변환할 Ticket Entity는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("변환할 Ticket Entity는 필수입니다.");
         }
 
         return new TicketResponse(

@@ -6,6 +6,7 @@ import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.domain.point.model.entity.Point;
 import io.why503.paymentservice.domain.point.repository.PointRepository;
 import io.why503.paymentservice.domain.point.service.PointService;
+import io.why503.paymentservice.domain.point.util.PointExceptionFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,10 +42,10 @@ public class PointServiceImpl implements PointService {
     @Override
     public PointResponse findPoint(Long userSq, Long pointSq) {
         Point point = pointRepository.findById(pointSq)
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 충전 요청입니다."));
+                .orElseThrow(() -> PointExceptionFactory.pointNotFound("존재하지 않는 충전 요청입니다."));
 
         if (!point.getUserSq().equals(userSq)) {
-            throw new SecurityException("본인의 충전 내역만 조회할 수 있습니다.");
+            throw PointExceptionFactory.pointForbidden("본인의 충전 내역만 조회할 수 있습니다.");
         }
 
         return pointMapper.entityToResponse(point);
@@ -65,10 +66,10 @@ public class PointServiceImpl implements PointService {
     @Transactional
     public PointResponse cancelPoint(Long userSq, Long pointSq) {
         Point point = pointRepository.findById(pointSq)
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 충전 요청입니다."));
+                .orElseThrow(() -> PointExceptionFactory.pointNotFound("존재하지 않는 충전 요청입니다."));
 
         if (!point.getUserSq().equals(userSq)) {
-            throw new SecurityException("본인의 충전 요청만 취소할 수 있습니다.");
+            throw PointExceptionFactory.pointForbidden("본인의 충전 요청만 취소할 수 있습니다.");
         }
 
         point.cancel();

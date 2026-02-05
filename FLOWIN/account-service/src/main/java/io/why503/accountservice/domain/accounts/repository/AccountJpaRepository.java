@@ -12,5 +12,5 @@ public interface AccountJpaRepository extends JpaRepository<Account, Long> {
     Optional<Account> findBySq(Long sq);
     Optional<Account> findById(String id);
     boolean existsById(String id);
-    Optional<List<Account>> findByCompany_Sq(Long companySq);
+    List<Account> findByCompany_Sq(Long companySq);
 }

@@ -10,7 +10,6 @@ import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccount
 import io.why503.accountservice.domain.accounts.model.entity.Account;
 import io.why503.accountservice.domain.accounts.repository.AccountJpaRepository;
 import io.why503.accountservice.domain.accounts.service.AccountService;
-import io.why503.accountservice.domain.accounts.util.exception.AccountNotFound;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account findBySq(Long sq) {
         return accountJpaRepository.findBySq(sq).orElseThrow(
-                () -> AccountExceptionFactory.accountAccountNotFound("sq = "+ sq +" Account is not found")
+                () -> AccountExceptionFactory.accountNotFound("sq = "+ sq +" Account is not found")
         );
 
     }
@@ -40,14 +39,16 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Account findById(String id) {
         return accountJpaRepository.findById(id).orElseThrow(
-                () -> AccountExceptionFactory.accountAccountNotFound("id = " + id + " Account is not found")
+                () -> AccountExceptionFactory.accountNotFound("id = " + id + " Account is not found")
         );
     }
     @Override
     @Transactional
     public UserRoleResponse create(CreateAccountRequest request){
-
         Account account = accountMapper.upsertRequestToEntity(request);
+        if(accountJpaRepository.existsById(account.getId())){
+            throw AccountExceptionFactory.accountConflict("id exist");
+        }
         accountJpaRepository.save(account);
         return accountMapper.entityToRoleResponse(account);
     }
@@ -81,7 +82,11 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public UserRoleResponse deleteBySq(Long sq) {
         Account account = findBySq(sq);
-        accountJpaRepository.delete(account);
+        try {
+            accountJpaRepository.delete(account);
+        } catch (Exception e) {
+            throw AccountExceptionFactory.accountConflict("delete fail");
+        }
         return accountMapper.entityToRoleResponse(account);
     }
     //id기반 삭제
@@ -89,7 +94,11 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public UserRoleResponse deleteById(String id) {
         Account account = findById(id);
-        accountJpaRepository.delete(account);
+        try {
+            accountJpaRepository.delete(account);
+        } catch (Exception e) {
+            throw AccountExceptionFactory.accountConflict("delete fail");
+        }
         return accountMapper.entityToRoleResponse(account);
     }
     //아이디가 존재하는 지 확인
@@ -160,11 +169,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<UserRoleResponse> readCompanyMember(Long companySq) {
         return accountJpaRepository.findByCompany_Sq(companySq)
-                .orElseThrow(
-                        () -> AccountExceptionFactory.accountAccountNotFound("companySq = " + companySq + " Member is not found"))
                 .stream()
                 .map(i -> accountMapper.entityToRoleResponse(i))
                 .toList();
-
     }
 }

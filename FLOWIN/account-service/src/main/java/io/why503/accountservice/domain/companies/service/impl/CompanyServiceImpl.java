@@ -13,6 +13,7 @@ import io.why503.accountservice.domain.companies.model.dto.response.CompanySumma
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.repository.CompanyRepository;
 import io.why503.accountservice.domain.companies.service.CompanyService;
+import io.why503.accountservice.domain.companies.util.CompanyExceptionFactory;
 import io.why503.accountservice.domain.companies.util.CompanyMapper;
 import io.why503.accountservice.domain.companies.util.exception.CompanyNotFound;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class CompanyServiceImpl implements CompanyService {
     //내부 중복 간소화 메소드
     private Company findBySq(Long sq){
         return companyRepository.findBySq(sq)
-                .orElseThrow(() -> new CompanyNotFound(sq + " company is not found")
+                .orElseThrow(() -> CompanyExceptionFactory.companyNotFound(sq + " company is not found")
                 ); // 회사 미존재 시 예외 처리
     }
     /*
@@ -47,7 +48,6 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override // 조회 전용 트랜잭션
     public CompanySummaryResponse getCompanyBySq(Long sq) {
-
         Company company = findBySq(sq);
         return companyMapper.EntityToSummaryResponse(company); // Entity → Response DTO 변환 후 반환
     }

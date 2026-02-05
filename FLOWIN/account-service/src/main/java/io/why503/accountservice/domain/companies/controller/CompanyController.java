@@ -13,6 +13,7 @@ import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;
 import io.why503.accountservice.domain.companies.service.CompanyService;
+import io.why503.accountservice.domain.companies.util.CompanyExceptionFactory;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class CompanyController {
     ) {
         //권한이 COMPANY가 아니면 거부
         if(accountService.readUserRoleBySq(userSq) != UserRole.COMPANY){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            throw CompanyExceptionFactory.companyForbidden("권한이 부족합니다.");
         }
         // 회사 등록 비즈니스 로직
         companyService.registerCompany(userSq, request);

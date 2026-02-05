@@ -2,6 +2,7 @@ package io.why503.paymentservice.domain.booking.model.entity;
 
 import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 import io.why503.paymentservice.domain.booking.model.enums.BookingStatus;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -63,10 +64,10 @@ public class Booking {
     @Builder
     public Booking(Long userSq, String orderId) {
         if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("회원 번호는 필수이며 0보다 커야 합니다.");
+            throw BookingExceptionFactory.bookingBadRequest("회원 번호는 필수이며 0보다 커야 합니다.");
         }
         if (orderId == null || orderId.isBlank()) {
-            throw new IllegalArgumentException("주문 번호는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("주문 번호는 필수입니다.");
         }
 
         this.userSq = userSq;
@@ -89,7 +90,7 @@ public class Booking {
          * 2. 예매 및 모든 소속 티켓 상태 확정
          */
         if (this.status != BookingStatus.PENDING) {
-            throw new IllegalStateException("예매 대기 상태에서만 확정이 가능합니다.");
+            throw BookingExceptionFactory.bookingConflict("예매 대기 상태에서만 확정이 가능합니다.");
         }
         this.status = BookingStatus.CONFIRMED;
 
@@ -105,7 +106,9 @@ public class Booking {
          * 2. 예매 상태 변경 및 사유 기록
          * 3. 유효한 모든 하위 티켓 취소 처리
          */
-        if (this.status == BookingStatus.CANCELLED) throw new IllegalStateException("이미 취소된 예매입니다.");
+        if (this.status == BookingStatus.CANCELLED) {
+            throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");
+        }
 
         this.status = BookingStatus.CANCELLED;
         this.cancelReason = reason;
@@ -120,12 +123,12 @@ public class Booking {
     // 환불 금액에 따른 부분 취소 또는 전체 취소 처리
     public void partialCancel(long canceledAmount) {
         if (this.status == BookingStatus.CANCELLED) {
-            throw new IllegalStateException("이미 전체 취소된 예매입니다.");
+            throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");
         }
 
         long newFinalAmount = this.finalAmount - canceledAmount;
         if (newFinalAmount < 0) {
-            throw new IllegalStateException("취소 금액이 남은 결제 금액보다 큽니다.");
+            throw BookingExceptionFactory.bookingConflict("취소 금액이 남은 결제 금액보다 큽니다.");
         }
 
         this.finalAmount = newFinalAmount;
@@ -141,10 +144,10 @@ public class Booking {
     // 예매 확정 전 금액 정보 변경
     public void changeAmounts(long originalAmount, long finalAmount) {
         if (this.status != BookingStatus.PENDING) {
-            throw new IllegalStateException("금액 변경은 예매 대기 상태에서만 가능합니다.");
+            throw BookingExceptionFactory.bookingConflict("금액 변경은 예매 대기 상태에서만 가능합니다.");
         }
         if (originalAmount < 0 || finalAmount < 0) {
-            throw new IllegalArgumentException("금액은 0원 이상이어야 합니다.");
+            throw BookingExceptionFactory.bookingBadRequest("금액은 0원 이상이어야 합니다.");
         }
 
         this.originalAmount = originalAmount;

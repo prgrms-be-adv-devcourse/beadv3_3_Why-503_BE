@@ -12,6 +12,7 @@ import io.why503.paymentservice.domain.booking.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
 import io.why503.paymentservice.domain.booking.repository.BookingRepository;
 import io.why503.paymentservice.domain.booking.service.BookingService;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class BookingServiceImpl implements BookingService {
          * 3. 예매 시점의 정보를 스냅샷 형태로 티켓에 저장
          */
         if (request.tickets().isEmpty()) {
-            throw new IllegalArgumentException("티켓 정보가 없습니다.");
+            throw BookingExceptionFactory.bookingBadRequest("티켓 정보가 없습니다.");
         }
 
         List<Long> seatSqs = request.tickets().stream()
@@ -68,7 +69,7 @@ public class BookingServiceImpl implements BookingService {
             if (!reservedIds.isEmpty()) {
                 performanceClient.cancelRoundSeats(reservedIds);
             }
-            throw new IllegalStateException("요청한 좌석 중 일부를 선점할 수 없습니다.");
+            throw BookingExceptionFactory.bookingBadRequest("요청한 좌석 중 일부를 선점할 수 없습니다.");
         }
 
         String orderId = "BOOKING-" + UUID.randomUUID();
@@ -99,10 +100,10 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse findBooking(Long userSq, Long bookingSq) {
         Booking booking = bookingRepository.findById(bookingSq)
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 예매입니다."));
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("존재하지 않는 예매입니다."));
 
         if (!booking.getUserSq().equals(userSq)) {
-            throw new SecurityException("본인의 예매 내역만 조회할 수 있습니다.");
+            throw BookingExceptionFactory.bookingForbidden("본인의 예매 내역만 조회할 수 있습니다.");
         }
 
         return bookingMapper.entityToResponse(booking);
@@ -128,14 +129,14 @@ public class BookingServiceImpl implements BookingService {
          * 3. 외부 서비스에 취소된 좌석 해제 요청
          */
         Booking booking = bookingRepository.findById(bookingSq)
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 예매입니다."));
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("존재하지 않는 예매입니다."));
 
         if (!booking.getUserSq().equals(userSq)) {
-            throw new SecurityException("본인의 예매만 취소할 수 있습니다.");
+            throw BookingExceptionFactory.bookingForbidden("본인의 예매만 취소할 수 있습니다.");
         }
 
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            throw new IllegalStateException("이미 결제된 예매는 결제 취소를 이용해주세요.");
+            throw BookingExceptionFactory.bookingForbidden("이미 결제된 예매는 결제 취소를 이용해주세요.");
         }
 
         List<Long> canceledSeatSqs = new ArrayList<>();
@@ -160,7 +161,7 @@ public class BookingServiceImpl implements BookingService {
             }
 
             if (canceledSeatSqs.isEmpty()) {
-                throw new IllegalArgumentException("취소 가능한 티켓이 없거나 잘못된 요청입니다.");
+                throw BookingExceptionFactory.bookingBadRequest("취소 가능한 티켓이 없거나 잘못된 요청입니다.");
             }
 
             booking.partialCancel(currentCancelAmount);

@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.payment.mapper;
 
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
@@ -15,7 +16,7 @@ public class PaymentMapper {
     // 결제 엔티티를 상태 및 수단 설명이 포함된 응답 객체로 변환
     public PaymentResponse entityToResponse(Payment payment) {
         if (payment == null) {
-            throw new IllegalArgumentException("변환할 Payment Entity는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("변환할 Payment Entity는 필수입니다.");
         }
 
         return new PaymentResponse(

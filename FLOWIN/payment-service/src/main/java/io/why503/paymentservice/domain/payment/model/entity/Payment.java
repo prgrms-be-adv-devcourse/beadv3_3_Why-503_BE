@@ -3,6 +3,7 @@ package io.why503.paymentservice.domain.payment.model.entity;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentStatus;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -76,20 +77,35 @@ public class Payment {
          * 2. 결제 수단별 금액 정합성 확인
          * 3. 초기 결제 대기 상태로 설정
          */
-        if (userSq == null || userSq <= 0) throw new IllegalArgumentException("회원 번호는 필수입니다.");
-        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("주문 번호는 필수입니다.");
-        if (refType == null) throw new IllegalArgumentException("결제 대상 구분은 필수입니다.");
-        if (method == null) throw new IllegalArgumentException("결제 수단은 필수입니다.");
-        if (totalAmount == null || totalAmount < 0) throw new IllegalArgumentException("총 금액은 필수입니다.");
+        if (userSq == null || userSq <= 0) {
+            // [400] 필수값 오류
+            throw PaymentExceptionFactory.paymentBadRequest("회원 번호는 필수입니다.");
+        }
+        if (orderId == null || orderId.isBlank()) {
+            // [400] 필수값 오류
+            throw PaymentExceptionFactory.paymentBadRequest("주문 번호는 필수입니다.");
+        }
+        if (refType == null) {
+            // [400] 필수값 오류
+            throw PaymentExceptionFactory.paymentBadRequest("결제 대상 구분은 필수입니다.");
+        }
+        if (method == null) {
+            // [400] 필수값 오류
+            throw PaymentExceptionFactory.paymentBadRequest("결제 수단은 필수입니다.");
+        }
+        if (totalAmount == null || totalAmount < 0) {
+            // [400] 필수값/유효성 오류
+            throw PaymentExceptionFactory.paymentBadRequest("총 금액은 필수입니다.");
+        }
 
         long safePgAmount = (pgAmount != null) ? pgAmount : 0L;
         long safePointAmount = (pointAmount != null) ? pointAmount : 0L;
 
         if (safePgAmount < 0 || safePointAmount < 0) {
-            throw new IllegalArgumentException("결제 금액은 음수일 수 없습니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("결제 금액은 음수일 수 없습니다.");
         }
         if (safePgAmount + safePointAmount != totalAmount) {
-            throw new IllegalArgumentException("결제 금액 합계가 총 금액과 일치하지 않습니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("결제 금액 합계가 총 금액과 일치하지 않습니다.");
         }
 
         this.userSq = userSq;
@@ -105,12 +121,12 @@ public class Payment {
     // 외부 결제 기관의 승인 키를 등록하고 상태를 완료로 변경
     public void approve(String pgKey) {
         if (this.status != PaymentStatus.READY) {
-            throw new IllegalStateException("대기 상태에서만 승인 가능합니다.");
+            throw PaymentExceptionFactory.paymentConflict("대기 상태에서만 승인 가능합니다.");
         }
 
         boolean isPgInvolved = this.method == PaymentMethod.CARD || this.method == PaymentMethod.MIX;
         if (isPgInvolved && (pgKey == null || pgKey.isBlank())) {
-            throw new IllegalArgumentException("외부 결제 승인 키가 누락되었습니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("외부 결제 승인 키가 누락되었습니다.");
         }
 
         this.pgKey = pgKey;
@@ -121,7 +137,7 @@ public class Payment {
     // 결제 건을 취소 상태로 변경하고 취소 시각 기록
     public void cancel() {
         if (this.status == PaymentStatus.CANCELED) {
-            throw new IllegalStateException("이미 취소된 결제입니다.");
+            throw PaymentExceptionFactory.paymentConflict("이미 취소된 결제입니다.");
         }
         this.status = PaymentStatus.CANCELED;
         this.canceledDt = LocalDateTime.now();

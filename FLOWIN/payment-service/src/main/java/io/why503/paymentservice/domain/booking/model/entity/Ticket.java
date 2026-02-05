@@ -2,6 +2,7 @@ package io.why503.paymentservice.domain.booking.model.entity;
 
 import io.why503.paymentservice.domain.booking.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.booking.model.enums.TicketStatus;
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -80,15 +81,15 @@ public class Ticket {
          * 2. 가격 유효성 검사 및 최종 금액 계산
          * 3. 티켓 상태 초기화
          */
-        if (booking == null) throw new IllegalArgumentException("예매 정보는 필수입니다.");
-        if (roundSeatSq == null || roundSeatSq <= 0) throw new IllegalArgumentException("좌석 ID는 필수입니다.");
-        if (showName == null || showName.isBlank()) throw new IllegalArgumentException("공연명은 필수입니다.");
-        if (hallName == null || hallName.isBlank()) throw new IllegalArgumentException("공연장명은 필수입니다.");
-        if (roundDt == null) throw new IllegalArgumentException("공연 일시는 필수입니다.");
-        if (seatGrade == null || seatGrade.isBlank()) throw new IllegalArgumentException("좌석 등급은 필수입니다.");
-        if (seatArea == null || seatArea.isBlank()) throw new IllegalArgumentException("좌석 구역은 필수입니다.");
-        if (seatAreaNum == null || seatAreaNum <= 0) throw new IllegalArgumentException("좌석 번호는 양수여야 합니다.");
-        if (originalPrice == null || originalPrice < 0) throw new IllegalArgumentException("정가는 0원 이상이어야 합니다.");
+        if (booking == null) throw BookingExceptionFactory.bookingBadRequest("예매 정보는 필수입니다.");
+        if (roundSeatSq == null || roundSeatSq <= 0) throw BookingExceptionFactory.bookingBadRequest("좌석 ID는 필수입니다.");
+        if (showName == null || showName.isBlank()) throw BookingExceptionFactory.bookingBadRequest("공연명은 필수입니다.");
+        if (hallName == null || hallName.isBlank()) throw BookingExceptionFactory.bookingBadRequest("공연장명은 필수입니다.");
+        if (roundDt == null) throw BookingExceptionFactory.bookingBadRequest("공연 일시는 필수입니다.");
+        if (seatGrade == null || seatGrade.isBlank()) throw BookingExceptionFactory.bookingBadRequest("좌석 등급은 필수입니다.");
+        if (seatArea == null || seatArea.isBlank()) throw BookingExceptionFactory.bookingBadRequest("좌석 구역은 필수입니다.");
+        if (seatAreaNum == null || seatAreaNum <= 0) throw BookingExceptionFactory.bookingBadRequest("좌석 번호는 양수여야 합니다.");
+        if (originalPrice == null || originalPrice < 0) throw BookingExceptionFactory.bookingBadRequest("정가는 0원 이상이어야 합니다.");
 
         this.booking = booking;
         this.roundSeatSq = roundSeatSq;
@@ -108,7 +109,7 @@ public class Ticket {
 
         long calculatedPrice = this.originalPrice - this.discountAmount;
         if (calculatedPrice < 0) {
-            throw new IllegalArgumentException("할인 금액이 정가보다 클 수 없습니다.");
+            throw BookingExceptionFactory.bookingBadRequest("할인 금액이 정가보다 클 수 없습니다.");
         }
         this.finalPrice = calculatedPrice;
         this.status = TicketStatus.RESERVED;
@@ -121,7 +122,7 @@ public class Ticket {
     // 티켓 상태를 결제 완료로 변경
     public void confirm() {
         if (this.status != TicketStatus.RESERVED) {
-            throw new IllegalStateException("선점 상태의 티켓만 결제 확정이 가능합니다. 현재: " + this.status);
+            throw BookingExceptionFactory.bookingConflict("선점 상태의 티켓만 결제 확정이 가능합니다. 현재: " + this.status);
         }
         this.status = TicketStatus.PAID;
     }
@@ -129,10 +130,10 @@ public class Ticket {
     // 티켓 취소 처리
     public void cancel() {
         if (this.status == TicketStatus.CANCELLED) {
-            throw new IllegalStateException("이미 취소된 티켓입니다.");
+            throw BookingExceptionFactory.bookingConflict("이미 취소된 티켓입니다.");
         }
         if (this.status == TicketStatus.USED) {
-            throw new IllegalStateException("이미 사용된 티켓은 취소할 수 없습니다.");
+            throw BookingExceptionFactory.bookingConflict("이미 사용된 티켓은 취소할 수 없습니다.");
         }
         this.status = TicketStatus.CANCELLED;
     }
@@ -140,7 +141,7 @@ public class Ticket {
     // 티켓 사용 완료 처리
     public void use() {
         if (this.status != TicketStatus.PAID) {
-            throw new IllegalStateException("결제 완료 된 티켓만 사용할 수 있습니다. 현재: " + this.status);
+            throw BookingExceptionFactory.bookingConflict("결제 완료 된 티켓만 사용할 수 있습니다. 현재: " + this.status);
         }
         this.status = TicketStatus.USED;
     }

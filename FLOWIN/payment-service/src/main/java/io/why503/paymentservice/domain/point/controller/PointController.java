@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.point.controller;
 
+import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.paymentservice.domain.point.model.dto.request.PointRequest;
 import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.domain.point.service.PointService;
@@ -27,9 +28,7 @@ public class PointController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody @Valid PointRequest request) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         PointResponse response = pointService.createPointCharge(userSq, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -41,9 +40,7 @@ public class PointController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable("pointSq") Long pointSq) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         PointResponse response = pointService.findPoint(userSq, pointSq);
         return ResponseEntity.ok(response);
@@ -54,9 +51,7 @@ public class PointController {
     public ResponseEntity<List<PointResponse>> findPoints(
             @RequestHeader("X-USER-SQ") Long userSq) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         List<PointResponse> responses = pointService.findPointsByUser(userSq);
         return ResponseEntity.ok(responses);
@@ -68,11 +63,15 @@ public class PointController {
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable("pointSq") Long pointSq) {
 
-        if (userSq == null || userSq <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
-        }
+        validateUserHeader(userSq);
 
         PointResponse response = pointService.cancelPoint(userSq, pointSq);
         return ResponseEntity.ok(response);
+    }
+
+    private void validateUserHeader(Long userSq) {
+        if (userSq == null || userSq <= 0) {
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+        }
     }
 }

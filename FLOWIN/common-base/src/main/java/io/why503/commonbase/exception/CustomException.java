@@ -3,8 +3,6 @@ package io.why503.commonbase.exception;
 
 import org.springframework.http.HttpStatus;
 
-import java.util.UUID;
-
 /**
  * 커스텀 예외, 추상클래스, 보관하는 역할
  * md 파일 필독

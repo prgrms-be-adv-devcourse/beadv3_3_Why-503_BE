@@ -1,6 +1,7 @@
 package io.why503.accountservice.domain.companies.util;
 
 import io.why503.accountservice.domain.companies.util.exception.CompanyBadRequest;
+import io.why503.accountservice.domain.companies.util.exception.CompanyForbidden;
 import io.why503.accountservice.domain.companies.util.exception.CompanyNotFound;
 import io.why503.commonbase.exception.CustomException;
 
@@ -17,6 +18,12 @@ public final class CompanyExceptionFactory {
     }
     public static CustomException companyNotFound(Throwable cause){
         return new CompanyNotFound(cause);
+    }
+    public static CustomException companyForbidden(String message){
+        return new CompanyForbidden(message);
+    }
+    public static CustomException companyForbidden(Throwable cause){
+        return new CompanyForbidden(cause);
     }
 
 }

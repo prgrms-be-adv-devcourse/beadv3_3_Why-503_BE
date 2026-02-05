@@ -31,16 +31,20 @@ ext {
 }
 dependencies {
 
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     //ai
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
-
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
     // service discovery
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
+    //test
+    testRuntimeOnly 'com.h2database:h2'
 
     compileOnly ("org.projectlombok:lombok")
     annotationProcessor ("org.projectlombok:lombok")

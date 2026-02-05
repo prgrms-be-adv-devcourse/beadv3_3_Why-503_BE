@@ -6,6 +6,7 @@ import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.round.service.RoundService;
+import io.why503.performanceservice.domain.round.util.RoundExceptionFactory;
 import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
 import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeat.repository.RoundSeatRepository;
@@ -52,12 +53,16 @@ public class RoundServiceImpl implements RoundService {
 
         // 초기 생성 시엔 상태가 예매 대기여야 함
         if (request.roundStatus() != RoundStatus.WAIT) {
-            throw new BusinessException(ErrorCode.ROUND_INITIAL_STATUS_MUST_BE_WAIT);
+            throw RoundExceptionFactory.roundBadRequest("회차 생성 시 초기 상태는 '예매대기(WAIT)'여야 합니다.");
+        }
+
+        if (request.roundDt().isBefore(LocalDateTime.now())) {
+            throw RoundExceptionFactory.roundBadRequest("과거 시간에는 회차를 생성할 수 없습니다.");
         }
 
         // 이미 등록된 시간인지 확인
         if (roundRepository.existsByShowAndStartDt(show, request.roundDt())) {
-            throw new BusinessException(ErrorCode.ROUND_CONFLICT);
+            throw RoundExceptionFactory.roundConflict("이미 해당 시간에 등록된 회차가 존재합니다.");
         }
 
         // 날짜 범위 계산
@@ -95,13 +100,13 @@ public class RoundServiceImpl implements RoundService {
 
         //회차 엔티티를 조회
         RoundEntity round = roundRepository.findById(roundResponse.roundSq())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
+                .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
 
         //ShowSeatService 이용해 공연 좌석 등급/가격을 가져옴
         List<ShowSeatEntity> showSeats = showSeatService.getSeatsByShowSq(request.showSq());
 
         if (showSeats.isEmpty()) {
-            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
+            throw RoundExceptionFactory.roundNotFound("해당 공연의 공연좌석이 생성되어 있지 않습니다.");
         }
 
         //ShowSeat -> RoundSeat 변환
@@ -149,6 +154,14 @@ public class RoundServiceImpl implements RoundService {
         userValidator.validateEnterprise(userSq);
         //변경할 회차를 DB에서 찾아옴
         RoundEntity entity = findRoundBySq(roundSq);
+
+        if (entity.getStatus() == RoundStatus.CLOSED) {
+            throw RoundExceptionFactory.roundBadRequest("이미 종료된 회차의 상태는 변경할 수 없습니다.");
+        }
+        if (newStatus == RoundStatus.AVAILABLE && entity.getStartDt().isBefore(LocalDateTime.now())) {
+            throw RoundExceptionFactory.roundBadRequest("공연 시간이 지난 회차는 예매 가능 상태로 변경할 수 없습니다.");
+        }
+
         //해당 회차의 상태를 새로운 상태로 변경
         entity.updateStat(newStatus);
         return roundMapper.entityToDto(entity);
@@ -157,7 +170,7 @@ public class RoundServiceImpl implements RoundService {
     // 회차 ID로 엔티티를 찾음
     private RoundEntity findRoundBySq(Long roundSq) {
         return roundRepository.findById(roundSq)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
+                .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
     }
 
 }

@@ -14,6 +14,7 @@ package io.why503.performanceservice.domain.hall.service.Impl;
 import java.util.List;
 
 import io.why503.performanceservice.domain.hall.service.HallService;
+import io.why503.performanceservice.domain.hall.util.HallExceptionFactory;
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.global.error.ErrorCode;
 import io.why503.performanceservice.global.error.exception.BusinessException;
@@ -56,6 +57,10 @@ public class HallServiceImpl implements HallService {
     public void createHall(Long userSq, HallRequest request) {
         userValidator.validateEnterprise(userSq);
 
+        if (hallRepository.existsByNameAndBasicAddr(request.hallName(), request.hallBasicAddr())) {
+            throw HallExceptionFactory.hallConflict("이미 해당 주소에 동일한 이름의 공연장이 존재합니다.");
+        }
+
         HallEntity hall = hallMapper.requestToEntity(request);
 
         hall.setHallStatus(
@@ -76,7 +81,7 @@ public class HallServiceImpl implements HallService {
     public HallResponse getHall(Long hallSq) {
 
         HallEntity hall = hallRepository.findById(hallSq)
-                .orElseThrow(() ->  new BusinessException(ErrorCode.HALL_NOT_FOUND));
+                .orElseThrow(() -> HallExceptionFactory.hallNotFound("존재하지 않는 공연장입니다."));
 
         return hallMapper.entityToResponse(hall);
     }
@@ -92,6 +97,14 @@ public class HallServiceImpl implements HallService {
             List<SeatAreaCreateVo> areaCreateVos
     ) {
         userValidator.validateEnterprise(userSq);
+
+        if (hallRepository.existsByNameAndBasicAddr(request.hallName(), request.hallBasicAddr())) {
+            throw HallExceptionFactory.hallConflict("이미 해당 주소에 동일한 이름의 공연장이 존재합니다.");
+        }
+
+        if (areaCreateVos == null || areaCreateVos.isEmpty()) {
+            throw HallExceptionFactory.hallBadRequest("좌석 생성 정보는 필수입니다.");
+        }
         HallEntity hall = hallMapper.requestToEntity(request);
         hallRepository.save(hall);
 

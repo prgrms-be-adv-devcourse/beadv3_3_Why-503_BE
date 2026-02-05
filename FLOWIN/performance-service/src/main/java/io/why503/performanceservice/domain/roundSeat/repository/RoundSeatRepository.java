@@ -1,5 +1,6 @@
 package io.why503.performanceservice.domain.roundSeat.repository;
 
+import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,6 @@ public interface RoundSeatRepository extends JpaRepository<RoundSeatEntity,Long>
     //특정 회차의 특정 상태인 좌석만 조회
     List<RoundSeatEntity> findByRound_SqAndStatus(Long roundSq, RoundSeatStatus roundSeatStatus);
 
+    //특정 회차에 특정좌석SQ를 자진 데이터가 존재하는지 확인
+    boolean existsByRoundAndShowSeatSq(RoundEntity round, Long showSeatSq);
 }

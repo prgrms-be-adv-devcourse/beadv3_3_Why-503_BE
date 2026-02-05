@@ -15,7 +15,21 @@ java {
 }
 
 repositories {
+    repositories {
     mavenCentral()
+    // 이 부분 추가 하면 actions 사용시 라이브러리를 주입 받을 수 있음
+    if (System.getenv("CI") == "true") {
+        maven {
+            url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    } else {
+        mavenLocal()
+    }
+}
 }
 
 ext {
@@ -23,6 +37,7 @@ ext {
 }
 
 dependencies {
+    implementation 'io.why503:common-base:0.0.1'
     // cloud
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

@@ -13,6 +13,7 @@ import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import io.why503.performanceservice.domain.show.repository.ShowRepository;
 import io.why503.performanceservice.domain.show.service.ShowService;
+import io.why503.performanceservice.domain.show.util.ShowExceptionFactory;
 import io.why503.performanceservice.domain.showseat.model.dto.request.SeatPolicyRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
@@ -48,7 +49,7 @@ public class ShowServiceImpl implements ShowService {
     @Override
     public ShowEntity findShowBySq(Long showSq) {
         return showRepository.findById(showSq)
-                .orElseThrow(() ->new BusinessException(ErrorCode.SHOW_NOT_FOUND));
+                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연입니다"));
     }
 
     @Override
@@ -62,7 +63,7 @@ public class ShowServiceImpl implements ShowService {
 
         //공연장 id로 hallEntity 조회
         HallEntity hallEntity = hallRepository.findById(request.showRequest().hallSq())
-                .orElseThrow(() -> new BusinessException(ErrorCode.HALL_NOT_FOUND));
+                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연장입니다."));
 
         //mapper에 hallEntity 전달
         ShowEntity show = showMapper.requestToEntity(request.showRequest(), companySq, hallEntity);
@@ -74,7 +75,7 @@ public class ShowServiceImpl implements ShowService {
                 );
 
         if (allSeats.isEmpty()) {
-            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
+            throw ShowExceptionFactory.showNotFound("공연 좌석이 존재하지 않습니다");
         }
 
         Map<String, List<SeatEntity>> seatsByArea =
@@ -95,7 +96,7 @@ public class ShowServiceImpl implements ShowService {
         Long companySq = resolveCompanySq(userSq);
         //공연장 id로 hallEntity 조회
         HallEntity hallEntity = hallRepository.findById(request.hallSq())
-                .orElseThrow(() -> new BusinessException(ErrorCode.HALL_NOT_FOUND));
+                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연장 입니다"));
 
         //mapper에 hallEntity 전달
         ShowEntity show = showMapper.requestToEntity(request, companySq, hallEntity);
@@ -116,7 +117,7 @@ public class ShowServiceImpl implements ShowService {
     ) {
         List<SeatEntity> seats = seatsByArea.get(policy.seatArea());
         if (seats == null || seats.isEmpty()) {
-            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);
+            throw ShowExceptionFactory.showNotFound("좌석이 존재하지 않습니다.");
         }
         ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.grade());
         return seats.stream()
@@ -130,22 +131,19 @@ public class ShowServiceImpl implements ShowService {
 
             // 응답이 없거나 회사 정보가 없는 경우 -> 권한 없음(Forbidden) 처리
             if (response == null || response.companySq() == null) {
-                throw new BusinessException(ErrorCode.PERFORMANCE_CREATE_FORBIDDEN);
-            }
+                throw ShowExceptionFactory.showForbidden("회사 정보를 찾을 수 없거나 공연 생성 권한이 없습니다.");}
             return response.companySq();
 
         } catch (FeignException.Forbidden e) {
             // Feign Client 403 에러 -> 권한 없음
-            throw new BusinessException(ErrorCode.PERFORMANCE_CREATE_FORBIDDEN);
+            throw ShowExceptionFactory.showForbidden("공연 생성 권한이 없습니다.");
 
         } catch (FeignException.Unauthorized e) {
             // Feign Client 401 에러 -> 인증 실패
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-
+            throw ShowExceptionFactory.showForbidden("인증되지 않은 사용자입니다.");
         } catch (FeignException e) {
             // 그 외 Feign 통신 에러 (서버 다운 등) -> 502 Bad Gateway
-            throw new BusinessException(ErrorCode.USER_SERVICE_UNAVAILABLE);
-        }
+            throw new BusinessException(ErrorCode.USER_SERVICE_UNAVAILABLE);        }
     }
     // 카테고리별 조회
     @Override

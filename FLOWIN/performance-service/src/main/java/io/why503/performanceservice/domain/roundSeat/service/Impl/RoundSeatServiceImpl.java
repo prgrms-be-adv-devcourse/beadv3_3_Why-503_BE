@@ -2,6 +2,7 @@ package io.why503.performanceservice.domain.roundSeat.service.Impl;
 
 import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
+import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
@@ -10,6 +11,7 @@ import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntit
 import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeat.repository.RoundSeatRepository;
 import io.why503.performanceservice.domain.roundSeat.service.RoundSeatService;
+import io.why503.performanceservice.domain.roundSeat.util.RoundSeatExceptionFactory;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
 import io.why503.performanceservice.global.error.ErrorCode;
@@ -46,8 +48,21 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ROUND_NOT_FOUND));
+                .orElseThrow(() -> RoundSeatExceptionFactory.roundSeatNotFound("존재하지 않은 회차 입니다."));
+        //이미 종료된 회차에는 좌석을 추가할 수 없음
+        if (roundEntity.getStatus() == RoundStatus.CLOSED) {
+            throw RoundSeatExceptionFactory.roundSeatBadRequest("이미 종료된 회차에는 좌석을 생성할 수 없습니다.");
+        }
+        //해당 회차에 이미 동일한 공연 좌석이 등록되어 있는지 확인
+        boolean exists = roundSeatRepository.existsByRoundAndShowSeatSq(
+                roundEntity, //회차에서
+                request.showSeatSq() //좌석번호를 가진 데이터가 있는지
+        );
 
+        // 해당 회차에 이미 같은 좌석이 등록되어져 있다면 에러 발생
+        if (exists) {
+            throw RoundSeatExceptionFactory.roundSeatConflict("해당 회차에 이미 등록된 좌석입니다.");
+        }
         //회차 좌석 엔티티 생성
         RoundSeatEntity entity = roundSeatMapper.requestToEntity(request, roundEntity);
         //DB에 저장
@@ -83,7 +98,11 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SEAT_NOT_FOUND));
+                .orElseThrow(() -> RoundSeatExceptionFactory.roundSeatNotFound("존재하지 않는 회차 좌석입니다."));
+        //종료된 회차는 상태 변경 불가
+        if (entity.getRound().getStatus() == RoundStatus.CLOSED) {
+            throw RoundSeatExceptionFactory.roundSeatBadRequest("종료된 회차의 좌석 상태는 변경할 수 없습니다.");
+        }
         //상태 변경
         entity.updateStatus(newStatus);
         return roundSeatMapper.entityToResponse(entity);
@@ -104,11 +123,11 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
 
         if (seats.size() != roundSeatSqs.size()) {
-            throw new BusinessException(ErrorCode.SEAT_NOT_FOUND);        }
+            throw RoundSeatExceptionFactory.roundSeatNotFound("요청하신 좌석 중 존재하지 않는 좌석이 포함되어 있습니다.");        }
 
         for (RoundSeatEntity seat : seats) {
             if (seat.getStatus() != RoundSeatStatus.AVAILABLE) {
-                throw new BusinessException(ErrorCode.SEAT_ALREADY_RESERVED);            }
+                throw RoundSeatExceptionFactory.roundSeatConflict("이미 선택되었거나 예매가 불가능한 좌석 입니다.");            }
         }
         // 같은 회차의 좌석들이므로 공연장 정보를 얻어올때 첫번째 좌석의 정보를 이용
         RoundSeatEntity firstSeat = seats.get(0);
@@ -183,18 +202,22 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         for (Long seatId : roundSeatSqs) {
             String key = "seat_owner:" + seatId;
             Object savedValue = redisTemplate.opsForValue().get(key);
-
+            //선점 시간이 만료되어 선점상태가 아님
             if (savedValue == null) {
-                throw new BusinessException(ErrorCode.RESERVATION_EXPIRED);
+                throw RoundSeatExceptionFactory.roundSeatBadRequest("선점 가능 시간이 만료되었거나 유효하지 않은 예약입니다.");
             }
-
             String savedUserSq = String.valueOf(savedValue);
+            //내가 선점된 좌석만 결제 가능
             if (!savedUserSq.equals(String.valueOf(userSq))) {
-                throw new BusinessException(ErrorCode.NOT_MY_SEAT);
+                throw RoundSeatExceptionFactory.roundSeatForbidden("본인이 선점한 좌석만 확정(결제)할 수 있습니다.");
             }
         }
 
         List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
+        //선택한 좌석의 개수와 확정하려는 좌석의 개수가 다름
+        if (seats.size() != roundSeatSqs.size()) {
+            throw RoundSeatExceptionFactory.roundSeatNotFound("요청하신 좌석 중 존재하지 않는 좌석이 포함되어 있습니다.");
+        }
 
         for (RoundSeatEntity seat : seats) {
             seat.confirm();

@@ -302,8 +302,6 @@ public class AiService {
             Map<Category, Double> categoryScores = calculateCategoryScores(r);
             //선호하는 공연의 장르 선정
             Map<MoodCategory, Double> moodScores = calculateMoodScores(r);
-            //공연 + 장르 -> 공연의 기본 카테고리 중 하나 추천
-            Map<Category, ShowCategory> pickedTypes = new HashMap<>();
 
             //사용자의 상위 장르 데이터
             List<Category> topCategory = decideTopCategoryByEmbedding(r);
@@ -401,7 +399,7 @@ public class AiService {
                     """.formatted(r.attention(), r.category(),
                     topCategory, topMoods,
                     convertCategoryScore(categoryScores), convertMoodScore(moodScores),
-                    docText, topFinalShows, pickedTypes, similarShows);
+                    docText, topFinalShows, similarShows);
 
             //ai 호출 -> 프롬프트 입력
             String content = ask(prompt);

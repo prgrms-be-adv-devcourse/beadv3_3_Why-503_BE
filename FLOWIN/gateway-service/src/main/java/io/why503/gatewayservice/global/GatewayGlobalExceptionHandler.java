@@ -53,62 +53,10 @@ public class GatewayGlobalExceptionHandler
                         "code", e.getCode(),
                         "message", e.getMessage()
         )
-    );
+                );
         }
 
-
-        // /* =====================
-        //    ENTRY TOKEN (삭제예정)
-        // ====================== */
-        // if (ex instanceof EntryTokenRequiredException e) {
-        //     return writeErrorResponse(
-        //             response,
-        //             HttpStatus.UNAUTHORIZED,
-        //             Map.of(
-        //                     "status", HttpStatus.UNAUTHORIZED.value(),
-        //                     "message", e.getMessage()
-        //             )
-        //     );
-        // }
-
-        // if (ex instanceof InvalidEntryRequestException e) {
-        //     return writeErrorResponse(
-        //             response,
-        //             HttpStatus.BAD_REQUEST,
-        //             Map.of(
-        //                     "status", HttpStatus.BAD_REQUEST.value(),
-        //                     "message", e.getMessage()
-        //             )
-        //     );
-        // }
-
-        // /* =====================
-        //    QUEUE (삭제예정)
-        // ====================== */
-        // if (ex instanceof QueueWaitingException e) {
-
-        //     // Retry-After 헤더
-        //     response.getHeaders().add(
-        //             HttpHeaders.RETRY_AFTER,
-        //             String.valueOf(e.getRetryAfter())
-        //     );
-
-        //     Map<String, Object> body = new HashMap<>();
-        //     body.put("status", HttpStatus.ACCEPTED.value());
-        //     body.put("message", e.getMessage());
-        //     body.put("position", e.getPosition());
-        //     body.put("total", e.getTotal());
-
-        //     return writeErrorResponse(
-        //             response,
-        //             HttpStatus.ACCEPTED,
-        //             body
-        //     );
-        // }
-
-        /* =====================
-           FALLBACK
-        ====================== */
+        // FallBack
         log.error("Unhandled exception in gateway", ex);
         return writeErrorResponse(
                 response,

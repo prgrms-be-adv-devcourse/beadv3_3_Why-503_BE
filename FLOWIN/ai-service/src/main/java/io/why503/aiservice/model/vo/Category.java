@@ -59,8 +59,7 @@ public enum Category {
         }
     }
 
-
-
+    //공연 종류 찾기
     public ShowCategory findShowType(String raw) {
 
         if (raw == null || raw.isBlank()) {

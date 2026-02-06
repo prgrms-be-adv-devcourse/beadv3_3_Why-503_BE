@@ -64,7 +64,7 @@ public class AiService {
     }
 
     //장르 점수 계산 (빈도 + 임베딩 유사도)
-    private Map<Category, Double> calculateCategoryScores(ResultRequest r) {
+    private Map<Category, Double> CategoryScores(ResultRequest r) {
         Map<Category, Double> scoreMap = new EnumMap<>(Category.class);
 
         // 기본 점수: 최근 구매 3, 관심 1 가중치 부여
@@ -95,7 +95,7 @@ public class AiService {
 
 
     //카테고리 점수 계산
-    private Map<MoodCategory, Double> calculateMoodScores(ResultRequest r) {
+    private Map<MoodCategory, Double> MoodScores(ResultRequest r) {
         if (r.mood() == null || r.mood().isEmpty()) return Map.of();
         Map<MoodCategory, Double> scoreMap = new EnumMap<>(MoodCategory.class);
 
@@ -125,7 +125,7 @@ public class AiService {
         return scoreMap;
     }
     //최종 점수 = 카테고리 점수 40% + 분위기 점수 합 40% + 보정
-    private double calculateFinalScore(
+    private double FinalScore(
             Category category,
             ShowCategory show,
             Map<Category, Double> categoryScores,
@@ -145,31 +145,30 @@ public class AiService {
 
 
     //상위 장르 + 점수 -> 매김
-    private List<ScoredShow> buildFinalShowRanking(
+    private List<TypeShowScore> FinalShowRanking(
             List<Category> topCategory,
             Map<Category, Double> categoryScores,
             Map<MoodCategory, Double> moodScores
     ) {
-        List<ScoredShow> results = new ArrayList<>();
+        List<TypeShowScore> results = new ArrayList<>();
 
         for (Category category : topCategory) {
             for (ShowCategory show : category.getTypes()) {
-                double score = calculateFinalScore(
+                double score = FinalScore(
                         category, show, categoryScores, moodScores
                 );
-                results.add(new ScoredShow(category, show, score));
+                results.add(new TypeShowScore(category, show, score));
             }
         }
 
         return results.stream()
-                .sorted(Comparator.comparingDouble((ScoredShow scoredShow) -> scoredShow.TypeScore()).reversed())
                 .toList();
     }
 
-    private List<String> findSimilarShowsByContent(List<ScoredShow> topFinalShows) {
+    private List<String> SimilarShows(List<TypeShowScore> topFinalShows) {
         Set<String> similarShows = new LinkedHashSet<>();
 
-        for (ScoredShow topShow : topFinalShows) {
+        for (TypeShowScore topShow : topFinalShows) {
             Category category = topShow.category();
             ShowCategory topShowType = topShow.showType();
             Set<MoodCategory> topMoods = topShowType.moods();
@@ -180,16 +179,16 @@ public class AiService {
                     .toList();
 
             // Mood 겹치는 수로 점수 계산
-            Map<ShowCategory, Integer> scored = new HashMap<>();
+            Map<ShowCategory, Integer> score = new HashMap<>();
             for (ShowCategory candidate : candidates) {
                 long commonMoodCount = candidate.moods().stream()
                         .filter(o -> topMoods.contains(o))
                         .count();
-                scored.put(candidate, (int) commonMoodCount);
+                score.put(candidate, (int) commonMoodCount);
             }
 
             // 점수 높은 순 정렬 후 top 2 정도 추천
-            scored.entrySet().stream()
+            score.entrySet().stream()
                     .sorted(Map.Entry.<ShowCategory, Integer>comparingByValue().reversed())
                     .map(entry -> entry.getKey().typeName())
                     .limit(2)
@@ -202,18 +201,18 @@ public class AiService {
 
 
     // 사용자의 행동 기반 상위 장르 결정
-    private List<Category> decideTopCategoryByEmbedding(ResultRequest r) {
-        Map<Category, Double> scores = calculateCategoryScores(r);
+    private List<Category> TopCategory(ResultRequest r) {
+        Map<Category, Double> scores = CategoryScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<Category, Double>comparingByValue().reversed())
                 .map(categoryDoubleEntry -> categoryDoubleEntry.getKey())
                 .limit(2)
                 .toList();
     }
-    private List<MoodCategory> decideTopMoods(ResultRequest r) {
+    private List<MoodCategory> TopMoods(ResultRequest r) {
         if (r.mood() == null || r.mood().isEmpty()) return List.of();
 
-        Map<MoodCategory, Double> scores = calculateMoodScores(r);
+        Map<MoodCategory, Double> scores = MoodScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<MoodCategory, Double>comparingByValue().reversed())
                 .map(moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getKey())
@@ -223,7 +222,7 @@ public class AiService {
 
 
     // 상위 장르 문서 검색
-    private List<Document> searchCategoryDocs(List<Category> topCategory) {
+    private List<Document> searchCategory(List<Category> topCategory) {
         String query = topCategory.stream().map(
                 category -> category.name()).collect(Collectors.joining(" "));
         SearchRequest searchRequest = SearchRequest.builder()
@@ -299,30 +298,30 @@ public class AiService {
         try {
 
             //선호하는 공연 선정
-            Map<Category, Double> categoryScores = calculateCategoryScores(r);
+            Map<Category, Double> categoryScores = CategoryScores(r);
             //선호하는 공연의 장르 선정
-            Map<MoodCategory, Double> moodScores = calculateMoodScores(r);
+            Map<MoodCategory, Double> moodScores = MoodScores(r);
 
             //사용자의 상위 장르 데이터
-            List<Category> topCategory = decideTopCategoryByEmbedding(r);
-            List<MoodCategory> topMoods = decideTopMoods(r);
+            List<Category> topCategory = TopCategory(r);
+            List<MoodCategory> topMoods = TopMoods(r);
 
-            List<ScoredShow> finalShows =
-                    buildFinalShowRanking(
+            List<TypeShowScore> finalShows =
+                    FinalShowRanking(
                             topCategory,
                             categoryScores,
                             moodScores
                     );
 
             // 상위 3개만 사용
-            List<ScoredShow> topFinalShows = finalShows.stream()
+            List<TypeShowScore> topFinalShows = finalShows.stream()
                     .limit(3)
                     .toList();
 
-            List<String> similarShows = findSimilarShowsByContent(topFinalShows);
+            List<String> similarShows = SimilarShows(topFinalShows);
 
             //상위 2개 뽑아 스트림 값으로 문서 검색
-            List<Document> docs = searchCategoryDocs(topCategory);
+            List<Document> docs = searchCategory(topCategory);
             String docText = docs.stream()
                     .map(document -> document.getText().toString())
                     .collect(Collectors.joining("\n"));
@@ -431,7 +430,7 @@ public class AiService {
                     Optional.ofNullable(aiResponse.topMood()).orElse(topMoods.stream().map(
                             moodCategory -> moodCategory.name()).toList()),
                     Optional.ofNullable(aiResponse.topFinalShows()).orElse(topFinalShows.stream().map(
-                            scoredShow -> scoredShow.showType().typeName()
+                            TypeShowScore -> TypeShowScore.showType().typeName()
                             ).toList())
                 );
 
@@ -462,7 +461,7 @@ public class AiService {
     }
 
     //비슷한 장르 찾기
-    private List<String> findSimilarShowsByContentFallback(List<Recommendations> fallbackRecommendations) {
+    private List<String> findSimilarShows(List<Recommendations> fallbackRecommendations) {
         Set<String> similarShows = new HashSet<>();
 
         for (Recommendations rec : fallbackRecommendations) {
@@ -474,15 +473,15 @@ public class AiService {
                     .filter(showCategory -> !showCategory.equals(topShowType))
                     .toList();
 
-            Map<ShowCategory, Integer> scored = new HashMap<>();
+            Map<ShowCategory, Integer> score = new HashMap<>();
             for (ShowCategory candidate : candidates) {
                 long commonMoodCount = candidate.moods().stream()
                         .filter(MoodCategory -> topMoods.contains(MoodCategory))
                         .count();
-                scored.put(candidate, (int) commonMoodCount);
+                score.put(candidate, (int) commonMoodCount);
             }
 
-            scored.entrySet().stream()
+            score.entrySet().stream()
                     .sorted(Map.Entry.<ShowCategory, Integer>comparingByValue().reversed())
                     .map(entry -> entry.getKey().typeName())
                     .limit(2)
@@ -503,16 +502,16 @@ public class AiService {
                 new Recommendations(Category.CLASSIC, "차분한 분위기, 클래식 선호", Category.CLASSIC.getTypes().iterator().next().moods().iterator().next(), Category.CLASSIC.getTypes().iterator().next())
         );
 
-        Map<String, Double> categoryScore = convertCategoryScore(calculateCategoryScores(r));
-        Map<String, Double> moodScore = convertMoodScore(calculateMoodScores(r));
+        Map<String, Double> categoryScore = convertCategoryScore(CategoryScores(r));
+        Map<String, Double> moodScore = convertMoodScore(MoodScores(r));
 
-        List<String> topCategory = decideTopCategoryByEmbedding(r).stream().map(
+        List<String> topCategory = TopCategory(r).stream().map(
                 category -> category.name()).toList();
-        List<String> topMood = decideTopMoods(r).stream().map(
+        List<String> topMood = TopMoods(r).stream().map(
                 moodCategory -> moodCategory.name()).toList();
         List<String> topFinalShows = fallbackRecommendations.stream().map(
                 r1 -> r1.showCategory().typeName()).toList();
-        List<String> similarShows = findSimilarShowsByContentFallback(fallbackRecommendations);
+        List<String> similarShows = findSimilarShows(fallbackRecommendations);
 
 
         return new ResultResponse(

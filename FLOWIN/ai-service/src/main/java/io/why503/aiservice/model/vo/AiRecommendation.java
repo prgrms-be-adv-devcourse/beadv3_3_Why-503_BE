@@ -17,6 +17,7 @@ public record AiRecommendation(
         List<String> explanations,
         //공연장르
         String showCategory
+
 ) {
 
 }

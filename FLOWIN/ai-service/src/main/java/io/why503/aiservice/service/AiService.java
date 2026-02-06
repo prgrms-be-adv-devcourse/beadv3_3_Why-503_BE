@@ -24,7 +24,6 @@ public class AiService {
     private final EmbeddingModel embeddingModel;
     private final Random random = new Random();
 
-
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest r) {
 
@@ -40,8 +39,6 @@ public class AiService {
                       );
         return embeddingModel.embed(text);
     }
-
-
 
     //두 백터 간 코사인 유사도 계산
     public double cosineSimilarity(float[] vectorA, float[] vectorB) {
@@ -61,19 +58,20 @@ public class AiService {
             magnitudeB += vectorB[i] * vectorB[i];
         }
 
-
         //유사도 값에 따라 비슷한 의미를 나옴
         return dotProduct / (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
 
     }
 
     //장르 점수 계산 (빈도 + 임베딩 유사도)
-    private Map<Category, Double> calculateCategoryScores(ResultRequest r) {
+    private Map<Category, Double> CategoryScores(ResultRequest r) {
         Map<Category, Double> scoreMap = new EnumMap<>(Category.class);
 
         // 기본 점수: 최근 구매 3, 관심 1 가중치 부여
-        for (Category c : r.category()) scoreMap.merge(c, 3.0, (a, b) -> Double.sum(a, b));
-        for (Category c : r.attention()) scoreMap.merge(c, 1.0, (a, b) -> Double.sum(a, b));
+        for (Category c : r.category()) scoreMap.merge(
+                c, 3.0, (a, b) -> Double.sum(a, b));
+        for (Category c : r.attention()) scoreMap.merge(
+                c, 1.0, (a, b) -> Double.sum(a, b));
 
         // 사용자 행동을 임베딩
         float[] userVector = embed(r);
@@ -85,7 +83,8 @@ public class AiService {
             );
 
             double maxSim = docs.stream()
-                    .map(doc -> cosineSimilarity(userVector, embeddingModel.embed(doc.getText().toString())))
+                    .map(doc -> cosineSimilarity(userVector, embeddingModel.embed(
+                            doc.getText().toString())))
                     .max((d1, d2) -> Double.compare(d1, d2))
                     .orElse(0.0);
             scoreMap.merge(c, maxSim * 5, (a, b) -> Double.sum(a, b));
@@ -96,16 +95,18 @@ public class AiService {
 
 
     //카테고리 점수 계산
-    private Map<MoodCategory, Double> calculateMoodScores(ResultRequest r) {
+    private Map<MoodCategory, Double> MoodScores(ResultRequest r) {
         if (r.mood() == null || r.mood().isEmpty()) return Map.of();
         Map<MoodCategory, Double> scoreMap = new EnumMap<>(MoodCategory.class);
 
         // 기본 점수
-        for (MoodCategory m : r.mood()) scoreMap.merge(m, 1.0, (a, b) -> Double.sum(a, b));
+        for (MoodCategory m : r.mood()) scoreMap.merge(
+                m, 1.0, (a, b) -> Double.sum(a, b));
 
         // 임베딩 기반 유사도
         float[] moodVector = embeddingModel.embed(
-                String.join(" ", r.mood().stream().map(moodCategory -> moodCategory.name()).toList())
+                String.join(" ", r.mood().stream().map(
+                        moodCategory -> moodCategory.name()).toList())
         );
 
         for (MoodCategory m : MoodCategory.values()) {
@@ -114,7 +115,8 @@ public class AiService {
             );
 
             double maxSim = docs.stream()
-                    .map(doc -> cosineSimilarity(moodVector, embeddingModel.embed(doc.getText().toString())))
+                    .map(doc -> cosineSimilarity(
+                            moodVector, embeddingModel.embed(doc.getText().toString())))
                     .max((d1, d2) -> Double.compare(d1, d2))
                     .orElse(0.0);
             scoreMap.merge(m, maxSim * 5, (a, b) -> Double.sum(a, b));
@@ -122,20 +124,95 @@ public class AiService {
         }
         return scoreMap;
     }
+    //최종 점수 = 카테고리 점수 40% + 분위기 점수 합 40% + 보정
+    private double FinalScore(
+            Category category,
+            ShowCategory show,
+            Map<Category, Double> categoryScores,
+            Map<MoodCategory, Double> moodScores
+    ) {
+        double categoryScore =
+                categoryScores.getOrDefault(category, 0.0);
+
+        double moodScore =
+                show.moods().stream()
+                        .mapToDouble(m -> moodScores.getOrDefault(m, 0.3))
+                        .sum();
+
+        return categoryScore * 0.4
+                + moodScore * 0.4;
+    }
+
+
+    //상위 장르 + 점수 -> 매김
+    private List<TypeShowScore> FinalShowRanking(
+            List<Category> topCategory,
+            Map<Category, Double> categoryScores,
+            Map<MoodCategory, Double> moodScores
+    ) {
+        List<TypeShowScore> results = new ArrayList<>();
+
+        for (Category category : topCategory) {
+            for (ShowCategory show : category.getTypes()) {
+                double score = FinalScore(
+                        category, show, categoryScores, moodScores
+                );
+                results.add(new TypeShowScore(category, show, score));
+            }
+        }
+
+        return results.stream()
+                .toList();
+    }
+
+    private List<String> SimilarShows(List<TypeShowScore> topFinalShows) {
+        Set<String> similarShows = new LinkedHashSet<>();
+
+        for (TypeShowScore topShow : topFinalShows) {
+            Category category = topShow.category();
+            ShowCategory topShowType = topShow.showType();
+            Set<MoodCategory> topMoods = topShowType.moods();
+
+            // 같은 카테고리의 다른 쇼 후보
+            List<? extends ShowCategory> candidates = category.getTypes().stream()
+                    .filter(show -> !show.equals(topShowType))
+                    .toList();
+
+            // Mood 겹치는 수로 점수 계산
+            Map<ShowCategory, Integer> score = new HashMap<>();
+            for (ShowCategory candidate : candidates) {
+                long commonMoodCount = candidate.moods().stream()
+                        .filter(o -> topMoods.contains(o))
+                        .count();
+                score.put(candidate, (int) commonMoodCount);
+            }
+
+            // 점수 높은 순 정렬 후 top 2 정도 추천
+            score.entrySet().stream()
+                    .sorted(Map.Entry.<ShowCategory, Integer>comparingByValue().reversed())
+                    .map(entry -> entry.getKey().typeName())
+                    .limit(2)
+                    .forEach(e -> similarShows.add(e));
+        }
+
+        return new ArrayList<>(similarShows);
+    }
+
+
 
     // 사용자의 행동 기반 상위 장르 결정
-    private List<Category> decideTopCategoryByEmbedding(ResultRequest r) {
-        Map<Category, Double> scores = calculateCategoryScores(r);
+    private List<Category> TopCategory(ResultRequest r) {
+        Map<Category, Double> scores = CategoryScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<Category, Double>comparingByValue().reversed())
                 .map(categoryDoubleEntry -> categoryDoubleEntry.getKey())
                 .limit(2)
                 .toList();
     }
-    private List<MoodCategory> decideTopMoods(ResultRequest r) {
+    private List<MoodCategory> TopMoods(ResultRequest r) {
         if (r.mood() == null || r.mood().isEmpty()) return List.of();
 
-        Map<MoodCategory, Double> scores = calculateMoodScores(r);
+        Map<MoodCategory, Double> scores = MoodScores(r);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<MoodCategory, Double>comparingByValue().reversed())
                 .map(moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getKey())
@@ -145,8 +222,9 @@ public class AiService {
 
 
     // 상위 장르 문서 검색
-    private List<Document> searchCategoryDocs(List<Category> topCategory) {
-        String query = topCategory.stream().map(category -> category.name()).collect(Collectors.joining(" "));
+    private List<Document> searchCategory(List<Category> topCategory) {
+        String query = topCategory.stream().map(
+                category -> category.name()).collect(Collectors.joining(" "));
         SearchRequest searchRequest = SearchRequest.builder()
                 .query(query)
                 .topK(topCategory.size())
@@ -187,22 +265,26 @@ public class AiService {
      * ai용 추천 요약 문장, 설명 문장 포함 모든 정보  -> 사용자용 장르, 추천 이유
      */
     private Recommendations toDomain(AiRecommendation ar) {
-        Category category = Category.fromString(ar.category()).orElse(Category.PLAY);
-        MoodCategory mood = MoodCategory.fromString(ar.mood()).orElse(randomMood());
-        return new Recommendations(category, ar.reason(), mood);
+        Category category = Category.fromString(ar.category()).orElse(null);
+        ShowCategory showCategory = Objects.requireNonNull(category).findShowType(ar.showCategory());
+        MoodCategory mood = MoodCategory.fromString(ar.mood())
+                .orElseGet(() -> {
+                    if (showCategory != null) {
+                        return showCategory.pickMood(random);
+                    }
+                    return null;
+                });
+        return new Recommendations(category, ar.reason(), mood, showCategory );
     }
 
-    //기본결과에 랜덤 카테고리 적용
-    private MoodCategory randomMood() {
-        MoodCategory[] moods = MoodCategory.values();
-        return moods[random.nextInt(moods.length)];
-    }
 
+    //점수 반환
     private Map<String, Double> convertCategoryScore(Map<Category, Double> scores) {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().name(), categoryDoubleEntry -> categoryDoubleEntry.getValue()));
     }
 
+    //점수 반환
     private Map<String, Double> convertMoodScore(Map<MoodCategory, Double> scores) {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().name(), moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getValue()));
@@ -215,18 +297,31 @@ public class AiService {
 
         try {
 
-
-
-            Map<Category, Double> categoryScores = calculateCategoryScores(r);
-            Map<MoodCategory, Double> moodScores = calculateMoodScores(r);
+            //선호하는 공연 선정
+            Map<Category, Double> categoryScores = CategoryScores(r);
+            //선호하는 공연의 장르 선정
+            Map<MoodCategory, Double> moodScores = MoodScores(r);
 
             //사용자의 상위 장르 데이터
-            List<Category> topCategories = decideTopCategoryByEmbedding(r);
-            List<MoodCategory> topMoods = decideTopMoods(r);
+            List<Category> topCategory = TopCategory(r);
+            List<MoodCategory> topMoods = TopMoods(r);
 
+            List<TypeShowScore> finalShows =
+                    FinalShowRanking(
+                            topCategory,
+                            categoryScores,
+                            moodScores
+                    );
+
+            // 상위 3개만 사용
+            List<TypeShowScore> topFinalShows = finalShows.stream()
+                    .limit(3)
+                    .toList();
+
+            List<String> similarShows = SimilarShows(topFinalShows);
 
             //상위 2개 뽑아 스트림 값으로 문서 검색
-            List<Document> docs = searchCategoryDocs(topCategories);
+            List<Document> docs = searchCategory(topCategory);
             String docText = docs.stream()
                     .map(document -> document.getText().toString())
                     .collect(Collectors.joining("\n"));
@@ -238,7 +333,7 @@ public class AiService {
                     [규칙]
                     1. 반드시 JSON만 출력한다.
                     2. category 값은 다음 중 하나만 사용한다:
-                       MUSICAL, CONCERT, PLAY, CLASSIC (소문자 사용 금지)
+                       MUSICAL, CONCERT, PLAY, CLASSIC
                     3. mood 값은 다음중 하나만 사용한다:
                         FANTASY, HORROR, ROMANCE, COMEDY, ACTION
                     4. summary, explanations, recommendations 외 다른 텍스트 금지
@@ -250,35 +345,60 @@ public class AiService {
                     6. 절대로 문장이나 설명을 JSON 밖에 출력하지 마세요.
                     7. ``` 같은 코드블록 제거 후 순수 JSON만 출력
                     
+
+                    [Category 규칙]
+                    - category 값은 반드시 아래 중 하나만 사용:
+                      MUSICAL, CONCERT, PLAY, CLASSIC
+                    
+                    [topFinalShow 규칙]
+                    - topFinalShow 선택한 category에 속한 공연 종류 중 하나여야 한다.
+                    - category와 무관한 topFinalShow 절대 선택하지 말 것.
+                    
+                    [ MoodCategory 규칙 ]
+                    - mood 값은 반드시 아래 중 하나만 사용:
+                      FANTASY, HORROR, ROMANCE, COMEDY, ACTION
+                    - mood는 선택한 showCategory가 허용하는 mood 중 하나여야 한다.
+                    
+                    [ similarShow 규칙 ]
+                    - topFinalShow 선택한 category에 속한 공연 종류 중 하나씩 최대 3~4개까지 선정한단.
+                    - category와 무관한 topFinalShow 절대 선택하지 말 것.
                     
                     [사용자 정보]
-                    -관심 카테고리: %s
-                    -최근 구매: %s
-                    [장르 점수]: %s
-                    -상위 장르: %s
-                    [무드 점수]: %s
-                    -상위 무드: %s
-                    [장르 문서]: %s
+                    - 관심 카테고리: %s
+                    - 최근 구매 카테고리: %s
+                    - 선호 무드: %s
+                    
+                    [카테고리 점수]
+                    %s
+                    
+                    [무드 점수]
+                    %s
+                    
+                    [이미 계산된 추천 후보]
+                    %s
+                    
                     [출력 형식]
                     {
                     "summary": "추천 요약 문장",
                     "explanations": ["설명 문장1", "설명 문장2"],
                     "recommendations": [
                     {
-                    "category": "PLAY | MUSICAL | CONCERT | CLASSIC",
+                    "category": "장르", "장르" ,
                     "reason": "추천 이유",
-                    "mood": "FANTASY | HORROR | ROMANCE | COMEDY | ACTION"
-                    "categoryScore": { "MUSICAL": 3.0, "CONCERT": 2.0, ... },
-                    "moodScore": { "COMEDY": 1.0, "ROMANCE": 2.0, ... },
-                    "topCategory": ["MUSICAL", "CONCERT"],
-                    "topMood": ["COMEDY", "ROMANCE"]
+                    "mood": "분위기", "분위기"
+                    "categoryScore": { "장르": 점수, "장르": 점수, ... },
+                    "moodScore": { "mood": 1.0, "mood": 2.0, ... },
+                    "topCategory": ["category", "category"],
+                    "topMood": ["mood", "mood]
+                    "topFinalShow" : 해당 카테고리에 속한 공연 종류
+                    "similarShow" : 공연 종류 리스트
                             }
                         ]
                     }
                     """.formatted(r.attention(), r.category(),
-                    topCategories, topMoods,
+                    topCategory, topMoods,
                     convertCategoryScore(categoryScores), convertMoodScore(moodScores),
-                    docText);
+                    docText, topFinalShows, similarShows);
 
             //ai 호출 -> 프롬프트 입력
             String content = ask(prompt);
@@ -288,12 +408,13 @@ public class AiService {
             AiResponse aiResponse = parse(content);
 
             List<AiRecommendation> recommendations = Optional.ofNullable(aiResponse.recommendations())
-                    .orElse(List.of()).stream()
-                    .map(ar -> new AiRecommendation(
+                    .orElse(List.of()).stream().map(
+                            ar -> new AiRecommendation(
                             ar.category(),
                             ar.reason(),
-                            ar.mood() != null ? ar.mood() : randomMood().name(),
-                            ar.explanations()
+                            ar.mood(),
+                            ar.explanations(),
+                            ar.showCategory()
                     ))
                     .toList();
 
@@ -304,9 +425,14 @@ public class AiService {
                     recommendations,
                     Optional.ofNullable(aiResponse.categoryScore()).orElse(convertCategoryScore(categoryScores)),
                     Optional.ofNullable(aiResponse.moodScore()).orElse(convertMoodScore(moodScores)),
-                    Optional.ofNullable(aiResponse.topCategory()).orElse(topCategories.stream().map(category -> category.name()).toList()),
-                    Optional.ofNullable(aiResponse.topMood()).orElse(topMoods.stream().map(moodCategory -> moodCategory.name()).toList())
-            );
+                    Optional.ofNullable(aiResponse.topCategory()).orElse(topCategory.stream().map(
+                            category -> category.name()).toList()),
+                    Optional.ofNullable(aiResponse.topMood()).orElse(topMoods.stream().map(
+                            moodCategory -> moodCategory.name()).toList()),
+                    Optional.ofNullable(aiResponse.topFinalShows()).orElse(topFinalShows.stream().map(
+                            TypeShowScore -> TypeShowScore.showType().typeName()
+                            ).toList())
+                );
 
             //AiRecommendation -> 스트림, Recommendations -> 스트림
             List<Recommendations> finalRecommendations =
@@ -315,6 +441,8 @@ public class AiService {
                             .toList();
 
 
+
+            //응답 반환
             return new ResultResponse(
                     fixedResponse.summary(),
                     fixedResponse.explanations(),
@@ -322,7 +450,9 @@ public class AiService {
                     fixedResponse.categoryScore(),
                     fixedResponse.moodScore(),
                     fixedResponse.topCategory(),
-                    fixedResponse.topMood()
+                    fixedResponse.topMood(),
+                    fixedResponse.topFinalShows(),
+                    similarShows
             );
         } catch (Exception e) {
             return fallbackRecommendation(r);
@@ -330,22 +460,59 @@ public class AiService {
 
     }
 
+    //비슷한 장르 찾기
+    private List<String> findSimilarShows(List<Recommendations> fallbackRecommendations) {
+        Set<String> similarShows = new HashSet<>();
+
+        for (Recommendations rec : fallbackRecommendations) {
+            Category category = rec.category();
+            ShowCategory topShowType = rec.showCategory();
+            Set<MoodCategory> topMoods = topShowType.moods();
+
+            List<? extends ShowCategory> candidates = category.getTypes().stream()
+                    .filter(showCategory -> !showCategory.equals(topShowType))
+                    .toList();
+
+            Map<ShowCategory, Integer> score = new HashMap<>();
+            for (ShowCategory candidate : candidates) {
+                long commonMoodCount = candidate.moods().stream()
+                        .filter(MoodCategory -> topMoods.contains(MoodCategory))
+                        .count();
+                score.put(candidate, (int) commonMoodCount);
+            }
+
+            score.entrySet().stream()
+                    .sorted(Map.Entry.<ShowCategory, Integer>comparingByValue().reversed())
+                    .map(entry -> entry.getKey().typeName())
+                    .limit(2)
+                    .forEach(e -> similarShows.add(e));
+        }
+
+        return new ArrayList<>(similarShows);
+    }
+
     //ai 요청 실패시 기본결과 값으로 호출
     public ResultResponse fallbackRecommendation(
             ResultRequest r
     ) {
         List<Recommendations> fallbackRecommendations = List.of(
-                new Recommendations(Category.MUSICAL, "스토리와 음악이 뛰어난 뮤지컬", randomMood()),
-                new Recommendations(Category.CONCERT, "라이브 공연 선호", randomMood()),
-                new Recommendations(Category.PLAY, "대화 중심 작품 선호", randomMood()),
-                new Recommendations(Category.CLASSIC, "차분한 분위기, 클래식 선호", randomMood())
+                new Recommendations(Category.MUSICAL, "스토리와 음악이 뛰어난 뮤지컬", Category.MUSICAL.getTypes().iterator().next().moods().iterator().next(), Category.MUSICAL.getTypes().iterator().next()),
+                new Recommendations(Category.CONCERT, "라이브 공연 선호", Category.CONCERT.getTypes().iterator().next().moods().iterator().next(), Category.CONCERT.getTypes().iterator().next()),
+                new Recommendations(Category.PLAY, "대화 중심 작품 선호", Category.PLAY.getTypes().iterator().next().moods().iterator().next(), Category.PLAY.getTypes().iterator().next()),
+                new Recommendations(Category.CLASSIC, "차분한 분위기, 클래식 선호", Category.CLASSIC.getTypes().iterator().next().moods().iterator().next(), Category.CLASSIC.getTypes().iterator().next())
         );
 
-        Map<String, Double> categoryScore = convertCategoryScore(calculateCategoryScores(r));
-        Map<String, Double> moodScore = convertMoodScore(calculateMoodScores(r));
+        Map<String, Double> categoryScore = convertCategoryScore(CategoryScores(r));
+        Map<String, Double> moodScore = convertMoodScore(MoodScores(r));
 
-        List<String> topCategory = decideTopCategoryByEmbedding(r).stream().map(category -> category.name()).toList();
-        List<String> topMood = decideTopMoods(r).stream().map(moodCategory -> moodCategory.name()).toList();
+        List<String> topCategory = TopCategory(r).stream().map(
+                category -> category.name()).toList();
+        List<String> topMood = TopMoods(r).stream().map(
+                moodCategory -> moodCategory.name()).toList();
+        List<String> topFinalShows = fallbackRecommendations.stream().map(
+                r1 -> r1.showCategory().typeName()).toList();
+        List<String> similarShows = findSimilarShows(fallbackRecommendations);
+
 
         return new ResultResponse(
                 "기본 추천 결과입니다.",
@@ -354,9 +521,9 @@ public class AiService {
                 categoryScore,
                 moodScore,
                 topCategory,
-                topMood
+                topMood,
+                topFinalShows,
+                similarShows
         );
-
     }
-
 }

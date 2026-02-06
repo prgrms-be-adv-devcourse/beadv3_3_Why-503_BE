@@ -15,9 +15,15 @@ public record AiResponse(
         List<String> explanations,
         //추천 결과 정보
         List<AiRecommendation> recommendations,
+        //장르 점수
         Map<String, Double>categoryScore,
+        //분위기 점수
         Map<String, Double>moodScore,
+        //상위 장르
         List<String> topCategory,
-        List<String> topMood
+        //상위 분위기
+        List<String> topMood,
+        //선정된 장르 추천
+        List<String> topFinalShows
 ) {
 }

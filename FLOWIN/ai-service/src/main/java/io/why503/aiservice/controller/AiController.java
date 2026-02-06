@@ -1,9 +1,7 @@
 package io.why503.aiservice.controller;
 
 
-import io.why503.aiservice.model.vo.Category;
-import io.why503.aiservice.model.vo.ResultRequest;
-import io.why503.aiservice.model.vo.ResultResponse;
+import io.why503.aiservice.model.vo.*;
 import io.why503.aiservice.service.AiService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +76,6 @@ public class AiController {
                 .build();
 
         vectorStore.add(List.of(doc));
-
     }
 
     private List<Category> generateCategoryList() {

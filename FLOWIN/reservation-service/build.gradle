@@ -6,7 +6,7 @@ plugins {
 
 group = 'io.why503'
 version = '0.0.1-SNAPSHOT'
-description = 'payment-service'
+description = 'reservation-service'
 
 java {
     toolchain {
@@ -41,6 +41,7 @@ ext {
 }
 
 dependencies {
+
 
     implementation 'io.why503:common-base:0.0.2'
 

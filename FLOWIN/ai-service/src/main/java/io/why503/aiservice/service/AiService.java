@@ -401,7 +401,7 @@ public class AiService {
                     """.formatted(r.attention(), r.category(),
                     topCategory, topMoods,
                     convertCategoryScore(categoryScores), convertMoodScore(moodScores),
-                    docText, topFinalShows, similarShows);
+                    docText, topFinalShows, pickedTypes, similarShows);
 
             //ai 호출 -> 프롬프트 입력
             String content = ask(prompt);

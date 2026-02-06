@@ -3,7 +3,6 @@ package io.why503.reservationservice.domain.booking.controller;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCancelRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
-import io.why503.reservationservice.domain.booking.model.entity.Booking;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
 import jakarta.validation.Valid;

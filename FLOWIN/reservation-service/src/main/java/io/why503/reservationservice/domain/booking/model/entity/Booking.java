@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 예매의 생명주기와 전체 결제 금액 정보를 관리하는 엔티티
+ * 예매(좌석 선점) 정보를 관리하는 엔티티
+ * - 규칙 준수: 메서드 참조 금지, 해피 패스 금지(상태 검증 필수)
+ * - SQL 스키마 반영: 금액/취소사유 제거, Status(PENDING, PAID, CANCELLED)
  */
 @Entity
 @Getter
@@ -40,17 +42,9 @@ public class Booking {
     @Column(name = "status", nullable = false, length = 20)
     private BookingStatus status = BookingStatus.PENDING;
 
-    @Column(name = "original_amount", nullable = false)
-    private Long originalAmount = 0L;
-
-    @Column(name = "final_amount", nullable = false)
-    private Long finalAmount = 0L;
-
-    @Column(name = "cancel_reason", length = 255)
-    private String cancelReason;
-
+    // Cascade 설정: Booking 저장/삭제 시 BookingSeat도 함께 처리
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Ticket> tickets = new ArrayList<>();
+    private List<BookingSeat> bookingSeats = new ArrayList<>();
 
     @CreatedDate
     @Column(name = "created_dt", nullable = false, updatable = false)
@@ -66,90 +60,35 @@ public class Booking {
             throw BookingExceptionFactory.bookingBadRequest("회원 번호는 필수이며 0보다 커야 합니다.");
         }
         if (orderId == null || orderId.isBlank()) {
-            throw BookingExceptionFactory.bookingBadRequest("주문 번호는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("주문 번호(OrderId)는 필수입니다.");
         }
 
         this.userSq = userSq;
         this.orderId = orderId;
     }
 
-    // 예매에 티켓을 추가하고 합계 금액 갱신
-    public void addTicket(Ticket ticket) {
-        this.tickets.add(ticket);
-        ticket.setBooking(this);
-
-        this.originalAmount += ticket.getOriginalPrice();
-        this.finalAmount += ticket.getFinalPrice();
+    // 좌석 추가 (연관관계 편의 메서드)
+    public void addBookingSeat(BookingSeat bookingSeat) {
+        if (bookingSeat == null) {
+            throw BookingExceptionFactory.bookingBadRequest("추가할 좌석 정보가 없습니다.");
+        }
+        this.bookingSeats.add(bookingSeat);
+        bookingSeat.setBooking(this);
     }
 
-    // 결제 완료에 따른 예매 및 하위 티켓 확정 처리
-    public void confirm() {
-        /*
-         * 1. 예매 상태 검증
-         * 2. 예매 및 모든 소속 티켓 상태 확정
-         */
+    // 결제 완료 처리 (단순 상태 변경)
+    public void paid() {
         if (this.status != BookingStatus.PENDING) {
-            throw BookingExceptionFactory.bookingConflict("예매 대기 상태에서만 확정이 가능합니다.");
+            throw BookingExceptionFactory.bookingConflict("결제 완료 처리는 대기(PENDING) 상태에서만 가능합니다.");
         }
-        this.status = BookingStatus.CONFIRMED;
-
-        for (Ticket ticket : this.tickets) {
-            ticket.confirm();
-        }
+        this.status = BookingStatus.PAID;
     }
 
-    // 예매 전체 취소 및 하위 티켓 일괄 취소
-    public void cancel(String reason) {
-        /*
-         * 1. 취소 가능 여부 확인
-         * 2. 예매 상태 변경 및 사유 기록
-         * 3. 유효한 모든 하위 티켓 취소 처리
-         */
+    // 예매 취소 처리 (단순 상태 변경)
+    public void cancel() {
         if (this.status == BookingStatus.CANCELLED) {
             throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");
         }
-
         this.status = BookingStatus.CANCELLED;
-        this.cancelReason = reason;
-
-        for (Ticket ticket : this.tickets) {
-            if (ticket.getStatus() != TicketStatus.CANCELLED) {
-                ticket.cancel();
-            }
-        }
-    }
-
-    // 환불 금액에 따른 부분 취소 또는 전체 취소 처리
-    public void partialCancel(long canceledAmount) {
-        if (this.status == BookingStatus.CANCELLED) {
-            throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");
-        }
-
-        long newFinalAmount = this.finalAmount - canceledAmount;
-        if (newFinalAmount < 0) {
-            throw BookingExceptionFactory.bookingConflict("취소 금액이 남은 결제 금액보다 큽니다.");
-        }
-
-        this.finalAmount = newFinalAmount;
-
-        if (this.finalAmount == 0) {
-            this.status = BookingStatus.CANCELLED;
-            this.cancelReason = "모든 티켓 취소로 인한 자동 전체 취소";
-        } else {
-            this.status = BookingStatus.PARTIAL_CANCEL;
-        }
-    }
-
-    // 예매 확정 전 금액 정보 변경
-    public void changeAmounts(long originalAmount, long finalAmount) {
-        if (this.status != BookingStatus.PENDING) {
-            throw BookingExceptionFactory.bookingConflict("금액 변경은 예매 대기 상태에서만 가능합니다.");
-        }
-        if (originalAmount < 0 || finalAmount < 0) {
-            throw BookingExceptionFactory.bookingBadRequest("금액은 0원 이상이어야 합니다.");
-        }
-
-        this.originalAmount = originalAmount;
-        this.finalAmount = finalAmount;
     }
 }

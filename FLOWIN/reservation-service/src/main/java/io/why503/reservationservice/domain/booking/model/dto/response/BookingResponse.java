@@ -1,32 +1,19 @@
 package io.why503.reservationservice.domain.booking.model.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 예매 정보와 소속된 티켓 목록을 전달하는 응답 객체
+ * 예매(좌석 선점) 정보 조회 응답 DTO
+ * - 내부 로직 없는 Record 사용
+ * - BookingSeat 엔티티 리스트를 단순 좌석 ID 목록으로 반환
  */
 public record BookingResponse(
-        @NotNull
         Long sq,
-        @NotBlank
+        Long userSq,
         String orderId,
-        @NotBlank
-        String status,
-        @NotBlank
-        String statusDescription,
-        @NotNull
-        Long originalAmount,
-        @NotNull
-        Long finalAmount,
-        @NotBlank
-        String cancelReason,
-        @NotNull
-        LocalDateTime createdDt,
-        @NotNull
-        List<TicketResponse> tickets
+        String status, // BookingStatus.name()
+        List<Long> roundSeatSqs, // 선점한 좌석 ID 목록
+        LocalDateTime createdDt
 ) {
 }

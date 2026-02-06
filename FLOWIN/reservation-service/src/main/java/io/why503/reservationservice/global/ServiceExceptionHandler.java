@@ -1,9 +1,7 @@
 package io.why503.reservationservice.global;
 
 import io.why503.commonbase.exception.CustomException;
-import io.why503.commonbase.exception.account.domain.AccountAccountException;
-import io.why503.commonbase.exception.account.domain.AccountAuthException;
-import io.why503.commonbase.exception.account.domain.AccountCompanyException;
+import io.why503.commonbase.exception.reservation.domain.ReservationBookingException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -140,9 +138,7 @@ public class ServiceExceptionHandler {
     //uri로 도메인 찾기
     private CustomException makeExceptionByURI(String s, String message, HttpStatus status){
         return switch (s) {
-            case "accounts" -> new AccountAccountException(message, status);
-            case "company" -> new AccountCompanyException(message, status);
-            case "auth" -> new AccountAuthException(message, status);
+            case "booking" -> new ReservationBookingException(message, status);
             default -> null;
         };
     }

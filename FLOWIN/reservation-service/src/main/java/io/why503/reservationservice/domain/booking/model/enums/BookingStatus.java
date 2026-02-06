@@ -3,18 +3,19 @@ package io.why503.reservationservice.domain.booking.model.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
-
 /**
- * 예매 프로세스의 진행 상태를 관리하는 열거형
+ * 예매 상태 관리 Enum
+ * - PENDING: 결제 대기 (좌석 선점 중)
+ * - PAID: 결제 완료 (예매 확정)
+ * - CANCELLED: 예매 취소 (사용자 취소 또는 미결제 만료)
  */
 @Getter
 @AllArgsConstructor
 public enum BookingStatus {
-    PENDING("예매대기"),
-    CONFIRMED("예매완료"),
-    CANCELLED("예매취소"),
-    PARTIAL_CANCEL("부분취소");
+
+    PENDING("결제 대기"),
+    PAID("결제 완료"),
+    CANCELLED("예매 취소");
 
     private final String description;
 }

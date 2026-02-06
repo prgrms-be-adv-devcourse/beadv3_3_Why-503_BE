@@ -1,10 +1,10 @@
 package io.why503.reservationservice.domain.booking.util;
 
 import io.why503.commonbase.exception.CustomException;
-import io.why503.paymentservice.domain.booking.util.exception.BookingBadRequest;
-import io.why503.paymentservice.domain.booking.util.exception.BookingConflict;
-import io.why503.paymentservice.domain.booking.util.exception.BookingForbidden;
-import io.why503.paymentservice.domain.booking.util.exception.BookingNotFound;
+import io.why503.reservationservice.domain.booking.util.exception.BookingBadRequest;
+import io.why503.reservationservice.domain.booking.util.exception.BookingConflict;
+import io.why503.reservationservice.domain.booking.util.exception.BookingForbidden;
+import io.why503.reservationservice.domain.booking.util.exception.BookingNotFound;
 
 public final class BookingExceptionFactory {
 

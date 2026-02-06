@@ -207,8 +207,11 @@
 
         const tossPayments = TossPayments(clientKey);
 
+        // 1. 서버에서 전달받은 customerKey 가져오기
+        const customerKey = /*[[${customerKey}]]*/ TossPayments.ANONYMOUS;
+
         const widgets = tossPayments.widgets({
-            customerKey: TossPayments.ANONYMOUS
+            customerKey: customerKey // 2. 전달받은 키 사용
         });
 
         // 결제 금액 설정

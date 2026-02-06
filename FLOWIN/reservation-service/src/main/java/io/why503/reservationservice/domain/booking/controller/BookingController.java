@@ -3,6 +3,7 @@ package io.why503.reservationservice.domain.booking.controller;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCancelRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
+import io.why503.reservationservice.domain.booking.model.entity.Booking;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
 import jakarta.validation.Valid;
@@ -36,7 +37,7 @@ public class BookingController {
 
         validateUserHeader(userSq);
         BookingResponse response = bookingService.createBooking(userSq, request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -48,8 +49,7 @@ public class BookingController {
             @RequestHeader("X-USER-SQ") Long userSq) {
 
         validateUserHeader(userSq);
-        List<BookingResponse> responses = bookingService.findBookingsByUser(userSq);
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(bookingService.findBookingsByUser(userSq));
     }
 
     /**
@@ -62,8 +62,17 @@ public class BookingController {
             @PathVariable Long bookingSq) {
 
         validateUserHeader(userSq);
-        BookingResponse response = bookingService.findBooking(userSq, bookingSq);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(bookingService.findBooking(userSq, bookingSq));
+    }
+
+    /**
+     * [추가] 주문 번호(OrderId)로 예매 상세 조회
+     * - PaymentService에서 결제 요청 시 해당 주문 번호의 유효성을 검증하기 위해 사용
+     */
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<BookingResponse> findBookingByOrderId(@PathVariable String orderId) {
+        // Service 내부에서 존재 여부 체크 후 BookingResponse(DTO) 반환
+        return ResponseEntity.ok(bookingService.findBookingByOrderId(orderId));
     }
 
     /**
@@ -75,16 +84,42 @@ public class BookingController {
     public ResponseEntity<BookingResponse> cancelBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long bookingSq,
-            @RequestBody BookingCancelRequest request) {
+            @RequestBody(required = false) BookingCancelRequest request) {
 
         validateUserHeader(userSq);
 
-        // request가 null인 경우 대비 (전체 취소로 간주할 수도 있으나, 명시적으로 빈 객체라도 받는 것이 안전)
         List<Long> seats = (request != null) ? request.roundSeatSqs() : null;
         String reason = (request != null) ? request.reason() : "사용자 요청에 의한 취소";
 
-        BookingResponse response = bookingService.cancelBooking(userSq, bookingSq, seats, reason);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(bookingService.cancelBooking(userSq, bookingSq, seats, reason));
+    }
+
+    /**
+     * [Internal] 결제 완료 처리 (Payment Service에서 호출)
+     * - 상태를 PENDING -> PAID로 변경
+     */
+    @PostMapping("/{bookingSq}/paid")
+    public ResponseEntity<Void> confirmPaid(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long bookingSq) {
+
+        validateUserHeader(userSq);
+        bookingService.confirmPaid(userSq, bookingSq);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * [Internal] 결제 후 환불에 따른 좌석 해제 요청
+     */
+    @PostMapping("/{bookingSq}/refund")
+    public ResponseEntity<Void> refundSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long bookingSq,
+            @RequestBody List<Long> roundSeatSqs) {
+
+        validateUserHeader(userSq);
+        bookingService.refundSeats(userSq, bookingSq, roundSeatSqs);
+        return ResponseEntity.ok().build();
     }
 
     // --- Internal / Admin 용 엔드포인트가 필요하다면 여기에 추가 (현재는 생략) ---

@@ -59,4 +59,25 @@ public interface BookingService {
      * @return Booking 엔티티
      */
     Booking findByOrderId(String orderId);
+
+    /**
+     * [추가] 주문 번호로 예매 상세 조회 (Controller용)
+     * - Payment Service 등 외부 요청 대응을 위해 DTO 반환
+     */
+    BookingResponse findBookingByOrderId(String orderId);
+
+    /**
+     * 결제 완료 확정 처리
+     * @param userSq 사용자 ID (검증용)
+     * @param bookingSq 예매 ID
+     */
+    void confirmPaid(Long userSq, Long bookingSq); // 추가
+
+    /**
+     * 결제 후 환불에 따른 좌석 재고 해제 (Internal)
+     * @param userSq 사용자 ID
+     * @param bookingSq 예매 ID
+     * @param roundSeatSqs 환불 대상 좌석 ID 목록
+     */
+    void refundSeats(Long userSq, Long bookingSq, List<Long> roundSeatSqs);
 }

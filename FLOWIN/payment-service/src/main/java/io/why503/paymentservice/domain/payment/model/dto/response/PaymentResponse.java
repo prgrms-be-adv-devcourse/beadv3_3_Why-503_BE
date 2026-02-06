@@ -1,37 +1,22 @@
 package io.why503.paymentservice.domain.payment.model.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.NonNull;
-
 import java.time.LocalDateTime;
 
 /**
- * 결제 결과와 승인/취소 일시 등 결제 상세 정보를 전달하는 응답 객체
+ * 결제 결과 상세 응답 DTO (12개 필드)
  */
 public record PaymentResponse(
-        @NonNull
         Long sq,
-        @NotBlank
         String orderId,
-        @NotBlank
-        String refType,
-        @NotBlank
-        String method,
-        @NotBlank
-        String methodDescription,
-        @NotBlank
-        String status,
-        @NotBlank
-        String statusDescription,
-        @NonNull
+        String refType,        // "BOOKING" 또는 "POINT"
+        String method,         // "CARD", "MIX" 등 코드값
+        String methodDescription, // "카드", "복합결제" 등 한글명
+        String status,         // "READY", "DONE" 등 코드값
+        String statusDescription, // "결제 준비", "결제 완료" 등 한글명
         Long totalAmount,
-        @NonNull
         Long pgAmount,
-        @NonNull
         Long pointAmount,
         LocalDateTime approvedDt,
-        LocalDateTime cancelledDt,
-        @NonNull
         LocalDateTime createdDt
 ) {
 }

@@ -1,58 +1,71 @@
 package io.why503.paymentservice.domain.payment.mapper;
 
-import io.why503.paymentservice.domain.booking.util.BookingExceptionFactory;
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * 결제 엔티티 데이터를 응답용 객체로 변환하는 컴포넌트
- */
 @Component
 public class PaymentMapper {
 
-    // 결제 엔티티를 상태 및 수단 설명이 포함된 응답 객체로 변환
+    /**
+     * 엔티티 -> 응답 DTO 변환 (12개 인수 전달)
+     */
     public PaymentResponse entityToResponse(Payment payment) {
         if (payment == null) {
-            throw BookingExceptionFactory.bookingBadRequest("변환할 Payment Entity는 필수입니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("변환할 결제 정보가 없습니다.");
         }
 
+        // 정확히 12개의 인수를 순서대로 생성자에 전달합니다.
         return new PaymentResponse(
-                payment.getSq(),
-                payment.getOrderId(),
-                payment.getRefType().name(),
-                payment.getMethod().name(),
-                payment.getMethod().getDescription(),
-                payment.getStatus().name(),
-                payment.getStatus().getDescription(),
-                payment.getTotalAmount(),
-                payment.getPgAmount(),
-                payment.getPointAmount(),
-                payment.getApprovedDt(),
-                payment.getCanceledDt(),
-                payment.getCreatedDt()
+                payment.getSq(),                 // 1
+                payment.getOrderId(),            // 2
+                payment.getRefType().name(),     // 3
+                payment.getMethod().name(),      // 4
+                payment.getMethod().getDescription(), // 5
+                payment.getStatus().name(),      // 6
+                payment.getStatus().getDescription(), // 7
+                payment.getTotalAmount(),        // 8
+                payment.getPgAmount(),           // 9
+                payment.getPointAmount(),        // 10
+                payment.getApprovedDt(),         // 11
+                payment.getCreatedDt()           // 12
         );
     }
 
-    public Payment responseToBookingEntity(Long userSq, String orderId, PaymentMethod method, Long totalAmount, Long pgAmount, Long pointAmount) {
+    /**
+     * [예매용] 요청 DTO -> 엔티티 변환 (계산 로직 포함)
+     */
+    public Payment responseToBookingEntity(Long userSq, Long bookingSq, PaymentRequest request) {
+        if (request == null) {
+            throw PaymentExceptionFactory.paymentBadRequest("결제 요청 정보가 누락되었습니다.");
+        }
+
+        long pgAmount = request.totalAmount() - request.usePointAmount();
+
         return Payment.builder()
                 .userSq(userSq)
-                .orderId(orderId)
                 .refType(PaymentRefType.BOOKING)
-                .method(method)
-                .totalAmount(totalAmount)
+                .bookingSq(bookingSq)
+                .orderId(request.orderId())
+                .method(request.method())
+                .totalAmount(request.totalAmount())
                 .pgAmount(pgAmount)
-                .pointAmount(pointAmount)
+                .pointAmount(request.usePointAmount())
                 .build();
     }
 
+    /**
+     * [포인트 충전용] 요청 데이터 -> 엔티티 변환
+     */
     public Payment responseToPointEntity(Long userSq, String orderId, Long amount) {
         return Payment.builder()
                 .userSq(userSq)
-                .orderId(orderId)
                 .refType(PaymentRefType.POINT)
+                .orderId(orderId)
                 .method(PaymentMethod.CARD)
                 .totalAmount(amount)
                 .pgAmount(amount)

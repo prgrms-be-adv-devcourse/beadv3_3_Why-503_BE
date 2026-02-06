@@ -203,4 +203,76 @@ public class BookingServiceImpl implements BookingService {
         if (orderId == null) throw BookingExceptionFactory.bookingBadRequest("주문 번호는 필수입니다.");
         return bookingRepository.findByOrderId(orderId).orElse(null);
     }
+
+    @Override
+    public BookingResponse findBookingByOrderId(String orderId) {
+        if (orderId == null || orderId.isBlank()) {
+            throw BookingExceptionFactory.bookingBadRequest("주문 번호(OrderId)는 필수입니다.");
+        }
+
+        Booking booking = bookingRepository.findByOrderId(orderId)
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("해당 주문 번호의 예매 내역이 존재하지 않습니다. OrderId: " + orderId));
+
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public void confirmPaid(Long userSq, Long bookingSq) {
+        // 1. 예매 조회 및 존재 여부 검증 (해피 패스 금지)
+        Booking booking = bookingRepository.findById(bookingSq)
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("존재하지 않는 예매입니다."));
+
+        // 2. 권한 검증 (내 예매가 맞는지)
+        if (!booking.getUserSq().equals(userSq)) {
+            throw BookingExceptionFactory.bookingForbidden("본인의 예매만 확정할 수 있습니다.");
+        }
+
+        // 3. 엔티티의 paid() 호출 (내부에서 PENDING 상태인지 검증함)
+        booking.paid(); //
+
+        // 4. 명시적 로그 (추적용)
+        log.info("예매 결제 완료 확정. BookingSQ: {}, OrderId: {}", booking.getSq(), booking.getOrderId());
+
+        // @Transactional에 의해 변경 감지(Dirty Checking)로 업데이트됨
+    }
+
+    @Override
+    @Transactional
+    public void refundSeats(Long userSq, Long bookingSq, List<Long> roundSeatSqs) {
+        // 1. 예매 조회 및 소유권 검증 (해피 패스 금지)
+        Booking booking = bookingRepository.findById(bookingSq)
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("환불할 예매 내역이 없습니다."));
+
+        if (!booking.getUserSq().equals(userSq)) {
+            throw BookingExceptionFactory.bookingForbidden("본인의 예매 재고만 해제할 수 있습니다.");
+        }
+
+        // 2. [규칙 준수] 메서드 참조(::) 금지, 람다 사용
+        // Booking 내부에 해당 좌석들이 실제로 포함되어 있는지 검증 (데이터 정합성)
+        List<Long> validSqs = booking.getBookingSeats().stream()
+                .map((seat) -> seat.getRoundSeatSq())
+                .filter((sq) -> roundSeatSqs.contains(sq))
+                .toList();
+
+        if (validSqs.isEmpty()) {
+            throw BookingExceptionFactory.bookingBadRequest("요청한 좌석이 예매 정보와 일치하지 않습니다.");
+        }
+
+        // 3. 공연 서비스(Performance)에 좌석 해제 요청 (재고 방출의 마침표)
+        try {
+            performanceClient.cancelRoundSeats(validSqs);
+        } catch (Exception e) {
+            log.error("환불 좌석 재고 해제 실패. BookingSQ: {}, Seats: {}, Error: {}",
+                    bookingSq, validSqs, e.getMessage());
+            // 환불은 이미 Payment에서 성공했으므로, 여기서는 실패 시 별도 로그/재시도 큐가 필요함
+            throw BookingExceptionFactory.bookingBadRequest("외부 서비스 재고 해제 중 오류가 발생했습니다.");
+        }
+
+        // 4. 모든 좌석이 환불된 경우 Booking 상태를 CANCELLED로 변경
+        // (부분 환불 시에는 상태 유지 또는 PARTIAL_CANCEL 등의 정책에 따름)
+        if (validSqs.size() == booking.getBookingSeats().size()) {
+            booking.cancel();
+        }
+    }
 }

@@ -1,9 +1,10 @@
 package io.why503.performanceservice.domain.seat.util.exception;
 
-import io.why503.commonbase.exception.performance.domain.PerformanceHallException;
+import io.why503.commonbase.exception.performance.domain.PerformanceRoundSeatException;
+
 import org.springframework.http.HttpStatus;
 
-public class SeatConflict extends PerformanceHallException {
+public class SeatConflict extends PerformanceRoundSeatException {
     public SeatConflict(String message) {
         super(message, HttpStatus.CONFLICT);
     }

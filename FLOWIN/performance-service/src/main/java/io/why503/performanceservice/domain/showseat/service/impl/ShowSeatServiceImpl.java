@@ -5,8 +5,6 @@ import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 import io.why503.performanceservice.domain.showseat.util.ShowSeatExceptionFactory;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

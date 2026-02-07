@@ -3,14 +3,19 @@ package io.why503.performanceservice.domain.hall.model.dto.request;
 import java.util.List;
 
 import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-//공연장 + 좌석 구역 정보를 함께 받기 위한 요청 DTO
 public record HallWithSeatsRequest(
-        @NotNull HallRequest hall,     //공연장 등록 정보
-        @NotNull
-        @NotEmpty
-        List<SeatAreaCreateVo> seatAreas   //좌석 구역 생성 정보
-){
-}
+
+        @NotNull(message = "공연장 정보는 필수입니다.")
+        @Valid
+        HallRequest hall,
+
+        @NotNull(message = "좌석 구역 정보는 필수입니다.")
+        @NotEmpty(message = "좌석 구역은 최소 1개 이상 필요합니다.")
+        @Valid
+        List<SeatAreaCreateVo> seatAreas
+
+) {}

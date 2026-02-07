@@ -1,12 +1,7 @@
-/**
- * Seat Controller
- * 공연장 기준 좌석 조회를 담당하는 Controller
- * 사용 목적 :
+/*
  * - 특정 공연장에 소속된 좌석 목록 조회
- * 설계 의도 :
  * - Seat 도메인은 공연장 기준 고정 자원이므로
- *   공연장 식별자를 기준으로 좌석을 조회한다.
- * - 좌석의 상태/가격/판매 여부는 다루지 않는다. (show_seat 책임)
+ *   공연장 식별자를 기준으로 좌석을 조회
  */
 package io.why503.performanceservice.domain.seat.controller;
 
@@ -30,20 +25,11 @@ public class SeatController {
 
     private final SeatService seatService;
 
-    /**
-     * 공연장 기준 좌석 목록 조회
-     * 요청 예시 :
-     * GET /concert-halls/{concertHallSq}/seats
-     * 처리 흐름 :
-     * 1. 공연장 식별자 기준 Seat 조회
-     * 2. Seat Entity → Response DTO 변환
-     * @param concertHallSq 공연장 식별자
-     * @return 좌석 목록
-     */
-    @GetMapping("/{concertHallSq}/seats")
-    public List<SeatResponse> getSeatsByConcertHall(
-            @PathVariable Long concertHallSq
+    // 공연장 기준 좌석 목록 조회
+    @GetMapping("/{hallSq}/seats")
+    public List<SeatResponse> getSeatsByHall(
+            @PathVariable("hallSq") Long hallSq
     ) {
-        return seatService.readByHall(concertHallSq);
+        return seatService.readByHall(hallSq);
     }
 }

@@ -29,6 +29,6 @@ public record ShowResponse(
         @NotNull ShowGenre genre,           //공연 장르
         @NotNull ShowStatus showStatus,       // 공연 상태
 
-        @NotNull Long concertHallSq,        // 공연장 식별자
+        @NotNull Long hallSq,        // 공연장 식별자
         @NotNull Long companySq             // 회사 식별자
 ) { }

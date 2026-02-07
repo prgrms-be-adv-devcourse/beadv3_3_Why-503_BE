@@ -8,6 +8,7 @@
  */
 package io.why503.performanceservice.domain.show.model.enums;
 
+import io.why503.performanceservice.domain.show.util.ShowExceptionFactory;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -19,4 +20,14 @@ public enum ShowCategory {
     MUSICAL, // 뮤지컬
     PLAY,  // 연극
     CLASSIC; // 클래식
+    
+    public static ShowCategory fromCode(String code) {
+        try {
+            return ShowCategory.valueOf(code);
+        } catch (Exception e) {
+            throw ShowExceptionFactory.showBadRequest(
+                    "유효하지 않은 ShowCategory 값: " + code
+            );
+        }
+    }
 }

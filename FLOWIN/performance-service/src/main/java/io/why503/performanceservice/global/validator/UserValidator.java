@@ -1,5 +1,7 @@
 package io.why503.performanceservice.global.validator;
 
+import io.why503.accountbase.model.enums.UserRole;
+import io.why503.commonbase.exception.CustomException;
 import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
 import io.why503.performanceservice.global.client.accountservice.dto.UserRoleResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,37 +15,45 @@ public class UserValidator {
 
     private final AccountServiceClient accountServiceClient;
 
-    private static final int ROLE_ADMIN = 0;
-    private static final int ROLE_COMPANY = 2;
+    // 기업 또는 관리자 권한 검증
 
-    // 기업, 관리자 권한 검증
-    public void validateEnterprise(Long userSq) {
-
-        validateRoles(userSq, "기업 또는 관리자 권한이 필요합니다.", List.of(ROLE_COMPANY, ROLE_ADMIN));
+    public void validateEnterprise(Long userSq, CustomException forbiddenException) {
+        validateRoles(
+                userSq,
+                List.of(UserRole.COMPANY, UserRole.ADMIN),
+                forbiddenException
+        );
     }
 
     // 관리자 권한 검증
-    public void validateAdmin(Long userSq) {
-
-        validateRoles(userSq, "관리자 권한이 필요합니다.", List.of(ROLE_ADMIN));
+    public void validateAdmin(Long userSq, CustomException forbiddenException) {
+        validateRoles(
+                userSq,
+                List.of(UserRole.ADMIN),
+                forbiddenException
+        );
     }
 
-    // Role 비교
-    private void validateRoles(Long userSq, String errorMessage, List<Integer> requiredRoles) {
+    // 공통
+    private void validateRoles(
+            Long userSq,
+            List<UserRole> requiredRoles,
+            CustomException forbiddenException
+    ) {
 
-        // 유저 정보 조회
+        // 유저 권한 조회
         UserRoleResponse roleInfo = accountServiceClient.getUserRole(userSq);
 
-        // 조회 실패 시 예외 처리
+        // 유저 정보 조회 실패
         if (roleInfo == null) {
-            throw new IllegalArgumentException("유저 정보를 찾을 수 없습니다.");
+            throw forbiddenException;
         }
 
-        int currentRole = roleInfo.userRole(); // 현재 유저의 권한
+        UserRole currentRole = roleInfo.userRole();
 
-        // 현재 유저의 권한에 대한 숫자가 리스트 안에 없으면 에러
+        // 권한 불충분
         if (!requiredRoles.contains(currentRole)) {
-            throw new IllegalArgumentException(errorMessage);
+            throw forbiddenException;
         }
     }
 }

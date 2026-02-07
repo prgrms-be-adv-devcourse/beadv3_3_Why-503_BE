@@ -34,7 +34,9 @@ public final class RoundSeatExceptionFactory {
     }
 
     // 409 Conflict
-    public static CustomException roundSeatConflict(String message) {return new RoundSeatConflict(message);}
+    public static CustomException roundSeatConflict(String message) {
+        return new RoundSeatConflict(message);
+    }
     public static CustomException roundSeatConflict(Throwable cause) {
         return new RoundSeatConflict(cause);
     }

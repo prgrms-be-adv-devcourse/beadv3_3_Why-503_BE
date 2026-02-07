@@ -1,4 +1,4 @@
-package io.why503.performanceservice.global.error.exception;
+package io.why503.performanceservice.global;
 
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
@@ -33,7 +33,7 @@ public class ServiceExceptionHandler {
 
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(i -> i.getDefaultMessage())
-                .collect(Collectors.joining(", ")) + "이(가) 누락되거나 옳바르지 않습니다";
+                .collect(Collectors.joining(", ")) + "이(가) 누락되거나 올바르지 않습니다";
 
         CustomException ex = makeBadRequestByURI(s, message);
 
@@ -67,6 +67,7 @@ public class ServiceExceptionHandler {
         return ResponseEntity.status(ex.getStatus())
                 .body(new ExceptionResponse(ex));
     }
+    
     //커스텀 전체 핸들러
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ExceptionResponse> customExceptionHandler(
@@ -89,7 +90,7 @@ public class ServiceExceptionHandler {
     private CustomException makeBadRequestByURI(String s, String message){
         return switch (s) {
             case "hall" -> HallExceptionFactory.hallBadRequest(message);
-            case "show" -> ShowExceptionFactory.showBadRequest(message);
+            case "shows" -> ShowExceptionFactory.showBadRequest(message);
             case "seat" -> SeatExceptionFactory.seatBadRequest(message);
             case "showSeat" -> ShowSeatExceptionFactory.showSeatBadRequest(message);
             case "round" -> RoundExceptionFactory.roundBadRequest(message);

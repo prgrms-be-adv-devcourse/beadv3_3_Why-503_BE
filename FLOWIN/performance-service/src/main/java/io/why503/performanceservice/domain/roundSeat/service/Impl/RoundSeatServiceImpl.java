@@ -4,6 +4,7 @@ import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
+import io.why503.performanceservice.domain.round.util.RoundExceptionFactory;
 import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.SeatReserveResponse;
@@ -14,8 +15,6 @@ import io.why503.performanceservice.domain.roundSeat.service.RoundSeatService;
 import io.why503.performanceservice.domain.roundSeat.util.RoundSeatExceptionFactory;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepository;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse createRoundSeat(Long userSq, RoundSeatRequest request) {
-        userValidator.validateEnterprise(userSq);
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
@@ -74,7 +73,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     //전체 좌석 조회
     @Override
     public List<RoundSeatResponse> getRoundSeatList(Long userSq,Long roundSq) {
-        userValidator.validateEnterprise(userSq);
+        // userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden(""));
         //해당 회차에 속한 모든 좌석을 가져옴
         List<RoundSeatEntity> entities = roundSeatRepository.findByRound_Sq(roundSq);
         return roundSeatMapper.dbToResponseList(entities);
@@ -94,7 +93,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse patchRoundSeatStatus(Long userSq, Long roundSeatSq, RoundSeatStatus newStatus) {
-        userValidator.validateEnterprise(userSq);
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
@@ -164,7 +163,9 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             // 좌석 등급/가격 정보 Map에서 꺼내기
             ShowSeatEntity showSeat = showSeatMap.get(roundSeat.getShowSeatSq());
             if (showSeat == null) {
-                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+                throw RoundSeatExceptionFactory.roundSeatConflict(
+                    "좌석 등급 정보가 존재하지 않습니다. (showSeatSq=" + roundSeat.getShowSeatSq() + ")"
+                );
             }
 
             // Response 생성

@@ -6,8 +6,7 @@ import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 import io.why503.performanceservice.domain.seat.repository.SeatRepository;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
 import io.why503.performanceservice.domain.seat.service.SeatService;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
+import io.why503.performanceservice.domain.seat.util.SeatExceptionFactory;
 import io.why503.performanceservice.util.mapper.SeatMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class SeatServiceImpl implements SeatService {
     private final SeatMapper seatMapper;
 
     private List<SeatEntity> findByHall(Long hallSq) {
-        return seatRepository.findAllByHallSqOrderByAreaAscNumInAreaAsc(hallSq);
+        return seatRepository.findAllByHall_SqOrderByAreaAscNumInAreaAsc(hallSq);
     }
 
     @Override
@@ -38,9 +37,7 @@ public class SeatServiceImpl implements SeatService {
                 .toList();
     }
 
-    /**
-     * 관리자 입력 기반 커스텀 좌석 생성
-     */
+    // 관리자 입력 기반 커스텀 좌석 생성
     @Override
     @Transactional
     public void createCustomSeats(
@@ -52,6 +49,7 @@ public class SeatServiceImpl implements SeatService {
 
         for (SeatAreaCreateVo vo : areaCreateVos) {
 
+            // 좌석 생성 요청 검증
             validateAreaVo(vo);
 
             for (int num = 1; num <= vo.seatCount(); num++) {
@@ -67,15 +65,21 @@ public class SeatServiceImpl implements SeatService {
         seatRepository.saveAll(seats);
     }
 
-    /* =======================
-       private validation
-       ======================= */
-
+    // 좌석 생성 요청 값 검증
     private void validateAreaVo(SeatAreaCreateVo vo) {
-        if (vo.seatArea() == null || vo.seatArea().isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);        }
 
+        // 구역명이 비어있음
+        if (vo.seatArea() == null || vo.seatArea().isBlank()) {
+            throw SeatExceptionFactory.seatBadRequest(
+                        "좌석 구역 값이 비어있습니다."
+            );        
+        }
+
+        // 좌석 개수가 0 이하
         if (vo.seatCount() <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);        }
+            throw SeatExceptionFactory.seatBadRequest(
+                "좌석 개수(seatCount)는 1 이상이어야 합니다."
+            );
+        }
     }
 }

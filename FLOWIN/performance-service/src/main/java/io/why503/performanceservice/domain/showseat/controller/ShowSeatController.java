@@ -1,11 +1,3 @@
-/**
- * ShowSeat Controller
- * 공연 좌석 정책(show_seat) 관리 API
- * 역할:
- * - 공연별 좌석 정책 조회
- * - 좌석 등급 변경
- * - 좌석 가격 변경
- */
 package io.why503.performanceservice.domain.showseat.controller;
 
 import io.why503.performanceservice.domain.showseat.model.dto.response.ShowSeatResponse;
@@ -13,9 +5,7 @@ import io.why503.performanceservice.util.mapper.ShowSeatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
 import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatGradeChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatPriceChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
@@ -46,9 +36,7 @@ public class ShowSeatController {
         );
     }
 
-    /**
-     * 좌석 등급 변경
-     */
+    // 좌석 등급 변경
     @PatchMapping("/{showSeatSq}/grade")
     public ResponseEntity<Void> changeGrade(
             @PathVariable Long showSeatSq,
@@ -59,9 +47,7 @@ public class ShowSeatController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 좌석 가격 변경
-     */
+    // 좌석 가격 변경
     @PatchMapping("/{showSeatSq}/price")
     public ResponseEntity<Void> changePrice(
             @PathVariable Long showSeatSq,

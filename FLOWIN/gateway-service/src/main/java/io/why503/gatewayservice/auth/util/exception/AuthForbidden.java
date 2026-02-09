@@ -5,9 +5,9 @@ import org.springframework.http.HttpStatus;
 
 public class AuthForbidden extends GatewayAuthException{
     public AuthForbidden(String message) {
-        super(message, HttpStatus.UNAUTHORIZED);
+        super(message, HttpStatus.FORBIDDEN);
     }
     public AuthForbidden(Throwable cause) {
-        super(cause, HttpStatus.UNAUTHORIZED);
+        super(cause, HttpStatus.FORBIDDEN);
     }
 }

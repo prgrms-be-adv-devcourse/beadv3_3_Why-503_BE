@@ -1,7 +1,6 @@
 package io.why503.gatewayservice.auth.util.exception;
 
 import io.why503.commonbase.exception.gateway.GatewayException;
-import io.why503.commonbase.exception.gateway.domain.GatewayAuthException;
 import org.springframework.http.HttpStatus;
 
 public class BadGateway extends GatewayException {

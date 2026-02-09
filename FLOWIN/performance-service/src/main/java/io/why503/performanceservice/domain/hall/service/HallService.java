@@ -19,26 +19,15 @@ import io.why503.performanceservice.domain.seat.model.dto.vo.SeatAreaCreateVo;
 
 public interface HallService {
 
-    /**
-     * 공연장 등록
-     * @param request 공연장 등록 요청 DTO
-     */
+    // 공연장 등록
     void createHall(Long userSq, HallRequest request);
 
-    /**
-     * 공연장 단건 조회
-     * @param concertHallSq 공연장 식별자
-     * @return 공연장 응답 DTO
-     */
-    HallResponse getHall(Long concertHallSq);
-    /**
-     * 관리자 입력 기반 좌석 생성 공연장 등록
-     * 처리 내용 :
+    // 공연장 조회
+    HallResponse getHall(Long hallSq);
+    
+    /** (관리자) 좌석 생성 공연장 등록
      * - 공연장 생성
      * - 관리자 입력 구역/좌석 수 기준 좌석 생성
-     * @param request 공연장 등록 요청 DTO
-     * @param areaCreateVos 좌석 구역 생성 정보
-     * @return 생성된 공연장 식별자
      */
     Long createWithCustomSeats(
             Long userSq,

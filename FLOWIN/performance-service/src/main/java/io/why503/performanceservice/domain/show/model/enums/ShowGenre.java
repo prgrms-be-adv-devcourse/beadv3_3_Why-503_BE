@@ -1,5 +1,7 @@
 package io.why503.performanceservice.domain.show.model.enums;
 
+import io.why503.performanceservice.domain.show.util.ShowExceptionFactory;
+
 public enum ShowGenre {
     BALLAD,        //발라드
     ROCK,          //락
@@ -26,4 +28,13 @@ public enum ShowGenre {
     VOCAL,         //성악
     CHOIR;         //합창
 
+    public static ShowGenre fromCode(String code) {
+        try {
+            return ShowGenre.valueOf(code);
+        } catch (Exception e) {
+            throw ShowExceptionFactory.showBadRequest(
+                    "유효하지 않은 ShowGenre 값: " + code
+            );
+        }
+    }
 }

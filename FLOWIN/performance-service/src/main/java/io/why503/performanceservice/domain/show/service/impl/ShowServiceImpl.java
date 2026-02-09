@@ -1,6 +1,5 @@
 package io.why503.performanceservice.domain.show.service.impl;
 
-import feign.FeignException;
 import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.hall.repository.HallRepository;
 import io.why503.performanceservice.domain.seat.model.entity.SeatEntity;
@@ -20,8 +19,7 @@ import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
 import io.why503.performanceservice.global.client.accountservice.AccountServiceClient;
 import io.why503.performanceservice.global.client.accountservice.dto.CompanyInfoResponse;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
+import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.ShowMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,11 +36,13 @@ import java.util.stream.Collectors;
 public class ShowServiceImpl implements ShowService {
 
     private final ShowRepository showRepository;
+    private final HallRepository hallRepository;
     private final SeatRepository seatRepository;
     private final ShowSeatService showSeatService;
-    private final HallRepository hallRepository;
-    private final AccountServiceClient accountServiceClient;
     private final ShowMapper showMapper;
+
+    private final UserValidator userValidator;
+    private final AccountServiceClient accountServiceClient;
 
 
     //공연 엔티티 조회 및 예외 처리
@@ -52,25 +52,34 @@ public class ShowServiceImpl implements ShowService {
                 .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연입니다"));
     }
 
+    // 공연 + 좌석 생성
     @Override
     @Transactional
     public Long createShowWithSeats(
             ShowCreateWithSeatPolicyRequest request,
             Long userSq
     ) {
-
-        Long companySq = resolveCompanySq(userSq);
+        // 권한 검증
+        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        Long companySq = findCompanySq(userSq);
 
         //공연장 id로 hallEntity 조회
         HallEntity hallEntity = hallRepository.findById(request.showRequest().hallSq())
-                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연장입니다."));
+                .orElseThrow(() -> 
+                        ShowExceptionFactory.showNotFound("존재하지 않는 공연장입니다.")
+                );
 
         //mapper에 hallEntity 전달
-        ShowEntity show = showMapper.requestToEntity(request.showRequest(), companySq, hallEntity);
+        ShowEntity show = showMapper.requestToEntity(
+                request.showRequest(), 
+                companySq, 
+                hallEntity
+            );
+
         ShowEntity savedShow = showRepository.save(show);
 
         List<SeatEntity> allSeats =
-                seatRepository.findAllByHallSqOrderByAreaAscNumInAreaAsc(
+                seatRepository.findAllByHall_SqOrderByAreaAscNumInAreaAsc(
                         savedShow.getHall().getSq()
                 );
 
@@ -78,9 +87,12 @@ public class ShowServiceImpl implements ShowService {
             throw ShowExceptionFactory.showNotFound("공연 좌석이 존재하지 않습니다");
         }
 
+        // 구역별 좌석 Group
         Map<String, List<SeatEntity>> seatsByArea =
-                allSeats.stream().collect(Collectors.groupingBy(SeatEntity::getArea));
+                allSeats.stream().
+                        collect(Collectors.groupingBy(SeatEntity::getArea));
 
+        // 공연장 좌석 기반 ShowSeat 생성
         List<ShowSeatEntity> showSeats =
                 request.seatPolicies().stream()
                         .flatMap(p -> createShowSeatsByPolicy(savedShow, p, seatsByArea).stream())
@@ -90,13 +102,17 @@ public class ShowServiceImpl implements ShowService {
         return savedShow.getSq();
     }
 
+    // 공연 단독 등록
     @Override
     @Transactional
     public ShowResponse createShow(ShowRequest request, Long userSq) {
-        Long companySq = resolveCompanySq(userSq);
+        // 권한 검증
+        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+
+        Long companySq = findCompanySq(userSq);
         //공연장 id로 hallEntity 조회
         HallEntity hallEntity = hallRepository.findById(request.hallSq())
-                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연장 입니다"));
+                .orElseThrow(() -> ShowExceptionFactory.showNotFound("존재하지 않는 공연장 입니다."));
 
         //mapper에 hallEntity 전달
         ShowEntity show = showMapper.requestToEntity(request, companySq, hallEntity);
@@ -104,47 +120,13 @@ public class ShowServiceImpl implements ShowService {
         return showMapper.entityToResponse(show);
     }
 
+    // 공연 조회
     @Override
     public ShowResponse readShowBySq(Long showSq) {
         ShowEntity show = findShowBySq(showSq);
         return showMapper.entityToResponse(show);
     }
 
-    private List<ShowSeatEntity> createShowSeatsByPolicy(
-            ShowEntity show,
-            SeatPolicyRequest policy,
-            Map<String, List<SeatEntity>> seatsByArea
-    ) {
-        List<SeatEntity> seats = seatsByArea.get(policy.seatArea());
-        if (seats == null || seats.isEmpty()) {
-            throw ShowExceptionFactory.showNotFound("좌석이 존재하지 않습니다.");
-        }
-        ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.grade());
-        return seats.stream()
-                .map(seat -> new ShowSeatEntity(grade,  policy.price(), show, seat))
-                .toList();
-    }
-
-    private Long resolveCompanySq(Long userSq) {
-        try {
-            CompanyInfoResponse response = accountServiceClient.getMyCompanyInfo(userSq);
-
-            // 응답이 없거나 회사 정보가 없는 경우 -> 권한 없음(Forbidden) 처리
-            if (response == null || response.companySq() == null) {
-                throw ShowExceptionFactory.showForbidden("회사 정보를 찾을 수 없거나 공연 생성 권한이 없습니다.");}
-            return response.companySq();
-
-        } catch (FeignException.Forbidden e) {
-            // Feign Client 403 에러 -> 권한 없음
-            throw ShowExceptionFactory.showForbidden("공연 생성 권한이 없습니다.");
-
-        } catch (FeignException.Unauthorized e) {
-            // Feign Client 401 에러 -> 인증 실패
-            throw ShowExceptionFactory.showForbidden("인증되지 않은 사용자입니다.");
-        } catch (FeignException e) {
-            // 그 외 Feign 통신 에러 (서버 다운 등) -> 502 Bad Gateway
-            throw new BusinessException(ErrorCode.USER_SERVICE_UNAVAILABLE);        }
-    }
     // 카테고리별 조회
     @Override
     public List<ShowResponse> findShowsByCategory(ShowCategory category) {
@@ -170,4 +152,41 @@ public class ShowServiceImpl implements ShowService {
         }
         return list;
     }
+
+    // 좌석 기반 ShowSeat 생성
+    private List<ShowSeatEntity> createShowSeatsByPolicy(
+            ShowEntity show,
+            SeatPolicyRequest policy,
+            Map<String, List<SeatEntity>> seatsByArea
+    ) {
+        List<SeatEntity> seats = seatsByArea.get(policy.seatArea());
+        if (seats == null || seats.isEmpty()) {
+            throw ShowExceptionFactory.showNotFound(
+                    "좌석 구역 [" + policy.seatArea() + "] 에 좌석이 존재하지 않습니다."
+            );
+
+        }
+
+        ShowSeatGrade grade = ShowSeatGrade.valueOf(policy.grade());
+
+        return seats.stream()
+                .map(seat -> new ShowSeatEntity(grade,  policy.price(), show, seat))
+                .toList();
+    }
+
+    // 회사 정보 조회
+    private Long findCompanySq(Long userSq) {
+
+        CompanyInfoResponse response =
+                accountServiceClient.getMyCompanyInfo(userSq);
+
+        if (response == null || response.companySq() == null) {
+            throw ShowExceptionFactory.showForbidden(
+                    "회사 정보가 존재하지 않아 공연을 생성할 수 없습니다."
+            );
+        }
+
+        return response.companySq();
+    }
+
 }

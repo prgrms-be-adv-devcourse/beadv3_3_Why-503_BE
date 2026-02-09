@@ -42,7 +42,7 @@ public class ServiceExceptionHandler {
         //notnull(그냥 단어)하면 여기서 취합해서 메시지로 만들어줌
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(i -> i.getDefaultMessage())
-                .collect(Collectors.joining(", ")) + "이(가) 누락되거나 옳바르지 않습니다";
+                .collect(Collectors.joining(", ")) + "이(가) 누락되거나 올바르지 않습니다";
         //makeExceptionURI 참조
         CustomException ex = makeExceptionByURI(s, message, HttpStatus.BAD_REQUEST);
         if(ex == null){

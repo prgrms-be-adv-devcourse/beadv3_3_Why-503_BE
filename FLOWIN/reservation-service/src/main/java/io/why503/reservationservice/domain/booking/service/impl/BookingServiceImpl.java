@@ -81,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
         Booking savedBooking = bookingRepository.save(booking);
         log.info("예매 생성 및 좌석 선점 완료. OrderId: {}, UserSq: {}", orderId, userSq);
 
-        return bookingMapper.toResponse(savedBooking);
+        return bookingMapper.entityToResponse(savedBooking);
     }
 
     // (조회 메서드들은 변경 없음 - 생략 가능하지만 전체 맥락을 위해 유지하거나 생략 표시)
@@ -92,14 +92,14 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getUserSq().equals(userSq)) {
             throw BookingExceptionFactory.bookingForbidden("본인의 예매 내역만 조회할 수 있습니다.");
         }
-        return bookingMapper.toResponse(booking);
+        return bookingMapper.entityToResponse(booking);
     }
 
     @Override
     public List<BookingResponse> findBookingsByUser(Long userSq) {
         if (userSq == null) throw BookingExceptionFactory.bookingBadRequest("사용자 정보는 필수입니다.");
         return bookingRepository.findAllByUserSqOrderByCreatedDtDesc(userSq).stream()
-                .map(booking -> bookingMapper.toResponse(booking))
+                .map(booking -> bookingMapper.entityToResponse(booking))
                 .toList();
     }
 
@@ -156,7 +156,7 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        return bookingMapper.toResponse(booking);
+        return bookingMapper.entityToResponse(booking);
     }
 
     /**
@@ -212,7 +212,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findByOrderId(orderId)
                 .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("해당 주문 번호의 예매 내역이 존재하지 않습니다. OrderId: " + orderId));
 
-        return bookingMapper.toResponse(booking);
+        return bookingMapper.entityToResponse(booking);
     }
 
     @Override

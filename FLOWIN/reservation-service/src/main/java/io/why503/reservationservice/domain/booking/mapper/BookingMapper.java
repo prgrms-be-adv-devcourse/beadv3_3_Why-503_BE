@@ -19,7 +19,7 @@ public class BookingMapper {
     /**
      * Booking 엔티티 -> BookingResponse 변환
      */
-    public BookingResponse toResponse(Booking booking) {
+    public BookingResponse entityToResponse(Booking booking) {
         if (booking == null) {
             throw BookingExceptionFactory.bookingBadRequest("변환할 Booking Entity는 필수입니다.");
         }

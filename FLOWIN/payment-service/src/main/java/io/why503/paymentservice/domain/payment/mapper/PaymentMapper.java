@@ -19,20 +19,19 @@ public class PaymentMapper {
             throw PaymentExceptionFactory.paymentBadRequest("변환할 결제 정보가 없습니다.");
         }
 
-        // 정확히 12개의 인수를 순서대로 생성자에 전달합니다.
         return new PaymentResponse(
-                payment.getSq(),                 // 1
-                payment.getOrderId(),            // 2
-                payment.getRefType().name(),     // 3
-                payment.getMethod().name(),      // 4
-                payment.getMethod().getDescription(), // 5
-                payment.getStatus().name(),      // 6
-                payment.getStatus().getDescription(), // 7
-                payment.getTotalAmount(),        // 8
-                payment.getPgAmount(),           // 9
-                payment.getPointAmount(),        // 10
-                payment.getApprovedDt(),         // 11
-                payment.getCreatedDt()           // 12
+                payment.getSq(),
+                payment.getOrderId(),
+                payment.getRefType().name(),
+                payment.getMethod().name(),
+                payment.getMethod().getDescription(),
+                payment.getStatus().name(),
+                payment.getStatus().getDescription(),
+                payment.getTotalAmount(),
+                payment.getPgAmount(),
+                payment.getPointAmount(),
+                payment.getApprovedDt(),
+                payment.getCreatedDt()
         );
     }
 

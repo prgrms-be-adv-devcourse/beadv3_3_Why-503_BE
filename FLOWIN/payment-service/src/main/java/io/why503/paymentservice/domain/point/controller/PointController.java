@@ -71,7 +71,7 @@ public class PointController {
 
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw PointExceptionFactory.pointBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+            throw PointExceptionFactory.pointBadRequest("유효하지 않은 사용자 입니다.");
         }
     }
 }

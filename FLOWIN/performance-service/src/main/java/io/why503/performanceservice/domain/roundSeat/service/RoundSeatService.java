@@ -32,4 +32,6 @@ public interface RoundSeatService {
 
     //판매 확정
     void confirmSeats(Long userSq, List<Long> roundSeatSqs);
+
+    List<SeatReserveResponse> getRoundSeatDetails(List<Long> roundSeatSqs);
 }

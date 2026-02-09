@@ -11,7 +11,7 @@ public record SeatReserveResponse(
         Long price,          // 가격
         String grade,           // 등급
         String seatArea,        // 구역
-        Integer seatAreaNumber,  // 번호
+        Integer seatAreaNum,  // 번호
 
         String showName,        // 공연명
         String hallName, // 공연장명

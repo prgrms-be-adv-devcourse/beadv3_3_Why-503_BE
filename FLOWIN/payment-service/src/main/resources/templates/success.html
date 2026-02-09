@@ -171,7 +171,13 @@
     const requestData = {
         paymentKey: urlParams.get("paymentKey"),
         orderId: urlParams.get("orderId"),
-        amount: Number(urlParams.get("amount")),
+
+        // 1. 이름 변경: amount -> totalAmount
+        totalAmount: Number(urlParams.get("amount")),
+
+        // 2. 필수 필드 추가: method (결제수단), usePointAmount (포인트사용액)
+        method: "CARD",   // PaymentMethod Enum과 일치하는 문자열
+        usePointAmount: 0 // 사용한 포인트가 없다면 0으로 설정
     };
 
     // 서버 측 최종 결제 승인 API 호출

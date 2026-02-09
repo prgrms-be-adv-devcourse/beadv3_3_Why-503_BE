@@ -2,9 +2,7 @@ package io.why503.paymentservice.global.client;
 
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,4 +29,7 @@ public interface PerformanceClient {
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody List<Long> roundSeatSqs
     );
+
+    @GetMapping("/round-seats/details") // PerformanceService 쪽에 해당 API가 존재해야 함
+    List<RoundSeatResponse> findRoundSeats(@RequestParam("roundSeatSqs") List<Long> roundSeatSqs);
 }

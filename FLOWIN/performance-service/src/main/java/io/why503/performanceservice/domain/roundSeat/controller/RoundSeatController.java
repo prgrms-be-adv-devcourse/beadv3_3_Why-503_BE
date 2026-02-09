@@ -81,4 +81,10 @@ public class RoundSeatController {
         roundSeatService.confirmSeats(userSq, roundSeatSqs);
         return ResponseEntity.ok("판매가 확정되었습니다.");
     }
+
+    @GetMapping("/details")
+    public ResponseEntity<List<SeatReserveResponse>> getRoundSeatDetails(
+            @RequestParam(name = "roundSeatSqs") List<Long> roundSeatSqs) {
+        return ResponseEntity.ok(roundSeatService.getRoundSeatDetails(roundSeatSqs));
+    }
 }

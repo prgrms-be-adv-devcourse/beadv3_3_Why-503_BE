@@ -8,14 +8,11 @@ import io.why503.performanceservice.domain.round.repository.RoundRepository;
 import io.why503.performanceservice.domain.round.service.RoundService;
 import io.why503.performanceservice.domain.round.util.RoundExceptionFactory;
 import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
-import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.roundSeat.repository.RoundSeatRepository;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
@@ -47,7 +44,7 @@ public class RoundServiceImpl implements RoundService {
     public RoundResponse createRound(Long userSq, RoundRequest request) {
 
         // 권한 검증
-        userValidator.validateEnterprise(userSq);
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
 
         ShowEntity show = showService.findShowBySq(request.showSq());
 
@@ -122,7 +119,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     public List<RoundResponse> getRoundListByShow(Long userSq, Long showSq) {
         //기업,관리자 회원인지 확인
-        userValidator.validateEnterprise(userSq);
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
         //요청된 공연 정보를 찾음
         ShowEntity show = showService.findShowBySq(showSq);
         //해당 공연에 소속된 모든 회차를 가져옴
@@ -151,7 +148,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     @Transactional
     public RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus) {
-        userValidator.validateEnterprise(userSq);
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
         //변경할 회차를 DB에서 찾아옴
         RoundEntity entity = findRoundBySq(roundSq);
 

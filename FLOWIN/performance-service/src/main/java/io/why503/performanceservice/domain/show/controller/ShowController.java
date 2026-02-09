@@ -6,8 +6,7 @@ import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
 import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import io.why503.performanceservice.domain.show.service.ShowService;
-import io.why503.performanceservice.global.error.ErrorCode;
-import io.why503.performanceservice.global.error.exception.BusinessException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,17 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Show Controller
- * 역할:
- * - 공연 등록
- * - 공연 + 좌석 정책 등록
- * - 공연 단건 조회
- * 책임:
- * - 요청/응답 매핑
- * - Authorization 헤더 존재 여부 검증
- * 비즈니스 로직은 Service 계층에 위임
- */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/shows")
@@ -33,53 +21,34 @@ public class ShowController {
 
     private final ShowService showService;
 
-    /**
-     * 공연 단독 생성
-     * (COMPANY 권한 필수)
-     */
+    // 공연 등록
     @PostMapping
     public ResponseEntity<ShowResponse> createShow(
-            @RequestBody ShowRequest request,
-            @RequestHeader("X-USER-SQ") Long userSq
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody @Valid ShowRequest request
     ) {
-        requireAuthorization(userSq);
         ShowResponse response = showService.createShow(request, userSq);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 공연 + 좌석 정책 동시 생성
-     * (COMPANY 권한 필수)
-     */
+    // 공연 + 좌석 정책 동시 생성
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(
-            @RequestBody ShowCreateWithSeatPolicyRequest request,
+            @RequestBody @Valid ShowCreateWithSeatPolicyRequest request,
             @RequestHeader("X-USER-SQ") Long userSq
     ) {
-        requireAuthorization(userSq);
         Long showSq = showService.createShowWithSeats(request, userSq);
         return ResponseEntity.status(HttpStatus.CREATED).body(showSq);
     }
 
-    /**
-     * 공연 단건 조회
-     */
+    // 공연 단건 조회
     @GetMapping("/{showSq}")
     public ResponseEntity<ShowResponse> getShow(
-            @PathVariable Long showSq
+            @PathVariable("showSq") Long showSq
     ) {
         ShowResponse response = showService.readShowBySq(showSq);
         return ResponseEntity.ok(response);
     }
-
-    /**
-     * Authorization 헤더 필수 검증
-     */
-    private void requireAuthorization(Long authorization) {
-        if (authorization == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);        }
-    }
-
 
     // 카테고리별 조회
     // shows/category?category=CONCERT

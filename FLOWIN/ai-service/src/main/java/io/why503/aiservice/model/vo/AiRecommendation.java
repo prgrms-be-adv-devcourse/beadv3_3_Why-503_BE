@@ -11,8 +11,13 @@ public record AiRecommendation(
         String category,
         //추천 이유
         String reason,
+        //분위기 설명
         String mood,
-        List<String> explanations
+        //추가 설명들
+        List<String> explanations,
+        //공연장르
+        String showCategory
+
 ) {
 
 }

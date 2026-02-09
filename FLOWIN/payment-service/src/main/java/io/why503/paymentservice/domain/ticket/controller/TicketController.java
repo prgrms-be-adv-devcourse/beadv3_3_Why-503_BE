@@ -13,9 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 티켓 슬롯 관리 및 조회를 위한 컨트롤러
- * - Internal: 공연 서비스 등 내부 시스템 호출
- * - User: 일반 사용자의 티켓 조회 요청 처리
+ * 발권된 티켓의 정보 조회 및 관리를 담당하는 컨트롤러
+ * - 사용자별 티켓 목록 제공 및 시스템 간 티켓 데이터 동기화 수행
  */
 @RestController
 @RequestMapping("/tickets")
@@ -24,47 +23,28 @@ public class TicketController {
 
     private final TicketService ticketService;
 
-    // ==========================================
-    // [Internal] 시스템 내부 호출용 (생성, 조회)
-    // ==========================================
-
-    /**
-     * 티켓 슬롯 일괄 생성 (초기화)
-     * - Performance Service에서 회차/좌석 생성 시 호출
-     */
+    // 공연 회차 생성 시점에 맞춘 티켓 기본 데이터 초기화
     @PostMapping("/init")
     public ResponseEntity<Void> createTicketSlots(@RequestBody @Valid TicketCreateRequest request) {
         ticketService.createTicketSlots(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    /**
-     * 특정 좌석 ID로 티켓 단건 조회 (시스템용)
-     */
+    // 좌석 식별자를 통한 특정 티켓의 발급 상태 확인
     @GetMapping("/round-seat/{roundSeatSq}")
     public ResponseEntity<TicketResponse> findTicketByRoundSeat(@PathVariable Long roundSeatSq) {
         TicketResponse response = ticketService.findTicketByRoundSeat(roundSeatSq);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 여러 좌석 ID로 티켓 목록 일괄 조회 (시스템용)
-     * - 예매 서비스 등에서 사용
-     */
+    // 타 서비스의 요청에 따른 다건의 티켓 상세 정보 일괄 추출
     @PostMapping("/list")
     public ResponseEntity<List<TicketResponse>> findTicketsByRoundSeats(@RequestBody List<Long> roundSeatSqs) {
         List<TicketResponse> responses = ticketService.findTicketsByRoundSeats(roundSeatSqs);
         return ResponseEntity.ok(responses);
     }
 
-    // ==========================================
-    // [User] 사용자 요청용
-    // ==========================================
-
-    /**
-     * 내 티켓 목록 전체 조회
-     * - 마이페이지 등에서 사용
-     */
+    // 사용자가 보유한 모든 유효 티켓 이력 조회
     @GetMapping
     public ResponseEntity<List<TicketResponse>> findMyTickets(
             @RequestHeader("X-USER-SQ") Long userSq) {
@@ -75,10 +55,7 @@ public class TicketController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * 내 티켓 상세 조회
-     * - 티켓 클릭 시 또는 QR 보기 등
-     */
+    // 개별 티켓의 상세 정보 및 입장 보안 정보 조회
     @GetMapping("/{ticketSq}")
     public ResponseEntity<TicketResponse> findMyTicket(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -90,7 +67,7 @@ public class TicketController {
         return ResponseEntity.ok(response);
     }
 
-    // 헤더 검증 (Gateway에서 넘어오지만 더블 체크)
+    // 게이트웨이로부터 전달된 사용자 식별 정보의 유효성 검증
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
             throw PaymentExceptionFactory.paymentBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");

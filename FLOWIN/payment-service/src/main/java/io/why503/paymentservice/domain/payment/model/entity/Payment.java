@@ -16,8 +16,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 /**
- * 결제 트랜잭션 엔티티
- * - [SQL 동기화 완료] ref_type, booking_sq, pg_amount 필드 반영
+ * 결제 거래 정보를 관리하는 엔티티
+ * - 결제 대상 구분(예매/포인트) 및 PG 승인 정보와 금액 구성을 유지
  */
 @Entity
 @Getter
@@ -35,36 +35,36 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ref_type", nullable = false, length = 20)
-    private PaymentRefType refType; // BOOKING, POINT
+    private PaymentRefType refType;
 
     @Column(name = "booking_sq")
-    private Long bookingSq; // 예매 결제 시 사용
+    private Long bookingSq;
 
     @Column(name = "order_id", nullable = false, unique = true, length = 64)
     private String orderId;
 
     @Column(name = "payment_key", length = 200)
-    private String paymentKey; // PG사 응답 키
+    private String paymentKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)
-    private PaymentMethod method; // CARD, EASY_PAY...
+    private PaymentMethod method;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private PaymentStatus status; // READY, DONE, CANCELED
+    private PaymentStatus status;
 
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
     @Column(name = "pg_amount", nullable = false)
-    private Long pgAmount; // 실제 PG 결제액
+    private Long pgAmount;
 
     @Column(name = "point_amount", nullable = false)
-    private Long pointAmount; // 사용된 포인트
+    private Long pointAmount;
 
     @Column(name = "approved_dt")
-    private LocalDateTime approvedDt; // 결제 승인 일시
+    private LocalDateTime approvedDt;
 
     @CreatedDate
     @Column(name = "created_dt", nullable = false, updatable = false)
@@ -77,7 +77,6 @@ public class Payment {
     @Builder
     public Payment(Long userSq, PaymentRefType refType, Long bookingSq, String orderId,
                    PaymentMethod method, Long totalAmount, Long pgAmount, Long pointAmount) {
-        // [해피 패스 금지] 예매 결제인데 bookingSq가 없으면 예외
         if (refType == PaymentRefType.BOOKING && bookingSq == null) {
             throw PaymentExceptionFactory.paymentBadRequest("예매 결제 시 예매 번호는 필수입니다.");
         }
@@ -87,16 +86,13 @@ public class Payment {
         this.bookingSq = bookingSq;
         this.orderId = orderId;
         this.method = method;
-        this.status = PaymentStatus.READY; // 초기 상태는 READY
+        this.status = PaymentStatus.READY;
         this.totalAmount = totalAmount;
         this.pgAmount = pgAmount;
         this.pointAmount = pointAmount;
     }
 
-    /**
-     * 결제 승인 완료 처리
-     * @param paymentKey PG사 식별 키
-     */
+    // 외부 PG사 승인 완료 정보를 기록하고 결제 상태를 확정
     public void complete(String paymentKey) {
         if (this.status != PaymentStatus.READY) {
             throw PaymentExceptionFactory.paymentConflict("준비 상태의 결제만 완료할 수 있습니다.");
@@ -106,9 +102,7 @@ public class Payment {
         this.approvedDt = LocalDateTime.now();
     }
 
-    /**
-     * 결제 취소 처리
-     */
+    // 결제 거래를 무효화하고 상태를 취소로 변경
     public void cancel() {
         if (this.status == PaymentStatus.CANCELED) {
             throw PaymentExceptionFactory.paymentConflict("이미 취소된 결제입니다.");

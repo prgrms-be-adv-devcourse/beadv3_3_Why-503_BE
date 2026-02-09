@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * 외부 결제 시스템 연동을 위한 설정값 로드 및 빈 등록 클래스
+ * 토스페이먼츠 연동에 필요한 인증 정보 및 통신 설정 관리
  */
 @Configuration
 public class TossPaymentConfig {
@@ -17,7 +17,7 @@ public class TossPaymentConfig {
     @Value("${toss.client.client-key}")
     private String tossClientKey;
 
-    // 외부 API 통신을 위한 RestTemplate 빈 등록
+    // 외부 결제 API 호출을 위한 공통 통신 객체 생성
     @Bean
     public RestTemplate tossRestTemplate() {
         return new RestTemplate();

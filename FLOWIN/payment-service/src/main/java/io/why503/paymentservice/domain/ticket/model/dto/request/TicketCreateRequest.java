@@ -8,7 +8,8 @@ import jakarta.validation.constraints.Positive;
 import java.util.List;
 
 /**
- * 예매할 개별 좌석의 식별자와 적용할 할인 정책을 담는 요청 객체
+ * 공연 회차에 따른 티켓 슬롯 일괄 생성을 위한 요청 객체
+ * - 공연 서비스의 좌석 정보와 티켓 데이터를 동기화하기 위해 사용
  */
 public record TicketCreateRequest(
         @NotNull(message = "회차 ID는 필수입니다.")

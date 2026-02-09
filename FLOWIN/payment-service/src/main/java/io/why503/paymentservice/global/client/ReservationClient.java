@@ -7,43 +7,32 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 예약 서비스(Reservation Service)와 통신하는 Feign Client
- * - [땅땅땅 규칙] 결제 서비스는 예약 서비스의 상세 데이터를 이 클라이언트를 통해 가져옴
+ * 예매 서비스와의 통신을 통해 예약 상태를 조회하고 결제 결과를 동기화하는 클라이언트
  */
-@FeignClient(name = "reservation-service", url = "http://localhost:8400") // 실제 포트에 맞게 조정
+@FeignClient(name = "reservation-service", url = "http://localhost:8400")
 public interface ReservationClient {
 
-    /**
-     * 예매 상세 조회 (PK 기반)
-     * - 취소 로직 등에서 사용
-     */
+    // 예매 식별자를 통한 예약 상세 정보 및 점유 좌석 현황 조회
     @GetMapping("/bookings/{bookingSq}")
     BookingResponse getBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable("bookingSq") Long bookingSq
     );
 
-    /**
-     * [추가] 주문 번호(OrderId)로 예매 상세 조회
-     * - PaymentServiceImpl.pay() 진입 시 결제 요청 검증을 위해 필수적으로 사용
-     */
+    // 주문 식별자를 기반으로 결제 대상 예약 건의 유효성 검증을 위한 데이터 추출
     @GetMapping("/bookings/orders/{orderId}")
     BookingResponse findBookingByOrderId(
             @PathVariable("orderId") String orderId
     );
 
-    /**
-     * 결제 완료 통보 (상태 변경: PENDING -> PAID)
-     */
+    // 결제 승인 완료에 따른 예약 상태 확정 요청
     @PostMapping("/bookings/{bookingSq}/paid")
     void confirmPaid(
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable("bookingSq") Long bookingSq
     );
 
-    /**
-     * 결제 취소/환불에 따른 좌석 점유 해제 요청
-     */
+    // 결제 취소 또는 환불 시 점유 중인 좌석의 권한 해제 처리
     @PostMapping("/bookings/{bookingSq}/refund")
     void refundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,

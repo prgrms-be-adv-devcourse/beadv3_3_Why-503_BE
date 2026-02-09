@@ -4,16 +4,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 예매(좌석 선점) 정보 조회 응답 DTO
- * - 내부 로직 없는 Record 사용
- * - BookingSeat 엔티티 리스트를 단순 좌석 ID 목록으로 반환
+ * 예매 상세 및 상태 정보를 반환하는 데이터 객체
+ * - 예매 식별자, 상태, 선점된 좌석 목록을 포함
  */
 public record BookingResponse(
         Long sq,
         Long userSq,
         String orderId,
-        String status, // BookingStatus.name()
-        List<Long> roundSeatSqs, // 선점한 좌석 ID 목록
+        String status,
+        List<Long> roundSeatSqs,
         LocalDateTime createdDt
 ) {
 }

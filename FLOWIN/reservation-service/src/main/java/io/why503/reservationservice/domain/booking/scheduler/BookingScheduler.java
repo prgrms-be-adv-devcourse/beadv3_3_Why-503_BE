@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 정해진 주기마다 미결제된 예매 건을 정리하는 스케줄러
+ * - 일정 시간 동안 결제가 완료되지 않은 점유 좌석을 회수
  */
 @Slf4j
 @Component
@@ -20,7 +21,7 @@ public class BookingScheduler {
     @Value("${scheduler.booking.expiration-minutes:10}")
     private int expirationMinutes;
 
-    // 일정 시간 동안 결제가 진행되지 않은 예매 건을 자동 취소
+    // 미결제 상태로 방치된 선점 좌석의 자동 해제 및 상태 변경
     @Scheduled(cron = "${scheduler.booking.cron}")
     public void autoCancelExpiredBookings() {
         long startTime = System.currentTimeMillis();

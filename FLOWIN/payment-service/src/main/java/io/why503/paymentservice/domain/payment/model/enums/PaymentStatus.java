@@ -3,6 +3,9 @@ package io.why503.paymentservice.domain.payment.model.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * 결제 거래 처리 상태에 대한 구분
+ */
 @Getter
 @AllArgsConstructor
 public enum PaymentStatus {

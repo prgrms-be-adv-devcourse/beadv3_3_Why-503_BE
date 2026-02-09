@@ -16,9 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 예매(좌석 선점) 정보를 관리하는 엔티티
- * - 규칙 준수: 메서드 참조 금지, 해피 패스 금지(상태 검증 필수)
- * - SQL 스키마 반영: 금액/취소사유 제거, Status(PENDING, PAID, CANCELLED)
+ * 예매 및 좌석 선점 정보를 관리하는 엔티티
+ * - 결제 상태에 따른 예매 생명 주기를 관리
  */
 @Entity
 @Getter
@@ -42,7 +41,6 @@ public class Booking {
     @Column(name = "status", nullable = false, length = 20)
     private BookingStatus status = BookingStatus.PENDING;
 
-    // Cascade 설정: Booking 저장/삭제 시 BookingSeat도 함께 처리
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookingSeat> bookingSeats = new ArrayList<>();
 
@@ -67,7 +65,7 @@ public class Booking {
         this.orderId = orderId;
     }
 
-    // 좌석 추가 (연관관계 편의 메서드)
+    // 예매와 선점 좌석 간의 객체 연관관계 설정
     public void addBookingSeat(BookingSeat bookingSeat) {
         if (bookingSeat == null) {
             throw BookingExceptionFactory.bookingBadRequest("추가할 좌석 정보가 없습니다.");
@@ -76,7 +74,7 @@ public class Booking {
         bookingSeat.setBooking(this);
     }
 
-    // 결제 완료 처리 (단순 상태 변경)
+    // 결제 승인 결과 반영 및 예매 확정
     public void paid() {
         if (this.status != BookingStatus.PENDING) {
             throw BookingExceptionFactory.bookingConflict("결제 완료 처리는 대기(PENDING) 상태에서만 가능합니다.");
@@ -84,7 +82,7 @@ public class Booking {
         this.status = BookingStatus.PAID;
     }
 
-    // 예매 취소 처리 (단순 상태 변경)
+    // 사용자 요청 또는 결제 실패에 따른 예매 무효화
     public void cancel() {
         if (this.status == BookingStatus.CANCELLED) {
             throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");

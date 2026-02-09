@@ -6,9 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 /**
- * 예매(좌석 선점) 생성 요청 DTO
- * - record 사용 (불변, 메서드 없음)
- * - 할인 정보는 포함하지 않음 (결제 단계에서 처리)
+ * 신규 예매 생성을 위한 데이터 객체
+ * - 선점하려는 좌석 정보와 사용자 정보를 전달
  */
 public record BookingCreateRequest(
         @NotNull(message = "사용자 ID는 필수입니다.")

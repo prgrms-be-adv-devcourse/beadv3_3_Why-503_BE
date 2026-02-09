@@ -25,10 +25,7 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    /**
-     * 예매 생성 (좌석 선점)
-     * [POST] /bookings
-     */
+    // 신규 예매를 통한 좌석 점유 요청
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -39,10 +36,7 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 내 예매 목록 조회
-     * [GET] /bookings
-     */
+    // 본인의 전체 예매 이력 조회
     @GetMapping
     public ResponseEntity<List<BookingResponse>> findMyBookings(
             @RequestHeader("X-USER-SQ") Long userSq) {
@@ -51,10 +45,6 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.findBookingsByUser(userSq));
     }
 
-    /**
-     * 예매 상세 조회
-     * [GET] /bookings/{bookingSq}
-     */
     @GetMapping("/{bookingSq}")
     public ResponseEntity<BookingResponse> findBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -64,21 +54,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.findBooking(userSq, bookingSq));
     }
 
-    /**
-     * [추가] 주문 번호(OrderId)로 예매 상세 조회
-     * - PaymentService에서 결제 요청 시 해당 주문 번호의 유효성을 검증하기 위해 사용
-     */
+    // 결제 시스템의 데이터 대조 및 유효성 검증 목적
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<BookingResponse> findBookingByOrderId(@PathVariable String orderId) {
-        // Service 내부에서 존재 여부 체크 후 BookingResponse(DTO) 반환
         return ResponseEntity.ok(bookingService.findBookingByOrderId(orderId));
     }
 
-    /**
-     * 예매 취소 (전체 또는 부분)
-     * [POST] /bookings/{bookingSq}/cancel
-     * - DELETE 메서드 대신 POST를 사용하여 명시적인 취소 행위(Action)를 표현하고 Body 사용을 용이하게 함
-     */
+    // 예매 철회 및 부분 좌석 해제
     @PostMapping("/{bookingSq}/cancel")
     public ResponseEntity<BookingResponse> cancelBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -93,10 +75,7 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.cancelBooking(userSq, bookingSq, seats, reason));
     }
 
-    /**
-     * [Internal] 결제 완료 처리 (Payment Service에서 호출)
-     * - 상태를 PENDING -> PAID로 변경
-     */
+    // 결제 확정 시 예매 상태를 실결제 완료로 전환
     @PostMapping("/{bookingSq}/paid")
     public ResponseEntity<Void> confirmPaid(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -107,9 +86,7 @@ public class BookingController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * [Internal] 결제 후 환불에 따른 좌석 해제 요청
-     */
+    // 환불 처리에 따른 점유 좌석 복구
     @PostMapping("/{bookingSq}/refund")
     public ResponseEntity<Void> refundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -121,8 +98,7 @@ public class BookingController {
         return ResponseEntity.ok().build();
     }
 
-    // --- Internal / Admin 용 엔드포인트가 필요하다면 여기에 추가 (현재는 생략) ---
-
+    // 필수 사용자 정보 헤더 존재 여부 확인
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
             throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");

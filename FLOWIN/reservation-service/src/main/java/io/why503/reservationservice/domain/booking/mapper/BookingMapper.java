@@ -11,20 +11,17 @@ import java.util.List;
 
 /**
  * 예매 엔티티와 DTO 간의 데이터 변환을 담당하는 컴포넌트
- * - 엔티티의 복잡한 연관관계(BookingSeat)를 단순화하여 클라이언트에 반환
+ * - 엔티티 구조를 클라이언트 응답 형식에 맞춰 가공 및 변환
  */
 @Component
 public class BookingMapper {
 
-    /**
-     * Booking 엔티티 -> BookingResponse 변환
-     */
+    // 도메인 모델을 외부 노출용 데이터 객체로 변환
     public BookingResponse entityToResponse(Booking booking) {
         if (booking == null) {
             throw BookingExceptionFactory.bookingBadRequest("변환할 Booking Entity는 필수입니다.");
         }
 
-        // 하위 좌석 정보 추출 (Entity -> List<Long>)
         List<Long> roundSeatSqs = extractRoundSeatSqs(booking.getBookingSeats());
 
         return new BookingResponse(
@@ -37,10 +34,7 @@ public class BookingMapper {
         );
     }
 
-    /**
-     * BookingSeat 리스트에서 회차 좌석 ID 목록 추출
-     * - 메서드 참조(::) 금지 규칙 준수
-     */
+    // 예매 정보에 포함된 개별 좌석들의 식별자만 추출
     private List<Long> extractRoundSeatSqs(List<BookingSeat> bookingSeats) {
         if (bookingSeats == null || bookingSeats.isEmpty()) {
             return Collections.emptyList();

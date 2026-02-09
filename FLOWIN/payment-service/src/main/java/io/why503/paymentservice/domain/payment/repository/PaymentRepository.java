@@ -8,27 +8,18 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 결제 내역(Payment) 엔티티에 대한 데이터 액세스를 담당하는 레포지토리
- * - [SQL 동기화] order_id를 통한 단건 조회 및 사용자별 내역 조회를 지원함
+ * 결제 거래 데이터의 영속성 관리를 담당하는 레포지토리
+ * - 주문 식별자 기반의 조회 및 사용자별 이력 추출 기능을 제공
  */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    /**
-     * 주문 번호(order_id)로 결제 내역 조회
-     * - PG 승인 프로세스에서 결제 정보를 찾기 위해 필수
-     */
+    // 외부 시스템과의 승인 결과 대조를 위한 주문 식별자 기반 조회
     Optional<Payment> findByOrderId(String orderId);
 
-    /**
-     * 특정 사용자의 전체 결제 내역 조회
-     * - 마이페이지 등에서 결제 이력 노출용
-     */
+    // 사용자의 결제 이력을 최신 순서대로 추출
     List<Payment> findAllByUserSqOrderByCreatedDtDesc(Long userSq);
 
-    /**
-     * 특정 예매(booking_sq)와 연관된 결제 정보 조회
-     * - 환불 시 예매 정보를 기반으로 결제 건을 찾을 때 사용
-     */
+    // 특정 예매 건에 할당된 결제 정보를 확인하여 환불 절차에 활용
     Optional<Payment> findByBookingSq(Long bookingSq);
 }

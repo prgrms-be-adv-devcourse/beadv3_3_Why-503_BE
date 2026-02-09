@@ -5,6 +5,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * 결제 승인 요청에 필요한 정보를 전달하는 객체
+ * - 외부 결제 시스템 승인에 필요한 키 값과 금액 정보를 포함
+ */
 public record PaymentRequest(
         @NotBlank(message = "주문 ID는 필수입니다.")
         String orderId,

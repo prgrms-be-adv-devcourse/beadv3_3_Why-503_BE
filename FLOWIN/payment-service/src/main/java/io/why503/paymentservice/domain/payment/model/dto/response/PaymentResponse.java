@@ -3,16 +3,17 @@ package io.why503.paymentservice.domain.payment.model.dto.response;
 import java.time.LocalDateTime;
 
 /**
- * 결제 결과 상세 응답 DTO (12개 필드)
+ * 결제 처리 결과 및 상세 이력 정보를 반환하는 객체
+ * - 결제 수단, 상태, 금액 구성 및 승인 시점 정보를 포함
  */
 public record PaymentResponse(
         Long sq,
         String orderId,
-        String refType,        // "BOOKING" 또는 "POINT"
-        String method,         // "CARD", "MIX" 등 코드값
-        String methodDescription, // "카드", "복합결제" 등 한글명
-        String status,         // "READY", "DONE" 등 코드값
-        String statusDescription, // "결제 준비", "결제 완료" 등 한글명
+        String refType,
+        String method,
+        String methodDescription,
+        String status,
+        String statusDescription,
         Long totalAmount,
         Long pgAmount,
         Long pointAmount,

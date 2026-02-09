@@ -8,9 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 예매(Booking)와 회차 좌석(RoundSeat)을 연결하는 중간 엔티티
- * - 역할: 단순히 "어떤 예매에 어떤 좌석이 묶여있는지"만 기록
- * - 상태 관리: 없음 (RoundSeat 테이블에서 직접 관리됨)
+ * 예매 정보와 선택된 좌석 간의 연관 관계를 관리하는 엔티티
+ * - 특정 예매에 귀속된 좌석 식별 정보를 유지
  */
 @Entity
 @Getter
@@ -40,9 +39,8 @@ public class BookingSeat {
         this.roundSeatSq = roundSeatSq;
     }
 
-    // 연관관계 편의 메서드용 (Booking에서 호출)
+    // 예매 엔티티와의 양방향 연관 관계 설정 및 데이터 무결성 검증
     public void setBooking(Booking booking) {
-        // 무결성 보호: 한 번 설정된 Booking은 변경 불가하거나, null 체크 등 필요 시 추가
         if (this.booking != null) {
             throw BookingExceptionFactory.bookingConflict("이미 예매 정보가 설정된 좌석입니다.");
         }

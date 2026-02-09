@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 결제 승인, 조회, 취소 요청을 처리하는 컨트롤러
- * - Gateway에서 전달된 X-USER-SQ 헤더를 기반으로 사용자 인증 처리
+ * 결제 승인, 조회, 취소 프로세스를 제어하는 컨트롤러
+ * - 외부 결제 시스템과의 연동 결과 반영 및 결제 이력 관리
  */
 @RestController
 @RequestMapping("/payments")
@@ -24,10 +24,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    /**
-     * 결제 승인 요청
-     * [POST] /payments
-     */
+    // 결제 수단 검증 및 최종 결제 승인 처리
     @PostMapping
     public ResponseEntity<PaymentResponse> pay(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -38,10 +35,7 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * 내 결제 목록 조회
-     * [GET] /payments
-     */
+    // 본인의 과거 결제 성공 및 취소 이력 전체 조회
     @GetMapping
     public ResponseEntity<List<PaymentResponse>> findPayments(
             @RequestHeader("X-USER-SQ") Long userSq) {
@@ -50,10 +44,6 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.findPaymentsByUser(userSq));
     }
 
-    /**
-     * 결제 상세 조회
-     * [GET] /payments/{paymentSq}
-     */
     @GetMapping("/{paymentSq}")
     public ResponseEntity<PaymentResponse> findPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -63,10 +53,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.findPayment(userSq, paymentSq));
     }
 
-    /**
-     * 결제 취소 요청
-     * [POST] /payments/{paymentSq}/cancel
-     */
+    // 승인된 결제건에 대한 환불 및 거래 무효화
     @PostMapping("/{paymentSq}/cancel")
     public ResponseEntity<PaymentResponse> cancelPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
@@ -80,6 +67,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.cancelPayment(userSq, paymentSq, reason));
     }
 
+    // 게이트웨이를 통해 전달된 필수 사용자 식별값 검증
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
             throw PaymentExceptionFactory.paymentForbidden("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");

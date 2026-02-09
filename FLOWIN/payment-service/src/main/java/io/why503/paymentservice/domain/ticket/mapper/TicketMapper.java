@@ -6,19 +6,18 @@ import io.why503.paymentservice.domain.ticket.model.entity.Ticket;
 import org.springframework.stereotype.Component;
 
 /**
- * 티켓 엔티티와 DTO 간의 데이터 변환을 담당하는 컴포넌트
- * - 엔티티의 상태(isSold)를 기반으로 응답용 상태 문자열을 생성
+ * 티켓 데이터의 엔티티와 응답 객체 간 변환을 관리하는 컴포넌트
+ * - 도메인 모델을 클라이언트 제공 형식으로 가공 및 추출
  */
 @Component
 public class TicketMapper {
 
-    // 티켓 엔티티를 조회 응답 객체로 변환
-    public TicketResponse toResponse(Ticket ticket) {
+    // 도메인 엔티티를 외부 노출용 데이터 구조로 가공
+    public TicketResponse entityToResponse(Ticket ticket) {
         if (ticket == null) {
             throw PaymentExceptionFactory.paymentBadRequest("변환할 Ticket Entity는 필수입니다.");
         }
 
-        // 판매 여부에 따라 상태 문자열 결정
         String status = ticket.isSold() ? "SOLD" : "AVAILABLE";
 
         return new TicketResponse(
@@ -34,10 +33,10 @@ public class TicketMapper {
         );
     }
 
-    // 좌석 ID를 받아 초기 상태의 티켓 엔티티 생성
-    public Ticket toEntity(Long roundSeatSq) {
+    // 신규 회차 좌석 정보에 할당할 티켓 기본 데이터 생성
+    public Ticket requestToEntity(Long roundSeatSq) {
         if (roundSeatSq == null || roundSeatSq <= 0) {
-            throw PaymentExceptionFactory.paymentBadRequest("티켓 생성을 위한 좌석 ID(RoundSeatSq)는 필수이며 양수여야 합니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("티켓 생성을 위한 좌석 ID는 필수이며 양수여야 합니다.");
         }
 
         return Ticket.builder()

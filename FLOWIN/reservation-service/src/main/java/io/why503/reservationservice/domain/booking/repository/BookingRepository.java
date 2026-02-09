@@ -10,28 +10,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 예매(Booking) 엔티티에 대한 데이터 액세스를 담당하는 인터페이스
- * - 핵심 역할: 주문 번호 조회, 사용자별 목록 조회, 좌석 중복 선점 체크
+ * 예매 정보에 대한 데이터베이스 접근 및 쿼리 처리를 담당
  */
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    /**
-     * 주문 번호(OrderId)로 예매 건 조회
-     * - 결제 서비스에서 결제 승인/취소 요청 시 식별자로 사용
-     */
+    // 외부 시스템과의 연동 및 결제 정보 대조를 위한 조회
     Optional<Booking> findByOrderId(String orderId);
 
-    /**
-     * 특정 사용자의 예매 목록 조회 (최신순)
-     * - 마이페이지 등에서 사용
-     */
+    // 사용자의 예매 이력을 시간 역순으로 추출
     List<Booking> findAllByUserSqOrderByCreatedDtDesc(Long userSq);
 
-    /**
-     * 좌석 선점 여부 확인 (중복 예매 방지)
-     * - 요청한 좌석(roundSeatSqs) 중 하나라도 '취소되지 않은(Active)' 예매에 포함되어 있는지 확인
-     * - PENDING(대기) 상태여도 선점된 것으로 간주함
-     */
+    // 특정 좌석들의 예약 가능 여부를 확인하기 위해 유효한 선점 내역 조회
     @Query("SELECT DISTINCT b FROM Booking b " +
             "JOIN b.bookingSeats bs " +
             "WHERE bs.roundSeatSq IN :roundSeatSqs " +

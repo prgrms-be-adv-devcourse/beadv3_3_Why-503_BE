@@ -174,4 +174,5 @@ public class PaymentViewController {
         model.addAttribute("code", code);
         return "fail";
     }
+
 }

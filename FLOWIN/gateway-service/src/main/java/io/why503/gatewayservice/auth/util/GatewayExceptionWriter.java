@@ -3,11 +3,13 @@ package io.why503.gatewayservice.auth.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.commonbase.exception.CustomException;
+import io.why503.commonbase.exception.gateway.domain.GatewayAuthException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
 import io.why503.gatewayservice.auth.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -23,27 +25,11 @@ public class GatewayExceptionWriter {
 
     private final ObjectMapper om;
 
-    //Unauthorized(401)
-    public Mono<Void> writeUnauthorized(
-            ServerWebExchange exchange,
-            String message){
-        CustomException e = new AuthUnauthorized(message);
-        return writeException(exchange, e);
-    }
-
-    //Forbidden(403)
-    public Mono<Void> writeForbidden(
-            ServerWebExchange exchange,
-            String message){
-        CustomException e = new AuthForbidden(message);
-        return writeException(exchange, e);
-    }
-
     //NotFound(404)
     public Mono<Void> writeNotFound(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthNotFound(message);
+        CustomException e = new NotFound(message);
         return writeException(exchange, e);
     }
 
@@ -51,7 +37,7 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeInternalServerError(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthInternalServerError(message);
+        CustomException e = new InternalServerError(message);
         return writeException(exchange, e);
     }
 
@@ -59,7 +45,7 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeBadGateway(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthBadGateway(message);
+        CustomException e = new BadGateway(message);
         return writeException(exchange, e);
     }
 
@@ -67,7 +53,7 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeServerUnavailable(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthServerUnavailable(message);
+        CustomException e = new ServerUnavailable(message);
         return writeException(exchange, e);
     }
 
@@ -75,9 +61,16 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeGatewayTimeout(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthGatewayTimeout(message);
+        CustomException e = new GatewayTimeout(message);
         return writeException(exchange, e);
     }
+
+    //나머지 Unauthorized, Forbidden, AuthException
+    public Mono<Void> writeGatewayAuthException(
+            ServerWebExchange exchange,CustomException e){;
+        return writeException(exchange, e);
+    }
+
 
     //에러 코드 log찍고 http 응답으로 내리기
     private Mono<Void> writeException(

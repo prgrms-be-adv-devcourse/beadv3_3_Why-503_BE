@@ -117,12 +117,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public UserCompanyResponse readCompanyBySq(Long sq) {
         Account account = findBySq(sq);
-        if(account.getRole() == UserRole.COMPANY) {
-            return accountMapper.entityToCompanyResponse(account);
-        }
-        else{
-            return null;
-        }
+        //일단 null이라도 리턴
+        return accountMapper.entityToCompanyResponse(account);
     }
     //포인트 증가
     @Override

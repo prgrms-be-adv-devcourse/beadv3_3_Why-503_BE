@@ -9,6 +9,7 @@ import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyRe
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.accounts.util.AccountExceptionFactory;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import jakarta.validation.Valid;
@@ -74,8 +75,9 @@ public class AccountsController {
             @PathVariable Long sq
     ){
         UserCompanyResponse foundCompanySq = accountService.readCompanyBySq(sq);
+        //null이면 not found
         if(foundCompanySq == null){
-            return ResponseEntity.noContent().build();
+            throw AccountExceptionFactory.accountNotFound("don't have Company");
         }
         return ResponseEntity.ok(foundCompanySq);
     }

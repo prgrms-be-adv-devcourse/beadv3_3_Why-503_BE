@@ -1,5 +1,6 @@
 package io.why503.accountservice.global;
 
+import io.why503.accountservice.global.exception.NotFound;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.exception.account.domain.AccountAccountException;
 import io.why503.commonbase.exception.account.domain.AccountAuthException;
@@ -15,6 +16,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.sql.SQLException;
 import java.util.stream.Collectors;
@@ -27,11 +29,14 @@ public class ServiceExceptionHandler {
     public ResponseEntity<ExceptionResponse> customExceptionHandler(
             CustomException e
     ){
-        loggingCustomException(e);
-        return ResponseEntity.status(e.getStatus())
-                .body(new ExceptionResponse(e));
+        return loggingCustomException(e);
     }
-
+    //url이 없을 때
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ExceptionResponse> noHandlerFoundExceptionHandler(){
+        CustomException ex = new NotFound("url not found");
+        return loggingCustomException(ex);
+    }
 
     //@Valid 예외 핸들러. 여러가지가 던져지니 그거에 맞춰서 잡을 것
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -52,10 +57,8 @@ public class ServiceExceptionHandler {
                     "MethodArgumentNotValidException -> Exception : 없는 uri인데 MethodArgumentNotValidException"
             );
         }
-        //loggingCustomException 참조, 로그 찍기 용임
-        loggingCustomException(ex);
-        return ResponseEntity.status(ex.getStatus())
-                .body(new ExceptionResponse(ex));
+        //loggingCustomException 참조, 로그 찍고 반환
+        return loggingCustomException(ex);
     }
 
     /*json 파싱 실패(위 함수와 같은 부분은 주석 생략)
@@ -76,9 +79,7 @@ public class ServiceExceptionHandler {
                     "HttpMessageNotReadableException -> Exception : 없는 uri인데 HttpMessageNotReadableException"
             );
         }
-        loggingCustomException(ex);
-        return ResponseEntity.status(ex.getStatus())
-                .body(new ExceptionResponse(ex));
+        return loggingCustomException(ex);
     }
 
     //db 규칙 오류(여기서는 명시적으로 잡지 못한 중복, null오류를 찾고 못 잡은 건 Exception)
@@ -96,9 +97,7 @@ public class ServiceExceptionHandler {
                 if(exception == null){
                     throw new Exception("DBExceptionHandler 1048 location is unknown");
                 }
-                loggingCustomException(exception);
-                return ResponseEntity.status(exception.getStatus())
-                        .body(new ExceptionResponse(exception));
+                return loggingCustomException(exception);
             }
             //unique 위반, 즉 중복, 409
             else if(se.getErrorCode() == 1062){
@@ -106,9 +105,7 @@ public class ServiceExceptionHandler {
                 if(exception == null){
                     throw new Exception("DBExceptionHandler 1062 location is unknown");
                 }
-                loggingCustomException(exception);
-                return ResponseEntity.status(exception.getStatus())
-                        .body(new ExceptionResponse(exception));
+                return loggingCustomException(exception);
             }
             //기타 등등 자세한 건 노출하면 안되니까 위치랑 내용만 찍고 500
             else{
@@ -119,9 +116,7 @@ public class ServiceExceptionHandler {
                 if(exception == null){
                     throw new Exception("DBExceptionHandler etc location is unknown");
                 }
-                loggingCustomException(exception);
-                return ResponseEntity.status(exception.getStatus())
-                        .body(new ExceptionResponse(exception));
+                return loggingCustomException(exception);
             }
         }
         throw new Exception("DBExceptionHandler meet unknown Exception");
@@ -136,7 +131,6 @@ public class ServiceExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("UnknownError");
     }
-
     //uri로 도메인 찾기
     private CustomException makeExceptionByURI(String s, String message, HttpStatus status){
         return switch (s) {
@@ -146,14 +140,15 @@ public class ServiceExceptionHandler {
             default -> null;
         };
     }
-
-    //CustomException 로그 출력
-    private void loggingCustomException(CustomException e){
+    //CustomException 로그 출력 후, ResponseEntity<ExceptionResponse>반환
+    private ResponseEntity<ExceptionResponse> loggingCustomException(CustomException e){
         log.error("{}/{}/{}/{}/{}",
                 e.getCause(),
                 e.getCode(),
                 e.getMessage(),
                 e.getClass(),
                 e.getUUID());
+        return ResponseEntity.status(e.getStatus())
+                .body(new ExceptionResponse(e));
     }
 }

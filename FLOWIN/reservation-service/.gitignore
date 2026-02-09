@@ -6,7 +6,6 @@ build/
 !**/src/test/**/build/
 *.yml
 *.pem
-*.jar
 
 ### STS ###
 .apt_generated

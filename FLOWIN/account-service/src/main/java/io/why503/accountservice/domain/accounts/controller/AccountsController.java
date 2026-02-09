@@ -75,10 +75,6 @@ public class AccountsController {
             @PathVariable Long sq
     ){
         UserCompanyResponse foundCompanySq = accountService.readCompanyBySq(sq);
-        //null이면 not found
-        if(foundCompanySq == null){
-            throw AccountExceptionFactory.accountNotFound("don't have Company");
-        }
         return ResponseEntity.ok(foundCompanySq);
     }
     //회사 가입(이걸로 가입하면 무조건 STAFF)

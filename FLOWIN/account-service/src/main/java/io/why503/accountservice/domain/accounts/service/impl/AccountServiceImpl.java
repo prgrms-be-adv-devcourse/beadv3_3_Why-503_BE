@@ -117,7 +117,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public UserCompanyResponse readCompanyBySq(Long sq) {
         Account account = findBySq(sq);
-        //일단 null이라도 리턴
+        //null이면 not found
+        if(account.getCompany() == null){
+            throw AccountExceptionFactory.accountNotFound("don't have Company");
+        }
         return accountMapper.entityToCompanyResponse(account);
     }
     //포인트 증가

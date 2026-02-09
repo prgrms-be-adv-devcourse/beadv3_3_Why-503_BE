@@ -36,7 +36,7 @@ public interface AccountService {
     Account findBySq(Long sq);
     Account findById(String id);
 
-    void grantCompany(Long sq);
+    void grantAccount(Long sq, UserRole role);
 
     boolean existId(String id);
 }

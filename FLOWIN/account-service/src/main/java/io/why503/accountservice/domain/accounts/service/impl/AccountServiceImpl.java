@@ -144,9 +144,9 @@ public class AccountServiceImpl implements AccountService {
     //sq로 UserRole 수정
     @Override
     @Transactional
-    public void grantCompany(Long sq) {
+    public void grantAccount(Long sq, UserRole role) {
         Account account = findBySq(sq);
-        account.setRole(UserRole.COMPANY);
+        account.setRole(role);
     }
     //회사 주입
     @Override

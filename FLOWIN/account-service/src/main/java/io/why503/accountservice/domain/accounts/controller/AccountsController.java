@@ -2,6 +2,7 @@ package io.why503.accountservice.domain.accounts.controller;
 
 
 import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.dto.requests.GrantAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.requests.PointUseRequest;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
@@ -96,7 +97,15 @@ public class AccountsController {
         UserRoleResponse response = accountService.leaveCompany(userSq);
         return ResponseEntity.ok(response);
     }
+    //권한 변경
+    @PatchMapping("/grant")
+    public ResponseEntity<UserRoleResponse> grantAccount(
+            @RequestBody @Valid GrantAccountRequest request
 
+    ){
+        accountService.grantAccount(request.sq(), request.role());
+        return ResponseEntity.ok().build();
+    }
     //point 증가
     @PostMapping("/point/increase/{sq}")
     public ResponseEntity<UserRoleResponse> increasePoint(

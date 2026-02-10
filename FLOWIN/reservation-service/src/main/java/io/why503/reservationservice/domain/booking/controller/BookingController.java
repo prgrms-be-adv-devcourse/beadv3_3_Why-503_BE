@@ -101,7 +101,7 @@ public class BookingController {
     // 필수 사용자 정보 헤더 존재 여부 확인
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자입니다.");
         }
     }
 }

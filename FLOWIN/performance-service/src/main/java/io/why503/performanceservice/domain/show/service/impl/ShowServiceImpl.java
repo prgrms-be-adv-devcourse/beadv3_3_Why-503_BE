@@ -90,7 +90,7 @@ public class ShowServiceImpl implements ShowService {
         // 구역별 좌석 Group
         Map<String, List<SeatEntity>> seatsByArea =
                 allSeats.stream().
-                        collect(Collectors.groupingBy(SeatEntity::getArea));
+                        collect(Collectors.groupingBy(seatEntity -> seatEntity.getArea()));
 
         // 공연장 좌석 기반 ShowSeat 생성
         List<ShowSeatEntity> showSeats =

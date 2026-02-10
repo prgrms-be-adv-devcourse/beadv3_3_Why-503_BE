@@ -226,33 +226,40 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         }
     }
 
+    // 요청된 좌석 목록에 대해 공연장 정보와 좌석 등급별 가격 데이터를 결합하여 상세 정보 추출
     @Override
     public List<SeatReserveResponse> getRoundSeatDetails(List<Long> roundSeatSqs) {
+        // 전달된 식별자 목록이 비어있는 경우 즉시 빈 결과 반환
         if (roundSeatSqs == null || roundSeatSqs.isEmpty()) {
             return Collections.emptyList();
         }
 
+        // 데이터베이스에서 해당 식별자에 대응하는 회차별 좌석 실데이터 확인
         List<RoundSeatEntity> roundSeats = roundSeatRepository.findAllById(roundSeatSqs);
         if (roundSeats.isEmpty()) {
             return Collections.emptyList();
         }
 
+        // 각 좌석의 등급 정보와 가격을 일괄 조회하기 위해 원천 좌석 식별자 수집
         List<Long> showSeatSqs = new ArrayList<>();
         for (RoundSeatEntity rs : roundSeats) {
             showSeatSqs.add(rs.getShowSeatSq());
         }
 
+        // 수집된 식별자를 기반으로 좌석 등급 데이터를 일괄 조회하여 매핑 구조 생성
         List<ShowSeatEntity> showSeats = showSeatRepository.findAllById(showSeatSqs);
         Map<Long, ShowSeatEntity> showSeatMap = new HashMap<>();
         for (ShowSeatEntity ss : showSeats) {
             showSeatMap.put(ss.getSq(), ss);
         }
 
+        // 동일 회차 내 좌석들이므로 첫 번째 좌석을 기준으로 연관된 공연장 명칭 추출
         RoundSeatEntity firstSeat = roundSeats.get(0);
         String hallName = firstSeat.getRound().getShow().getHall().getName();
 
         List<SeatReserveResponse> responseList = new ArrayList<>();
 
+        // 회차별 좌석과 등급별 가격 정보를 병합하여 최종 응답 객체 구성
         for (RoundSeatEntity rs : roundSeats) {
             ShowSeatEntity ss = showSeatMap.get(rs.getShowSeatSq());
             if (ss == null) continue;

@@ -66,9 +66,6 @@ public class RoundSeatEntity {
 
     //선점 해제 (취소/실패 시)
     public void release() {
-        if (this.status == RoundSeatStatus.SOLD) {
-            throw new RoundSeatConflict("이미 결제 완료된 좌석 입니다.");
-        }
         this.status = RoundSeatStatus.AVAILABLE;
         this.statusDt = LocalDateTime.now();
     }

@@ -13,10 +13,13 @@ import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
+import io.why503.performanceservice.global.client.paymentservice.PaymentServiceClient;
+import io.why503.performanceservice.global.client.paymentservice.dto.TicketCreateRequest;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,6 +41,7 @@ public class RoundServiceImpl implements RoundService {
     private final ShowService showService;
     private final ShowSeatService showSeatService;
     private final UserValidator userValidator;
+    private final PaymentServiceClient ticketClient;
 
     //회차 생성
     @Override
@@ -110,7 +115,21 @@ public class RoundServiceImpl implements RoundService {
         List<RoundSeatEntity> roundSeats = roundSeatMapper.showSeatListToRoundSeatList(showSeats, round);
 
         // 좌석 일괄 저장
-        roundSeatRepository.saveAll(roundSeats);
+        List<RoundSeatEntity> savedSeats = roundSeatRepository.saveAll(roundSeats);
+
+        if (!savedSeats.isEmpty()) {
+            List<Long> seatIds = savedSeats.stream()
+                    .map(RoundSeatEntity::getSq)
+                    .toList();
+
+            try {
+                ticketClient.createTicketSlots(new TicketCreateRequest(seatIds));
+                log.info("티켓 서비스 호출 완료: 좌석 {}개에 대한 티켓 생성 요청", seatIds.size());
+            } catch (Exception e) {
+                log.error("티켓 생성 요청 실패: {}", e.getMessage());
+                throw new IllegalStateException("티켓 슬롯 생성에 실패하여 회차 생성을 취소합니다.");
+            }
+        }
 
         return roundResponse;
     }

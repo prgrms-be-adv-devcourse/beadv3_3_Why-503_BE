@@ -51,7 +51,7 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeServerUnavailable(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new ServerUnavailable(message);
+        CustomException e = new ServiceUnavailable(message);
         return writeException(exchange, e);
     }
 

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -83,14 +84,24 @@ public class TossPgClient implements PgClient {
             );
 
             if (cancelAmount != null) {
-                log.info("부분 결제 취소 성공: {}, 금액: {}", pgKey, cancelAmount);
+                log.info("Toss 부분 결제 취소 성공: {}, 금액: {}", pgKey, cancelAmount);
             } else {
-                log.info("전액 결제 취소 성공: {}", pgKey);
+                log.info("Toss 전액 결제 취소 성공: {}", pgKey);
             }
 
+        } catch (HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            if (errorBody.contains("ALREADY_CANCELED_PAYMENT")) {
+                log.warn("이미 토스측에서 취소된 결제입니다. 로컬 상태 변경을 위해 진행합니다. (pgKey: {})", pgKey);
+                return;
+            }
+
+            log.error("Toss 결제 취소 요청 실패. status: {}, body: {}", e.getStatusCode(), errorBody);
+            throw new IllegalStateException("PG사 결제 취소 실패: " + e.getMessage());
+
         } catch (Exception e) {
-            log.error("결제 취소 실패 (식별키: {}): {}", pgKey, e.getMessage());
-            throw new IllegalStateException("대행사 결제 취소 처리에 실패했습니다.");
+            log.error("Toss 결제 취소 실패 (pgKey: {}): {}", pgKey, e.getMessage());
+            throw new IllegalStateException("PG사 결제 취소 처리에 실패했습니다.");
         }
     }
 

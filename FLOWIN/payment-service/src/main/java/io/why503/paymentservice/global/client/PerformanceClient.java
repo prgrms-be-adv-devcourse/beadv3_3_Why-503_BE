@@ -30,6 +30,6 @@ public interface PerformanceClient {
             @RequestBody List<Long> roundSeatSqs
     );
 
-    @GetMapping("/round-seats/details") // PerformanceService 쪽에 해당 API가 존재해야 함
-    List<RoundSeatResponse> findRoundSeats(@RequestParam("roundSeatSqs") List<Long> roundSeatSqs);
+    @PostMapping("/round-seats/details")
+    List<RoundSeatResponse> findRoundSeats(@RequestBody List<Long> roundSeatSqs);
 }

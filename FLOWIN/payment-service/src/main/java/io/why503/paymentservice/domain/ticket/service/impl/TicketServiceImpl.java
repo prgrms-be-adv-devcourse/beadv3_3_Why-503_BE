@@ -8,13 +8,18 @@ import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.ticket.model.entity.Ticket;
 import io.why503.paymentservice.domain.ticket.repository.TicketRepository;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
+import io.why503.paymentservice.global.client.PerformanceClient;
+import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 티켓의 생성, 조회 및 발권 상태 전환을 관리하는 서비스 구현체
@@ -28,6 +33,7 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
     private final TicketMapper ticketMapper;
+    private final PerformanceClient performanceClient;
 
     // 새로운 공연 회차 정보에 대응하는 티켓 기초 데이터를 일괄 확보
     @Override
@@ -51,7 +57,7 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
 
         ticketRepository.saveAll(newTickets);
-        log.info("티켓 슬롯 일괄 생성 완료. (RoundSq: {}, Count: {})", request.roundSq(), newTickets.size());
+        log.info("티켓 슬롯 일괄 생성 완료. (Count: {})", newTickets.size());
     }
 
     @Override
@@ -125,16 +131,27 @@ public class TicketServiceImpl implements TicketService {
     public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<Long> roundSeatSqs) {
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
 
+        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(roundSeatSqs);
+
+        Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
+                .collect(Collectors.toMap(roundSeatResponse -> roundSeatResponse.roundSeatSq(), Function.identity()));
+
         for (Ticket ticket : tickets) {
-            ticket.issue(userSq, payment, bookingSq, 0L, null, 0L);
+            RoundSeatResponse seatInfo = seatMap.get(ticket.getRoundSeatSq());
+
+            long price = 0L;
+            if (seatInfo != null && seatInfo.price() != null) {
+                price = seatInfo.price();
+            }
+
+            ticket.issue(userSq, payment, bookingSq, price, null, price);
         }
     }
 
-    // 취소 또는 환불 발생 시 티켓 정보를 초기화하여 재판매 가능 상태로 변경
     @Override
     @Transactional
     public void resetTickets(List<Long> roundSeatSqs) {
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
-        tickets.forEach(Ticket::clear);
+        tickets.forEach(ticket -> ticket.clear());
     }
 }

@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -38,7 +35,7 @@ public class PaymentViewController {
     @GetMapping("/checkout/booking/{bookingSq}")
     public String renderBookingCheckout(
             @PathVariable Long bookingSq,
-            @RequestParam(required = false, defaultValue = "1") Long userSq,
+            @RequestHeader("X-USER-SQ") Long userSq,
             Model model) {
         try {
             BookingResponse booking = reservationClient.getBooking(userSq, bookingSq);
@@ -46,6 +43,10 @@ public class PaymentViewController {
 
             if (seats == null || seats.isEmpty()) {
                 throw new IllegalStateException("예매된 좌석 정보를 찾을 수 없습니다.");
+            }
+
+            if (!"PENDING".equals(booking.status())) {
+                return renderFailWithMsg("결제 가능한 상태가 아닙니다. (현재 상태: " + booking.status() + ")", "INVALID_STATUS", model);
             }
 
             RoundSeatResponse firstSeat = seats.get(0);
@@ -90,7 +91,7 @@ public class PaymentViewController {
     @GetMapping("/checkout/point/{pointSq}")
     public String renderPointCheckout(
             @PathVariable Long pointSq,
-            @RequestParam(required = false, defaultValue = "1") Long userSq,
+            @RequestHeader("X-USER-SQ") Long userSq,
             Model model) {
         try {
             PointResponse point = pointService.findPoint(userSq, pointSq);

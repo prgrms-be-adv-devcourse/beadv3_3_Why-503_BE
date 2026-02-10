@@ -63,6 +63,12 @@ public class Payment {
     @Column(name = "point_amount", nullable = false)
     private Long pointAmount;
 
+    @Column(name = "remain_pg_amount", nullable = false)
+    private Long remainPgAmount;
+
+    @Column(name = "remain_point_amount", nullable = false)
+    private Long remainPointAmount;
+
     @Column(name = "approved_dt")
     private LocalDateTime approvedDt;
 
@@ -90,6 +96,8 @@ public class Payment {
         this.totalAmount = totalAmount;
         this.pgAmount = pgAmount;
         this.pointAmount = pointAmount;
+        this.remainPgAmount = pgAmount;
+        this.remainPointAmount = pointAmount;
     }
 
     // 외부 PG사 승인 완료 정보를 기록하고 결제 상태를 확정
@@ -102,11 +110,33 @@ public class Payment {
         this.approvedDt = LocalDateTime.now();
     }
 
-    // 결제 거래를 무효화하고 상태를 취소로 변경
-    public void cancel() {
+    public void cancel(long refundPg, long refundPoint) {
         if (this.status == PaymentStatus.CANCELED) {
-            throw PaymentExceptionFactory.paymentConflict("이미 취소된 결제입니다.");
+            throw PaymentExceptionFactory.paymentConflict("이미 전액 취소된 결제입니다.");
         }
-        this.status = PaymentStatus.CANCELED;
+
+        // [추가] 음수 입력 방지
+        if (refundPg < 0 || refundPoint < 0) {
+            throw PaymentExceptionFactory.paymentBadRequest("환불 금액은 0원 이상이어야 합니다.");
+        }
+
+        // 1. 잔액 차감
+        this.remainPgAmount -= refundPg;
+        this.remainPointAmount -= refundPoint;
+
+        // (안전장치) 혹시 모를 음수 방지 (Service 계층에서 검증하겠지만 2중 방어)
+        if (this.remainPgAmount < 0) this.remainPgAmount = 0L;
+        if (this.remainPointAmount < 0) this.remainPointAmount = 0L;
+
+        // 2. 상태 결정 logic
+        if (this.remainPgAmount == 0 && this.remainPointAmount == 0) {
+            this.status = PaymentStatus.CANCELED;
+        } else {
+            this.status = PaymentStatus.PARTIAL_CANCELED;
+        }
+    }
+
+    public void cancel() {
+        this.cancel(this.remainPgAmount, this.remainPointAmount);
     }
 }

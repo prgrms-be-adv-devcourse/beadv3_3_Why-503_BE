@@ -58,19 +58,16 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse> cancelPayment(
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long paymentSq,
-            @RequestBody(required = false) PaymentCancelRequest request) {
+            @RequestBody @Valid PaymentCancelRequest request) {
 
         validateUserHeader(userSq);
-
-        String reason = (request != null && request.reason() != null) ? request.reason() : "사용자 요청에 의한 취소";
-
-        return ResponseEntity.ok(paymentService.cancelPayment(userSq, paymentSq, reason));
+        return ResponseEntity.ok(paymentService.cancelPayment(userSq, paymentSq, request));
     }
 
     // 게이트웨이를 통해 전달된 필수 사용자 식별값 검증
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw PaymentExceptionFactory.paymentForbidden("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+            throw PaymentExceptionFactory.paymentForbidden("유효하지 않은 사용자입니다.");
         }
     }
 }

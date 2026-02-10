@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
-import io.why503.gatewayservice.auth.util.exception.AuthForbidden;
-import io.why503.gatewayservice.auth.util.exception.AuthUnauthorized;
+import io.why503.gatewayservice.auth.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -24,22 +23,54 @@ public class GatewayExceptionWriter {
 
     private final ObjectMapper om;
 
-    //Unauthorized의 경우
-    public Mono<Void> writeUnauthorized(
+    //NotFound(404)
+    public Mono<Void> writeNotFound(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthUnauthorized(message);
+        CustomException e = new NotFound(message);
         return writeException(exchange, e);
     }
 
-    //Forbidden
-    public Mono<Void> writeForbidden(
+    //InternalServerError(500)
+    public Mono<Void> writeInternalServerError(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new AuthForbidden(message);
+        CustomException e = new InternalServerError(message);
         return writeException(exchange, e);
     }
 
+    //BadGateway(502)
+    public Mono<Void> writeBadGateway(
+            ServerWebExchange exchange,
+            String message){
+        CustomException e = new BadGateway(message);
+        return writeException(exchange, e);
+    }
+
+    //ServerUnavailable(503)
+    public Mono<Void> writeServerUnavailable(
+            ServerWebExchange exchange,
+            String message){
+        CustomException e = new ServerUnavailable(message);
+        return writeException(exchange, e);
+    }
+
+    //GatewayTimeout(504)
+    public Mono<Void> writeGatewayTimeout(
+            ServerWebExchange exchange,
+            String message){
+        CustomException e = new GatewayTimeout(message);
+        return writeException(exchange, e);
+    }
+
+    //나머지 Unauthorized, Forbidden, AuthException
+    public Mono<Void> writeGatewayAuthException(
+            ServerWebExchange exchange,CustomException e){;
+        return writeException(exchange, e);
+    }
+
+
+    //에러 코드 log찍고 http 응답으로 내리기
     private Mono<Void> writeException(
             ServerWebExchange exchange,
             CustomException e){

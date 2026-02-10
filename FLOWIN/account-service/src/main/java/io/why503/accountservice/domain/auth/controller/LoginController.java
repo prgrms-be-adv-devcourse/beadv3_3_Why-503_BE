@@ -6,10 +6,7 @@ import io.why503.accountservice.domain.accounts.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /*
 접근하고 로그인관련 url controller
@@ -19,6 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class LoginController {
     private final AccountService accountService;
+
+    @GetMapping("/login")
+    public String loginPage(){
+        return "login.html";
+    }
 
     //회원가입
     @PostMapping("/sign-up")

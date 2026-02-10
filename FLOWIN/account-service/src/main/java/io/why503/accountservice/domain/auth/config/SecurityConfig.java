@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .csrf((csrf -> csrf.disable()))     //csrf 설정 false
                 .cors(Customizer.withDefaults())    //다른 도메인에서 api호출 가능하게
                 .formLogin(form ->form  //post를 보낼 url
-                        .loginPage("/auth/login")    //로그인 페이지
+                        .loginPage("/auth/login.html")    //로그인 페이지
                         .loginProcessingUrl("/auth/login") //post보낼 위치
                         .successHandler(authenticationSuccessHandler)   //성공핸들러
                 )

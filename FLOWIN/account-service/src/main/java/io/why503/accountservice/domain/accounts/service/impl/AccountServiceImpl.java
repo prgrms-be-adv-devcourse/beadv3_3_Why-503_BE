@@ -117,12 +117,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public UserCompanyResponse readCompanyBySq(Long sq) {
         Account account = findBySq(sq);
-        if(account.getRole() == UserRole.COMPANY) {
-            return accountMapper.entityToCompanyResponse(account);
+        //null이면 not found
+        if(account.getCompany() == null){
+            throw AccountExceptionFactory.accountNotFound("don't have Company");
         }
-        else{
-            return null;
-        }
+        return accountMapper.entityToCompanyResponse(account);
     }
     //포인트 증가
     @Override
@@ -144,9 +143,9 @@ public class AccountServiceImpl implements AccountService {
     //sq로 UserRole 수정
     @Override
     @Transactional
-    public void grantCompany(Long sq) {
+    public void grantAccount(Long sq, UserRole role) {
         Account account = findBySq(sq);
-        account.setRole(UserRole.COMPANY);
+        account.setRole(role);
     }
     //회사 주입
     @Override

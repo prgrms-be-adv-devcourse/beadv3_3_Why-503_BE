@@ -2,12 +2,14 @@ package io.why503.accountservice.domain.accounts.controller;
 
 
 import io.why503.accountbase.model.enums.UserRole;
+import io.why503.accountservice.domain.accounts.model.dto.requests.GrantAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.requests.PointUseRequest;
 import io.why503.accountservice.domain.accounts.model.dto.requests.CreateAccountRequest;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
+import io.why503.accountservice.domain.accounts.util.AccountExceptionFactory;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import jakarta.validation.Valid;
@@ -73,9 +75,6 @@ public class AccountsController {
             @PathVariable Long sq
     ){
         UserCompanyResponse foundCompanySq = accountService.readCompanyBySq(sq);
-        if(foundCompanySq == null){
-            return ResponseEntity.noContent().build();
-        }
         return ResponseEntity.ok(foundCompanySq);
     }
     //회사 가입(이걸로 가입하면 무조건 STAFF)
@@ -96,7 +95,15 @@ public class AccountsController {
         UserRoleResponse response = accountService.leaveCompany(userSq);
         return ResponseEntity.ok(response);
     }
+    //권한 변경
+    @PatchMapping("/grant")
+    public ResponseEntity<UserRoleResponse> grantAccount(
+            @RequestBody @Valid GrantAccountRequest request
 
+    ){
+        accountService.grantAccount(request.sq(), request.role());
+        return ResponseEntity.ok().build();
+    }
     //point 증가
     @PostMapping("/point/increase/{sq}")
     public ResponseEntity<UserRoleResponse> increasePoint(

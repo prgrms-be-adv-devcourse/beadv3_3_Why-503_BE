@@ -94,7 +94,7 @@ public class RoundSeatMapper {
         return RoundSeatEntity.builder()
                 .round(round)
                 .showSeatSq(showSeat.getSq())
-                .status(RoundSeatStatus.AVAILABLE)
+                .status(RoundSeatStatus.WAIT)
                 .statusDt(LocalDateTime.now())
                 .version(0L)
                 .build();

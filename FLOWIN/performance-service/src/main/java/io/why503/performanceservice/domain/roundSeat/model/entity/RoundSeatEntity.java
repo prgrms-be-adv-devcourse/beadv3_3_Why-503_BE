@@ -3,7 +3,7 @@ package io.why503.performanceservice.domain.roundSeat.model.entity;
 
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
-import io.why503.performanceservice.domain.roundSeat.util.exception.RoundSeatConflict;
+import io.why503.performanceservice.domain.roundSeat.util.RoundSeatExceptionFactory;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -58,7 +58,7 @@ public class RoundSeatEntity {
     //좌석 선점
     public void reserve() {
         if (this.status != RoundSeatStatus.AVAILABLE) {
-            throw new RoundSeatConflict("이미 판매되었거나 선점된 좌석입니다.");
+            throw RoundSeatExceptionFactory.roundSeatConflict("이미 판매되었거나 선점된 좌석입니다.");
         }
         this.status = RoundSeatStatus.RESERVED;
         this.statusDt = LocalDateTime.now();
@@ -73,7 +73,7 @@ public class RoundSeatEntity {
     // 판매 확정
     public void confirm() {
         if (this.status != RoundSeatStatus.RESERVED) {
-            throw new RoundSeatConflict("선점된 좌석만 판매 확정할 수 있습니다.");
+            throw RoundSeatExceptionFactory.roundSeatConflict("선점된 좌석만 판매 확정할 수 있습니다.");
         }
         this.status = RoundSeatStatus.SOLD; // 상태를 판매완료로 변경
         this.statusDt = LocalDateTime.now();

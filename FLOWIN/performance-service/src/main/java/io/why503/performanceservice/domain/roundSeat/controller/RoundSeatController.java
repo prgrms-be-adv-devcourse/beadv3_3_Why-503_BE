@@ -82,7 +82,7 @@ public class RoundSeatController {
         return ResponseEntity.ok("판매가 확정되었습니다.");
     }
 
-    // 좌석 정보 조히
+    // 좌석 정보 조회
     @PostMapping("/details")
     public ResponseEntity<List<SeatReserveResponse>> getRoundSeatDetails(
             @RequestBody List<Long> roundSeatSqs) {

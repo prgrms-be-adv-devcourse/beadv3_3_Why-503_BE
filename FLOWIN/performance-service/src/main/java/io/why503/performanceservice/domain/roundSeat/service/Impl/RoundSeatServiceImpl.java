@@ -232,27 +232,22 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             return Collections.emptyList();
         }
 
-        // 1. 회차 좌석 조회 (N건)
         List<RoundSeatEntity> roundSeats = roundSeatRepository.findAllById(roundSeatSqs);
         if (roundSeats.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 공연 좌석 정보 조회 (1:N 관계 고려하여 ID 추출)
         List<Long> showSeatSqs = new ArrayList<>();
         for (RoundSeatEntity rs : roundSeats) {
             showSeatSqs.add(rs.getShowSeatSq());
         }
 
-        // ShowSeat 조회
         List<ShowSeatEntity> showSeats = showSeatRepository.findAllById(showSeatSqs);
         Map<Long, ShowSeatEntity> showSeatMap = new HashMap<>();
         for (ShowSeatEntity ss : showSeats) {
             showSeatMap.put(ss.getSq(), ss);
         }
 
-        // 공연장 이름 조회를 위한 샘플 데이터 (모두 같은 공연/회차라고 가정)
-        // 안전을 위해 첫 번째 좌석 기준으로 조회
         RoundSeatEntity firstSeat = roundSeats.get(0);
         String hallName = firstSeat.getRound().getShow().getHall().getName();
 
@@ -262,7 +257,6 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             ShowSeatEntity ss = showSeatMap.get(rs.getShowSeatSq());
             if (ss == null) continue;
 
-            // 기존 Mapper 메서드 재활용 (Entity -> SeatReserveResponse)
             SeatReserveResponse response = roundSeatMapper.entityToReserveResponse(
                     rs,
                     ss,

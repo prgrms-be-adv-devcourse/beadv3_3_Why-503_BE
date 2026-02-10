@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.payment.controller;
 
 import io.why503.paymentservice.domain.payment.config.TossPaymentConfig;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.domain.point.service.PointService;
 import io.why503.paymentservice.global.client.PerformanceClient;
@@ -42,7 +43,7 @@ public class PaymentViewController {
             List<RoundSeatResponse> seats = performanceClient.findRoundSeats(booking.roundSeatSqs());
 
             if (seats == null || seats.isEmpty()) {
-                throw new IllegalStateException("예매된 좌석 정보를 찾을 수 없습니다.");
+                throw PaymentExceptionFactory.paymentNotFound("예매된 좌석 정보를 찾을 수 없습니다.");
             }
 
             if (!"PENDING".equals(booking.status())) {

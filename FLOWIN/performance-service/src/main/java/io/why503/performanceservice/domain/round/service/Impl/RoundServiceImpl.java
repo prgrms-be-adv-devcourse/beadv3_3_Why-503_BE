@@ -119,7 +119,7 @@ public class RoundServiceImpl implements RoundService {
 
         if (!savedSeats.isEmpty()) {
             List<Long> seatIds = savedSeats.stream()
-                    .map(RoundSeatEntity::getSq)
+                    .map(roundSeatEntity -> roundSeatEntity.getSq())
                     .toList();
 
             try {
@@ -127,7 +127,7 @@ public class RoundServiceImpl implements RoundService {
                 log.info("티켓 서비스 호출 완료: 좌석 {}개에 대한 티켓 생성 요청", seatIds.size());
             } catch (Exception e) {
                 log.error("티켓 생성 요청 실패: {}", e.getMessage());
-                throw new IllegalStateException("티켓 슬롯 생성에 실패하여 회차 생성을 취소합니다.");
+                throw RoundExceptionFactory.roundBadRequest("티켓 슬롯 생성에 실패하여 회차 생성을 취소합니다.");
             }
         }
 

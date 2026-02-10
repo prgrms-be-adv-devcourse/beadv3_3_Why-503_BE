@@ -1,5 +1,6 @@
 package io.why503.paymentservice.infrastructure.pg.toss;
 
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.global.client.PgClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,14 +52,14 @@ public class TossPgClient implements PgClient {
             );
 
             if (response.getBody() == null || response.getBody().paymentKey() == null) {
-                throw new IllegalStateException("결제 대행사 승인 응답이 비어있습니다.");
+                throw PaymentExceptionFactory.paymentConflict("결제 대행사 승인 응답이 비어있습니다.");
             }
 
             return response.getBody().paymentKey();
 
         } catch (Exception e) {
             log.error("결제 승인 실패: {}", e.getMessage());
-            throw new IllegalArgumentException("대행사 결제 승인 실패: " + e.getMessage());
+            throw PaymentExceptionFactory.paymentConflict("대행사 결제 승인 실패: " + e.getMessage());
         }
     }
 
@@ -97,11 +98,11 @@ public class TossPgClient implements PgClient {
             }
 
             log.error("Toss 결제 취소 요청 실패. status: {}, body: {}", e.getStatusCode(), errorBody);
-            throw new IllegalStateException("PG사 결제 취소 실패: " + e.getMessage());
+            throw PaymentExceptionFactory.paymentConflict("PG사 결제 취소 실패: " + e.getMessage());
 
         } catch (Exception e) {
             log.error("Toss 결제 취소 실패 (pgKey: {}): {}", pgKey, e.getMessage());
-            throw new IllegalStateException("PG사 결제 취소 처리에 실패했습니다.");
+            throw PaymentExceptionFactory.paymentConflict("PG사 결제 취소 처리에 실패했습니다.");
         }
     }
 

@@ -203,7 +203,7 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             log.warn("취소 중 예매 정보 조회 실패: {}", e.getMessage());
             if (cancelSeatIds != null && !cancelSeatIds.isEmpty()) {
-                throw new IllegalStateException("예매 정보를 확인할 수 없어 부분 취소를 진행할 수 없습니다.");
+                throw PaymentExceptionFactory.paymentNotFound("예매 정보를 확인할 수 없어 부분 취소를 진행할 수 없습니다.");
             }
         }
 

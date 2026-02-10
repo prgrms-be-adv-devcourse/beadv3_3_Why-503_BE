@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.payment.service;
 
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentCancelRequest;
 import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 
@@ -19,5 +20,5 @@ public interface PaymentService {
     List<PaymentResponse> findPaymentsByUser(Long userSq);
 
     // 결제 수단별 자산 복구 및 관련 서비스의 점유 정보 해제 수행
-    PaymentResponse cancelPayment(Long userSq, Long paymentSq, String reason);
+    PaymentResponse cancelPayment(Long userSq, Long paymentSq, PaymentCancelRequest request);
 }

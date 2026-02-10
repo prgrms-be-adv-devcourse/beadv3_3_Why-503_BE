@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.ticket.model.entity;
 
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -63,7 +64,7 @@ public class Ticket {
     @Builder
     public Ticket(Long roundSeatSq) {
         if (roundSeatSq == null) {
-            throw new IllegalArgumentException("회차 좌석 ID(RoundSeatSq)는 필수입니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("회차 좌석 ID(RoundSeatSq)는 필수입니다.");
         }
         this.roundSeatSq = roundSeatSq;
     }
@@ -72,7 +73,7 @@ public class Ticket {
     public void issue(Long userSq, Payment payment, Long bookingSq,
                       Long originalPrice, String discount, Long finalPrice) {
         if (this.userSq != null || this.payment != null) {
-            throw new IllegalStateException("이미 판매된 티켓 슬롯입니다. TicketSQ: " + this.sq);
+            throw PaymentExceptionFactory.paymentConflict("이미 판매된 티켓 슬롯입니다. TicketSQ: " + this.sq);
         }
 
         this.userSq = userSq;

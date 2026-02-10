@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -219,10 +220,14 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingForbidden("본인의 예매 재고만 해제할 수 있습니다.");
         }
 
-        List<Long> validSqs = booking.getBookingSeats().stream()
-                .map((seat) -> seat.getRoundSeatSq())
-                .filter((sq) -> roundSeatSqs.contains(sq))
-                .toList();
+        List<Long> validSqs = new ArrayList<>();
+
+        for (BookingSeat seat : booking.getBookingSeats()) {
+            Long seatSq = seat.getRoundSeatSq();
+            if (roundSeatSqs.contains(seatSq)) {
+                validSqs.add(seatSq);
+            }
+        }
 
         if (validSqs.isEmpty()) {
             throw BookingExceptionFactory.bookingBadRequest("요청한 좌석이 예매 정보와 일치하지 않습니다.");
@@ -236,8 +241,11 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingBadRequest("외부 서비스 재고 해제 중 오류가 발생했습니다.");
         }
 
-        if (validSqs.size() == booking.getBookingSeats().size()) {
+        booking.removeSeats(validSqs);
+        if (booking.getBookingSeats().isEmpty()) {
             booking.cancel();
         }
     }
+
+
 }

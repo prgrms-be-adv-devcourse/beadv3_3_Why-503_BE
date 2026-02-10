@@ -1,11 +1,10 @@
 package io.why503.paymentservice.domain.payment.service.impl;
 
 import io.why503.paymentservice.domain.payment.mapper.PaymentMapper;
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentCancelRequest;
 import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
-import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
-import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentStatus;
 import io.why503.paymentservice.domain.payment.repository.PaymentRepository;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
@@ -13,6 +12,7 @@ import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.domain.point.model.entity.Point;
 import io.why503.paymentservice.domain.point.model.enums.PointStatus;
 import io.why503.paymentservice.domain.point.service.PointService;
+import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
 import io.why503.paymentservice.global.client.AccountClient;
 import io.why503.paymentservice.global.client.PerformanceClient;
@@ -176,45 +176,86 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<PaymentResponse> findPaymentsByUser(Long userSq) {
         return paymentRepository.findAllByUserSqOrderByCreatedDtDesc(userSq).stream()
-                .map(paymentMapper::entityToResponse)
+                .map(payment -> paymentMapper.entityToResponse(payment))
                 .toList();
     }
 
-    // 사용된 자산의 회수 및 타 서비스의 예매/좌석 정보 무효화 처리
     @Override
     @Transactional
-    public PaymentResponse cancelPayment(Long userSq, Long paymentSq, String reason) {
+    public PaymentResponse cancelPayment(Long userSq, Long paymentSq, PaymentCancelRequest request) {
         Payment payment = paymentRepository.findById(paymentSq)
                 .orElseThrow(() -> PaymentExceptionFactory.paymentNotFound("존재하지 않는 결제 내역입니다."));
 
-        if (!payment.getUserSq().equals(userSq)) throw PaymentExceptionFactory.paymentForbidden("본인의 결제만 취소 가능합니다.");
-        if (payment.getStatus() != PaymentStatus.DONE) throw PaymentExceptionFactory.paymentConflict("완료된 결제만 취소 가능합니다.");
-
-        if (payment.getPointAmount() > 0) {
-            accountClient.increasePoint(userSq, new PointUseRequest(payment.getPointAmount()));
-        }
-        if (payment.getPgAmount() > 0) {
-            pgClient.cancelPayment(payment.getPaymentKey(), reason, null);
+        if (!payment.getUserSq().equals(userSq)) {
+            throw PaymentExceptionFactory.paymentForbidden("본인의 결제만 취소 가능합니다.");
         }
 
-        if (payment.getRefType() == PaymentRefType.BOOKING) {
-            Long bookingSq = payment.getBookingSq();
-            BookingResponse booking = null;
-            try {
-                booking = reservationClient.getBooking(userSq, bookingSq);
-            } catch (Exception e) {
-                log.warn("취소 중 예매 정보 조회 실패: {}", e.getMessage());
+        if (payment.getStatus() == PaymentStatus.CANCELED) {
+            throw PaymentExceptionFactory.paymentConflict("이미 전액 취소된 결제입니다.");
+        }
+
+        List<Long> cancelSeatIds = request.seatIds();
+        long refundAmount = 0;
+
+        BookingResponse booking = null;
+        try {
+            booking = reservationClient.getBooking(userSq, payment.getBookingSq());
+        } catch (Exception e) {
+            log.warn("취소 중 예매 정보 조회 실패: {}", e.getMessage());
+            if (cancelSeatIds != null && !cancelSeatIds.isEmpty()) {
+                throw PaymentExceptionFactory.paymentNotFound("예매 정보를 확인할 수 없어 부분 취소를 진행할 수 없습니다.");
             }
+        }
+
+        if (cancelSeatIds == null || cancelSeatIds.isEmpty()) {
+            refundAmount = payment.getRemainPgAmount() + payment.getRemainPointAmount();
 
             if (booking != null) {
-                List<Long> seatIds = booking.roundSeatSqs();
-                performanceClient.cancelRoundSeats(seatIds);
-                reservationClient.refundSeats(userSq, bookingSq, seatIds);
-                ticketService.resetTickets(seatIds);
+                cancelSeatIds = booking.roundSeatSqs();
+            }
+        } else {
+            List<TicketResponse> ticketsToCancel = ticketService.findTicketsByRoundSeats(cancelSeatIds);
+            for (TicketResponse ticket : ticketsToCancel) {
+                refundAmount += ticket.finalPrice();
             }
         }
 
-        payment.cancel();
+        long refundPg = 0;
+        long refundPoint = 0;
+
+        long remainPg = payment.getRemainPgAmount();
+        long remainPoint = payment.getRemainPointAmount();
+
+        if (refundAmount > (remainPg + remainPoint)) {
+            throw PaymentExceptionFactory.paymentBadRequest("환불 요청 금액이 남은 결제 잔액을 초과합니다.");
+        }
+
+        if (remainPg >= refundAmount) {
+            refundPg = refundAmount;
+        } else {
+            refundPg = remainPg;
+            refundPoint = refundAmount - remainPg;
+        }
+
+        if (refundPoint > 0) {
+            accountClient.increasePoint(userSq, new PointUseRequest(refundPoint));
+        }
+
+        if (refundPg > 0) {
+            String cancelReason = "사용자 요청 취소";
+            if (request.reason() != null) {
+                cancelReason = request.reason();
+            }
+            pgClient.cancelPayment(payment.getPaymentKey(), cancelReason, refundPg);
+        }
+
+        if (booking != null && cancelSeatIds != null && !cancelSeatIds.isEmpty()) {
+            performanceClient.cancelRoundSeats(cancelSeatIds);
+            reservationClient.refundSeats(userSq, payment.getBookingSq(), cancelSeatIds);
+            ticketService.resetTickets(cancelSeatIds);
+        }
+
+        payment.cancel(refundPg, refundPoint);
 
         return paymentMapper.entityToResponse(payment);
     }

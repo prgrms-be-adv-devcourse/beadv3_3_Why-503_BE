@@ -89,4 +89,10 @@ public class Booking {
         }
         this.status = BookingStatus.CANCELLED;
     }
+
+    // 결제 후 환불 시 좌석 취소
+    public void removeSeats(List<Long> roundSeatSqs) {
+        this.bookingSeats.removeIf(seat -> roundSeatSqs.contains(seat.getRoundSeatSq()));
+    }
+
 }

@@ -36,7 +36,7 @@ public class HallServiceImpl implements HallService {
     @Override
     @Transactional
     public void createHall(Long userSq, HallRequest request) {
-        userValidator.validateEnterprise(userSq, HallExceptionFactory.hallForbidden("관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateAdmin(userSq, HallExceptionFactory.hallForbidden("관리자만 공연장 등록이 가능합니다."));
 
         if (hallRepository.existsByNameAndBasicAddr(request.hallName(), request.hallBasicAddr())) {
             throw HallExceptionFactory.hallConflict("이미 해당 주소에 동일한 이름의 공연장이 존재합니다.");
@@ -68,7 +68,7 @@ public class HallServiceImpl implements HallService {
             HallRequest request,
             List<SeatAreaCreateVo> areaCreateVos
     ) {
-        userValidator.validateEnterprise(userSq, HallExceptionFactory.hallForbidden("관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateAdmin(userSq, HallExceptionFactory.hallForbidden("관리자만 공연장 등록이 가능합니다."));
 
         if (hallRepository.existsByNameAndBasicAddr(request.hallName(), request.hallBasicAddr())) {
             throw HallExceptionFactory.hallConflict("이미 해당 주소에 동일한 이름의 공연장이 존재합니다.");

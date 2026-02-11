@@ -24,8 +24,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 티켓의 생성, 조회 및 발권 상태 전환을 관리하는 서비스 구현체
- * - 거래 흐름에 따른 티켓 데이터의 정합성과 소유권 보호를 수행
+ * 티켓 발권 라이프사이클 및 소유권 전환을 관리하는 서비스 구현체
+ * - 거래 결과에 따른 데이터 정합성 유지와 가격 산정 로직을 포함
  */
 @Slf4j
 @Service
@@ -37,7 +37,7 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
     private final PerformanceClient performanceClient;
 
-    // 새로운 공연 회차 정보에 대응하는 티켓 기초 데이터를 일괄 확보
+    // 공연 회차 정보와 연동하여 판매 가능한 티켓 데이터 슬롯을 일괄 생성
     @Override
     @Transactional
     public void createTicketSlots(TicketCreateRequest request) {
@@ -74,7 +74,7 @@ public class TicketServiceImpl implements TicketService {
         return ticketMapper.entityToResponse(ticket);
     }
 
-    // 요청된 좌석 목록과 실제 데이터의 일치 여부를 검증하며 정보 추출
+    // 다수의 좌석 식별자를 기반으로 현재 티켓의 발권 현황 정보를 일괄 추출
     @Override
     public List<TicketResponse> findTicketsByRoundSeats(List<Long> roundSeatSqs) {
         if (roundSeatSqs == null || roundSeatSqs.isEmpty()) {
@@ -127,7 +127,7 @@ public class TicketServiceImpl implements TicketService {
         return ticketMapper.entityToResponse(ticket);
     }
 
-    // 결제 완료 정보를 티켓 데이터에 반영하여 최종 발권 처리
+    // 결제 성공 정보와 적용된 혜택을 기반으로 실거래 가격을 산출하여 티켓 소유권 확정
     @Override
     @Transactional
     public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<BookingSeatResponse> bookingSeats) {
@@ -154,6 +154,7 @@ public class TicketServiceImpl implements TicketService {
                 originalPrice = seatInfo.price();
             }
 
+            // 적용된 할인 정책에 따라 최종 결제 금액 및 혜택 내역 계산
             long discountAmount = (originalPrice * policy.getDiscountPercent()) / 100;
             long finalPrice = originalPrice - discountAmount;
 
@@ -161,6 +162,7 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    // 거래 무효화 또는 환불 발생 시 발권된 티켓 정보를 초기화하여 판매 가능 상태로 전환
     @Override
     @Transactional
     public void resetTickets(List<Long> roundSeatSqs) {

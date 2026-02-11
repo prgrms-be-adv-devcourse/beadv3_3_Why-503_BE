@@ -23,8 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 결제 진입점 및 결과 화면 렌더링을 담당하는 뷰 컨트롤러
- * - 예매 및 포인트 충전 체크아웃 페이지 제공
+ * 결제 시작 단계의 정보 구성과 각 거래 결과에 따른 화면 응답을 처리하는 컨트롤러
  */
 @Slf4j
 @Controller
@@ -37,7 +36,7 @@ public class PaymentViewController {
     private final PointService pointService;
     private final TossPaymentConfig tossPaymentConfig;
 
-    // 예매된 좌석의 원가와 적용된 할인 정책을 결합하여 최종 결제 필요 금액 계산 및 화면 렌더링
+    // 예매된 좌석의 원가와 할인 혜택을 대조하여 최종 결제 대상 금액을 산출하고 화면 구성
     @GetMapping("/checkout/booking/{bookingSq}")
     public String renderBookingCheckout(
             @PathVariable Long bookingSq,
@@ -72,7 +71,7 @@ public class PaymentViewController {
                     long originalPrice = seatInfo.price();
                     DiscountPolicy policy = bookingSeat.discountPolicy();
 
-                    // 각 좌석별 할인율을 적용하여 실결제 대상 누적 합계 산출
+                    // 각 좌석별 혜택 비율을 적용하여 실제 결제가 필요한 누적 합계 계산
                     long discountAmount = (originalPrice * policy.getDiscountPercent()) / 100;
                     totalAmount += (originalPrice - discountAmount);
                 }
@@ -110,7 +109,7 @@ public class PaymentViewController {
         }
     }
 
-    // 포인트 충전 금액 및 결제 식별 정보를 포함한 체크아웃 화면 렌더링
+    // 포인트 충전 요청 내역과 결제 연동에 필요한 인증 정보를 조합하여 화면 출력
     @GetMapping("/checkout/point/{pointSq}")
     public String renderPointCheckout(
             @PathVariable Long pointSq,
@@ -137,7 +136,7 @@ public class PaymentViewController {
         }
     }
 
-    // 결제 성공 후 리다이렉트되어 결제 승인 결과를 보여주는 페이지
+    // 대행사를 통한 결제 승인 완료 후 최종적인 거래 성공 정보 안내
     @GetMapping("/success")
     public String renderSuccessPage(
             @RequestParam String paymentKey,
@@ -158,7 +157,7 @@ public class PaymentViewController {
         return "success";
     }
 
-    // 결제 과정에서 발생한 오류 메시지를 사용자에게 안내하는 페이지
+    // 결제 과정 중 발생한 거절 사유나 오류 내용을 사용자에게 통보
     @GetMapping("/fail")
     public String renderFailPage(
             @RequestParam(required = false) String message,

@@ -60,7 +60,7 @@ public class ShowServiceImpl implements ShowService {
             Long userSq
     ) {
         // 권한 검증
-        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연+공연좌석 등록이 가능합니다."));
         Long companySq = findCompanySq(userSq);
 
         //공연장 id로 hallEntity 조회
@@ -107,7 +107,7 @@ public class ShowServiceImpl implements ShowService {
     @Transactional
     public ShowResponse createShow(ShowRequest request, Long userSq) {
         // 권한 검증
-        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,ShowExceptionFactory.showForbidden("기업 또는 관리자만 공연 등록이 가능합니다."));
 
         Long companySq = findCompanySq(userSq);
         //공연장 id로 hallEntity 조회

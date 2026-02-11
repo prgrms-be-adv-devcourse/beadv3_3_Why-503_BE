@@ -49,7 +49,7 @@ public class RoundServiceImpl implements RoundService {
     public RoundResponse createRound(Long userSq, RoundRequest request) {
 
         // 권한 검증
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 등록이 가능합니다."));
 
         ShowEntity show = showService.findShowBySq(request.showSq());
 
@@ -138,7 +138,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     public List<RoundResponse> getRoundListByShow(Long userSq, Long showSq) {
         //기업,관리자 회원인지 확인
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 등록이 가능합니다."));
         //요청된 공연 정보를 찾음
         ShowEntity show = showService.findShowBySq(showSq);
         //해당 공연에 소속된 모든 회차를 가져옴
@@ -167,7 +167,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     @Transactional
     public RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus) {
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 상태 변경이 가능합니다."));
         //변경할 회차를 DB에서 찾아옴
         RoundEntity entity = findRoundBySq(roundSq);
 

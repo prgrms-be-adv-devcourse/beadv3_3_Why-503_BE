@@ -1,0 +1,111 @@
+name: Build and Docker release
+
+on:
+  workflow_call: #불렀을 때만 사용
+    inputs: #인자
+    service-name: #서비스 이름
+      required: true
+      type: string
+    outputs: #반환값
+      tag_name:
+        value: ${{ jobs.tagging.outputs.tag_name }}
+
+env:
+  DOCKER: docker.io
+
+jobs:
+
+  tagging:
+    name: tagging 및 git release
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag_version.outputs.new_tag }}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: versioning and tagging
+        id: tag_version #GITHUB_OUTPUT는 반환값 묶음, GITHUB_OUTPUT의 new_tag와 changelog에 값 저장
+        run: |
+          RANDOM_STR=$(openssl rand -hex 8)   # 예: a3f9c1d2bb44e21f
+          echo "Generated random string: $RANDOM_STR"
+          echo "new_tag=$RANDOM_STR" >> $GITHUB_OUTPUT 
+          echo "changelog=자동 생성된 릴리즈 노트입니다." >> $GITHUB_OUTPUT
+
+      - name: releasing
+        uses: ncipollo/release-action@v1 #git release 해주는 서드파티
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+
+  build-image:
+    name: 도커 이미지 빌드
+    runs-on: ubuntu-latest
+    needs: tagging #저 job의 반환값을 사용하겠다는 소리 -> tagging 끝나면 돌아간다는 소리
+
+    permissions: #권한
+      contents: read
+      packages: write
+      attestations: write
+
+    steps:
+      - name: Check out Repository
+        uses: actions/checkout@v5
+
+      - name: Sign in github container registry #도커 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_AC_KEY }}
+
+      - name: 메타데이터 작성
+        id: meta
+        uses: docker/metadata-action@v5
+        with: #이미지 이름이랑 메타데이터 작성
+          images: ${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}
+          tags: |
+            type=sha
+            type=raw,value=${{ needs.tagging.outputs.tag_name }}
+            type=raw,value=latest
+
+      #yml 추가
+      #secrets에 추가되어 있는지 확인하고 사용
+      - name: account test yml pem 세팅
+        if: ${{ inputs.service-name == 'account-service' }}
+        run: |
+          mkdir -p ./FLOWIN/account-service/src/main/resources
+          echo '${{ secrets.ACCOUNT_PROD_YML }}' > ./FLOWIN/account-service/src/main/resources/application-prod.yml
+          echo '${{ secrets.PRIVATE_KEY_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key-test.pem
+
+      - name: gateway test yml pem 세팅
+        if: ${{ inputs.service-name == 'gateway-service' }}
+        run: |
+          mkdir -p ./FLOWIN/gateway-service/src/main/resources
+          echo '${{ secrets.GATEWAY_PROD_YML }}' > ./FLOWIN/gateway-service/src/main/resources/application-prod.yml
+          echo '${{ secrets.PUBLIC_KEY_PEM }}' > ./FLOWIN/gateway-service/src/main/resources/public-key-test.pem
+
+      - name: payment test yml pem 세팅
+        if: ${{ inputs.service-name == 'payment-service' }}
+        run: |
+          mkdir -p ./FLOWIN/payment-service/src/main/resources
+          echo '${{ secrets.PAYMENT_PROD_YML }}' > ./FLOWIN/payment-service/src/main/resources/application-prod.yml
+
+      #이후 더 필요한 yml 추가
+
+
+      - name: Build with Gradle
+        working-directory: ./FLOWIN/${{ inputs.service-name }}
+        run: ./gradlew clean build
+
+      - name: Push Image #빌드하고 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: ./FLOWIN/${{ inputs.service-name }}
+          file: ./FLOWIN/${{ inputs.service-name }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

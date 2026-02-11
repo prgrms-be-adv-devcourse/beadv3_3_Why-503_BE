@@ -189,4 +189,13 @@ public class RoundServiceImpl implements RoundService {
                 .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
     }
 
+    @Override
+    public boolean isRoundBookable(Long roundSq) {
+        RoundEntity round = roundRepository.findById(roundSq)
+                .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
+
+        // AVAILABLE이면 진입 가능
+        return RoundStatus.AVAILABLE.equals(round.getStatus());
+    }
+
 }

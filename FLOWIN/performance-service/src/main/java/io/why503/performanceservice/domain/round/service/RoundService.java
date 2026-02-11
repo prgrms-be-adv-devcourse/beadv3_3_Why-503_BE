@@ -27,4 +27,6 @@ public interface RoundService {
     //회차 상태 변경
     RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus);
 
+    //회차 예매 가능 여부 판단
+    boolean isRoundBookable(Long roundSq);
 }

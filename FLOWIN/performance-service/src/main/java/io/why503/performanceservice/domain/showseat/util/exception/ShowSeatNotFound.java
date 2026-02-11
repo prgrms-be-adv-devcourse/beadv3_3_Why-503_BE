@@ -1,9 +1,9 @@
 package io.why503.performanceservice.domain.showseat.util.exception;
 
-import io.why503.commonbase.exception.performance.domain.PerformanceHallException;
+import io.why503.commonbase.exception.performance.domain.PerformanceShowSeatException;
 import org.springframework.http.HttpStatus;
 
-public class ShowSeatNotFound extends PerformanceHallException {
+public class ShowSeatNotFound extends PerformanceShowSeatException {
     public ShowSeatNotFound(String message) {
         super(message, HttpStatus.NOT_FOUND);
     }

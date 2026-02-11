@@ -43,7 +43,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse createRoundSeat(Long userSq, RoundSeatRequest request) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 등록이 가능합니다."));
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
@@ -93,7 +93,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse patchRoundSeatStatus(Long userSq, Long roundSeatSq, RoundSeatStatus newStatus) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 상태 변경이 가능합니다."));
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)

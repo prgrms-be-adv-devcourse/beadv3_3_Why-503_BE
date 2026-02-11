@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.accountservice.domain.auth.util.AuthExceptionFactory;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
+import io.why503.commonbase.model.dto.LogResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,15 +36,10 @@ public class AuthenticationFailureHandlerImpl implements AuthenticationFailureHa
         response.setCharacterEncoding("UTF-8");
         //로그를 던지기 위한 예외 생성
         CustomException e = AuthExceptionFactory.authUnauthorized(exception.getCause());
+        //로그 던지기
+        log.error(om.writeValueAsString(new LogResponse(e)));
         //예외로 dto 생성
         ExceptionResponse exceptionResponse = new ExceptionResponse(e);
-        //로그 던지기
-        log.error("{}/{}/{}/{}/{}",
-                e.getCause(),
-                e.getCode(),
-                e.getMessage(),
-                e.getClass(),
-                e.getUUID());
         //응답 던지기
         response.getWriter().write(om.writeValueAsString(exceptionResponse));
     }

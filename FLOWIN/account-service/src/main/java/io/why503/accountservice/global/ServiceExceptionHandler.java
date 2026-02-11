@@ -1,5 +1,7 @@
 package io.why503.accountservice.global;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.accountservice.global.exception.NotFound;
 import io.why503.accountservice.global.exception.ServiceUnavailable;
 import io.why503.commonbase.exception.CustomException;
@@ -7,7 +9,9 @@ import io.why503.commonbase.exception.account.domain.AccountAccountException;
 import io.why503.commonbase.exception.account.domain.AccountAuthException;
 import io.why503.commonbase.exception.account.domain.AccountCompanyException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
+import io.why503.commonbase.model.dto.LogResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,17 +29,22 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class ServiceExceptionHandler {
+
+    private final ObjectMapper om;
+
     //커스텀 전체 핸들러, 이건 그대로 가져다 쓰면 됨.
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ExceptionResponse> customExceptionHandler(
             CustomException e
-    ){
+    ) throws Exception {
         return loggingCustomException(e);
     }
     //url이 없을 때
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ExceptionResponse> noHandlerFoundExceptionHandler(){
+    public ResponseEntity<ExceptionResponse> noHandlerFoundExceptionHandler()
+            throws Exception {
         CustomException ex = new NotFound("url not found");
         return loggingCustomException(ex);
     }
@@ -61,10 +70,10 @@ public class ServiceExceptionHandler {
         return loggingCustomException(ex);
     }
 
-    /*json 파싱 실패(위 함수와 같은 부분은 주석 생략)
-    간단하게 설명하면 java->json에서 발생하는 오류 */
+    /*JPA의 json 매칭 실패(위 함수와 같은 부분은 주석 생략)
+    간단하게 설명하면 java->json에서 필요한 조건이 안맞으면 발생하는 오류 */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ExceptionResponse> JsonParseExceptionHandler(
+    public ResponseEntity<ExceptionResponse> JsonMatchExceptionHandler(
             HttpMessageNotReadableException e,
             HttpServletRequest request
     ) throws Exception {
@@ -121,7 +130,7 @@ public class ServiceExceptionHandler {
     @ExceptionHandler(RedisConnectionFailureException.class)
     public ResponseEntity<ExceptionResponse> RedisConnectionExceptionHandler(
             RedisConnectionFailureException e
-    ){
+    ) throws Exception {
         CustomException ex = new ServiceUnavailable(e);
         return loggingCustomException(ex);
     }
@@ -146,13 +155,8 @@ public class ServiceExceptionHandler {
         };
     }
     //CustomException 로그 출력 후, ResponseEntity<ExceptionResponse>반환
-    private ResponseEntity<ExceptionResponse> loggingCustomException(CustomException e){
-        log.error("{}/{}/{}/{}/{}",
-                e.getCause(),
-                e.getCode(),
-                e.getMessage(),
-                e.getClass(),
-                e.getUUID());
+    private ResponseEntity<ExceptionResponse> loggingCustomException(CustomException e) throws Exception {
+        log.error(om.writeValueAsString(new LogResponse(e)));
         return ResponseEntity.status(e.getStatus())
                 .body(new ExceptionResponse(e));
     }

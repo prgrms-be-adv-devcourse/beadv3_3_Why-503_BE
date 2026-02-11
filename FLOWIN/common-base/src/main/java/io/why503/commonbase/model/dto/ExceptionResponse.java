@@ -3,11 +3,11 @@ package io.why503.commonbase.model.dto;
 import io.why503.commonbase.exception.CustomException;
 
 public record ExceptionResponse(
-        String UUID,
+        String id,
         String message,
         String code
 ) {
     public ExceptionResponse(CustomException e) {
-        this(e.getUUID(), e.getMessage(), e.getCode());
+        this(e.getId(), e.getMessage(), e.getCode());
     }
 }

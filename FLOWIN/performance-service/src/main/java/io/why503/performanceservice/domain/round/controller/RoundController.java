@@ -72,6 +72,7 @@ public class RoundController {
         return ResponseEntity.ok(response);
     }
 
+    //예매 가능한 회차인지 확인
     @GetMapping("/{roundSq}/bookable")
     public ResponseEntity<Boolean> checkRoundBookable(
             @PathVariable("roundSq") Long roundSq

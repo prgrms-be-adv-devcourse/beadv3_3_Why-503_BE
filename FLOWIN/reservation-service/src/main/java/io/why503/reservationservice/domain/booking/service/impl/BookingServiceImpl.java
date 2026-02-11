@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 예매 및 좌석 선점 데이터의 생명주기를 관리하는 서비스
+ * 예매 및 좌석 선점 데이터의 생명주기를 관리하는 서비스 구현체
  * - 공연 서비스와 연동하여 좌석 상태 동기화 및 예매 무효화 처리 수행
  */
 @Slf4j
@@ -40,7 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final EntityManager entityManager;
     private final PerformanceClient performanceClient;
 
-    // 신규 예매 요청 시 중복 점유를 방지하고 외부 서비스에 좌석 선점 기록
+    // 신규 예매 요청 시 좌석의 중복 점유를 방지하고 외부 서비스에 선점 상태 기록
     @Override
     @Transactional
     public BookingResponse createBooking(Long userSq, BookingCreateRequest request) {
@@ -72,9 +72,8 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 좌석 정보입니다.");
         }
 
-        // 첫 번째 좌석의 공연 정보를 대표값으로 사용 (한 번에 같은 공연의 좌석만 예매한다고 가정)
-        String category = seatDetails.get(0).category();
-        String genre = seatDetails.get(0).genre();
+        String category = seatDetails.getFirst().category();
+        String genre = seatDetails.getFirst().genre();
 
         try {
             performanceClient.reserveRoundSeats(userSq, requestedSeats);
@@ -87,31 +86,30 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = Booking.builder()
                 .userSq(userSq)
                 .orderId(orderId)
-                .category(category) // [추가]
+                .category(category)
                 .genre(genre)
                 .build();
 
         for (Long seatSq : requestedSeats) {
             booking.addBookingSeat(BookingSeat.builder()
                     .roundSeatSq(seatSq)
-                    .discountPolicy(DiscountPolicy.NONE) // 명시적 기본값
+                    .discountPolicy(DiscountPolicy.NONE)
                     .build());
         }
 
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("예매 생성 및 좌석 선점 완료. Category: {}, Genre: {}, OrderId: {}, UserSq: {}", category, genre, orderId, userSq);
+        log.info("예매 생성 및 좌석 선점 완료. 식별자: {}, 주문번호: {}", userSq, orderId);
 
         return bookingMapper.entityToResponse(savedBooking);
     }
 
+    // 예매 상태와 권한을 확인한 후 각 좌석에 지정된 할인 정책을 일괄 갱신
     @Override
     @Transactional
     public BookingResponse applyDiscounts(Long userSq, Long bookingSq, BookingDiscountRequest request) {
-        // 1. 예매 조회
         Booking booking = bookingRepository.findById(bookingSq)
                 .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("존재하지 않는 예매입니다."));
 
-        // 2. 권한 및 상태 검증
         if (!booking.getUserSq().equals(userSq)) {
             throw BookingExceptionFactory.bookingForbidden("본인의 예매에만 할인을 적용할 수 있습니다.");
         }
@@ -122,7 +120,6 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingConflict("취소된 예매에는 할인을 적용할 수 없습니다.");
         }
 
-        // 3. 요청된 좌석별 할인 정책 업데이트 (Dirty Checking)
         if (request.seats() != null) {
             for (BookingDiscountSeatRequest seatRequest : request.seats()) {
                 booking.getBookingSeats().stream()
@@ -132,7 +129,6 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // 4. 변경된 결과 반환
         return bookingMapper.entityToResponse(booking);
     }
 
@@ -154,7 +150,7 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
-    // 결제 전 단계에서의 예매 철회 및 외부 점유 해제 전파
+    // 결제 전 단계의 예매를 철회하고 외부 서비스에 점유 중인 좌석의 해제를 요청
     @Override
     @Transactional
     public BookingResponse cancelBooking(Long userSq, Long bookingSq, List<Long> roundSeatSqs, String reason) {
@@ -172,7 +168,6 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingConflict("이미 취소된 예매입니다.");
         }
 
-        // 선점 단계에서는 데이터 정합성을 위해 일괄 취소만 허용
         if (roundSeatSqs != null && !roundSeatSqs.isEmpty()) {
             int totalSeatCount = booking.getBookingSeats().size();
             if (roundSeatSqs.size() != totalSeatCount) {
@@ -181,14 +176,14 @@ public class BookingServiceImpl implements BookingService {
         }
 
         List<Long> seatsToCancel = booking.getBookingSeats().stream()
-                .map((seat) -> seat.getRoundSeatSq())
+                .map(BookingSeat::getRoundSeatSq)
                 .toList();
 
         if (!seatsToCancel.isEmpty()) {
             try {
                 performanceClient.cancelRoundSeats(seatsToCancel);
             } catch (Exception e) {
-                log.error("공연 서비스 좌석 선점 해제 실패. OrderId: {}, Error: {}", booking.getOrderId(), e.getMessage());
+                log.error("공연 서비스 좌석 선점 해제 실패. 주문번호: {}, 사유: {}", booking.getOrderId(), e.getMessage());
                 throw BookingExceptionFactory.bookingBadRequest("좌석 해제 중 오류가 발생했습니다.");
             }
         }
@@ -199,7 +194,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.entityToResponse(booking);
     }
 
-    // 미결제 상태로 유지된 선점 좌석들을 주기적으로 회수
+    // 결제 유효 시간이 경과한 미결제 예매 건들을 선별하여 자동 무효화 및 좌석 복구 수행
     @Override
     @Transactional
     public int cancelExpiredBookings(int expirationMinutes) {
@@ -217,7 +212,7 @@ public class BookingServiceImpl implements BookingService {
                 booking.cancel();
 
                 List<Long> seatsToCancel = booking.getBookingSeats().stream()
-                        .map(seat -> seat.getRoundSeatSq())
+                        .map(BookingSeat::getRoundSeatSq)
                         .toList();
 
                 if (!seatsToCancel.isEmpty()) {
@@ -228,7 +223,7 @@ public class BookingServiceImpl implements BookingService {
 
                 cancelCount++;
             } catch (Exception e) {
-                log.error("만료 예매 자동 취소 실패 (ID: {}): {}", booking.getSq(), e.getMessage());
+                log.error("만료 예매 자동 취소 실패 (식별번호: {}): {}", booking.getSq(), e.getMessage());
             }
         }
 
@@ -245,7 +240,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse findBookingByOrderId(String orderId) {
         if (orderId == null || orderId.isBlank()) {
-            throw BookingExceptionFactory.bookingBadRequest("주문 번호(OrderId)는 필수입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("주문 번호는 필수입니다.");
         }
 
         Booking booking = bookingRepository.findByOrderId(orderId)
@@ -254,7 +249,7 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.entityToResponse(booking);
     }
 
-    // 결제 시스템의 승인 결과를 도메인 모델에 반영
+    // 결제 시스템으로부터 수신한 승인 결과를 예매 모델에 반영하여 확정 처리
     @Override
     @Transactional
     public void confirmPaid(Long userSq, Long bookingSq) {
@@ -266,10 +261,10 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.paid();
-        log.info("예매 결제 완료 확정. BookingSQ: {}, OrderId: {}", booking.getSq(), booking.getOrderId());
+        log.info("예매 결제 완료 확정. 주문번호: {}", booking.getOrderId());
     }
 
-    // 환불 진행 시 대상 좌석들의 점유 상태를 최종 해제
+    // 환불 절차에 따라 지정된 좌석들의 예매 기록을 제거하고 판매 가능 상태로 복구
     @Override
     @Transactional
     public void refundSeats(Long userSq, Long bookingSq, List<Long> roundSeatSqs) {
@@ -296,7 +291,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             performanceClient.cancelRoundSeats(validSqs);
         } catch (Exception e) {
-            log.error("환불 좌석 재고 해제 실패. BookingSQ: {}, Seats: {}, Error: {}",
+            log.error("환불 좌석 재고 해제 실패. 식별번호: {}, 좌석목록: {}, 사유: {}",
                     bookingSq, validSqs, e.getMessage());
             throw BookingExceptionFactory.bookingBadRequest("외부 서비스 재고 해제 중 오류가 발생했습니다.");
         }

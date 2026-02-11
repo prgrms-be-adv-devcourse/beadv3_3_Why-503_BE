@@ -47,11 +47,11 @@ public class SecurityConfig {
                                 }
                         )
                 )
-                .sessionManagement((session) ->
+                .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)  //서버에서 세션 안만듬, JWT로만 인증
                 )
                 .authorizeHttpRequests( //허용 url 리스트
-                        (auth) -> auth
+                        auth -> auth
                                 .anyRequest().permitAll()
                 )
                 .build();

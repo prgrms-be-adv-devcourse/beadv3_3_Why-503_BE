@@ -3,7 +3,6 @@ package io.why503.paymentservice.global;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.exception.payment.domain.PaymentPaymentException;
 import io.why503.commonbase.exception.payment.domain.PaymentPointException;
-import io.why503.commonbase.exception.payment.domain.PaymentTicketException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
 import io.why503.paymentservice.global.exception.NotFound;
 import io.why503.paymentservice.global.exception.ServiceUnavailable;
@@ -141,7 +140,7 @@ public class ServiceExceptionHandler {
         return switch (s) {
             case "payments" -> new PaymentPaymentException(message, status);
             case "points" -> new PaymentPointException(message, status);
-            case "tickets" -> new PaymentTicketException(message, status);
+//            case "tickets" -> new PaymentTicketException(message, status);
             default -> null;
         };
     }

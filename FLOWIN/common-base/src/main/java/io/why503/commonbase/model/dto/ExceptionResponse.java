@@ -2,6 +2,8 @@ package io.why503.commonbase.model.dto;
 
 import io.why503.commonbase.exception.CustomException;
 
+import java.util.UUID;
+
 public record ExceptionResponse(
         String id,
         String message,
@@ -9,5 +11,8 @@ public record ExceptionResponse(
 ) {
     public ExceptionResponse(CustomException e) {
         this(e.getId(), e.getMessage(), e.getCode());
+    }
+    public ExceptionResponse(Exception e) {
+        this(UUID.randomUUID().toString(), e.getMessage(), "unknown");
     }
 }

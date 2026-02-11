@@ -42,7 +42,7 @@ repositories {
 dependencies {
     //커스텀 패키지
     implementation 'io.why503:account-base:0.0.1'
-    implementation 'io.why503:common-base:0.0.3'
+    implementation 'io.why503:common-base:0.0.4'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

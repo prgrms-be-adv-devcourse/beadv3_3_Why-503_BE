@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CompanyMapper {
-    public Company RequestToEntity(CompanyRequest request){
+    public Company requestToEntity(CompanyRequest request){
         return Company.builder()
                 .bank(request.companyBank())
                 .accountNumber(request.accountNumber())
@@ -27,7 +27,7 @@ public class CompanyMapper {
                 .amountDt(request.amountDt())
                 .build();
     }
-    public CompanySummaryResponse EntityToSummaryResponse(Company company){
+    public CompanySummaryResponse entityToSummaryResponse(Company company){
         return new CompanySummaryResponse(
                 company.getSq(),
                 company.getName(),

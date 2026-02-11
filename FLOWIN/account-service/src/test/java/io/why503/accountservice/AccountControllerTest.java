@@ -4,6 +4,7 @@ import io.why503.accountservice.domain.accounts.controller.AccountsController;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.auth.config.SecurityConfig;
 import io.why503.accountservice.domain.companies.service.CompanyService;
+import io.why503.accountservice.global.exception.impl.PathFinderImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @WebMvcTest(AccountsController.class)
-@Import(TestSecurityConfig.class)
+@Import({TestSecurityConfig.class, PathFinderImpl.class})
 public class AccountControllerTest {
     @Autowired
     private MockMvc mvc;

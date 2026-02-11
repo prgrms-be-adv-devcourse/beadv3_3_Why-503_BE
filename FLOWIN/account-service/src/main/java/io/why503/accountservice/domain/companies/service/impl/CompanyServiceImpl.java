@@ -15,7 +15,6 @@ import io.why503.accountservice.domain.companies.repository.CompanyRepository;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import io.why503.accountservice.domain.companies.util.CompanyExceptionFactory;
 import io.why503.accountservice.domain.companies.util.CompanyMapper;
-import io.why503.accountservice.domain.companies.util.exception.CompanyNotFound;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +40,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     @Transactional
     public void registerCompany(Long userSq, CompanyRequest request) {
-        Company company = companyMapper.RequestToEntity(request);// 회사 Entity 생성
+        Company company = companyMapper.requestToEntity(request);// 회사 Entity 생성
         companyRepository.save(company);// 회사 정보 DB 저장
         accountService.joinCompany(userSq, company, UserRole.COMPANY); //회사 주입
     }
@@ -49,7 +48,7 @@ public class CompanyServiceImpl implements CompanyService {
     @Override // 조회 전용 트랜잭션
     public CompanySummaryResponse getCompanyBySq(Long sq) {
         Company company = findBySq(sq);
-        return companyMapper.EntityToSummaryResponse(company); // Entity → Response DTO 변환 후 반환
+        return companyMapper.entityToSummaryResponse(company); // Entity → Response DTO 변환 후 반환
     }
     //엔티티 반환, 내부 통신용
     @Override

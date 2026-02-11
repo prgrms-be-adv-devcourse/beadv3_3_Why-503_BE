@@ -78,7 +78,7 @@ public class PaymentViewController {
                 }
             }
 
-            RoundSeatResponse firstSeat = seats.get(0);
+            RoundSeatResponse firstSeat = seats.getFirst();
             model.addAttribute("productName", firstSeat.showName());
 
             String dateInfo = firstSeat.roundDt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));

@@ -5,7 +5,6 @@ import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
-import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.global.client.AccountClient;
 import io.why503.paymentservice.global.client.dto.response.AccountResponse;
 import jakarta.validation.Valid;

@@ -3,8 +3,6 @@ package io.why503.paymentservice.domain.ticket.model.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.Arrays;
-
 /**
  * 티켓 금액 계산 시 적용되는 할인 대상 및 유형에 대한 구분
  */

@@ -152,7 +152,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        String approvedPgKey = null;
+        String approvedPgKey;
 
         if (finalPgAmount > 0) {
             try {
@@ -282,7 +282,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        long refundPg = 0;
+        long refundPg;
         long refundPoint = 0;
 
         long remainPg = payment.getRemainPgAmount();
@@ -311,7 +311,7 @@ public class PaymentServiceImpl implements PaymentService {
             pgClient.cancelPayment(payment.getPaymentKey(), cancelReason, refundPg);
         }
 
-        if (booking != null && cancelSeatIds != null && !cancelSeatIds.isEmpty()) {
+        if (booking != null && !cancelSeatIds.isEmpty()) {
             performanceClient.cancelRoundSeats(cancelSeatIds);
             reservationClient.refundSeats(userSq, payment.getBookingSq(), cancelSeatIds);
             ticketService.resetTickets(cancelSeatIds);

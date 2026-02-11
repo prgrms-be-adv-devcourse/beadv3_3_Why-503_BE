@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
+import io.why503.commonbase.model.dto.LogResponse;
 import io.why503.gatewayservice.auth.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +52,7 @@ public class GatewayExceptionWriter {
     public Mono<Void> writeServerUnavailable(
             ServerWebExchange exchange,
             String message){
-        CustomException e = new ServerUnavailable(message);
+        CustomException e = new ServiceUnavailable(message);
         return writeException(exchange, e);
     }
 
@@ -65,7 +66,7 @@ public class GatewayExceptionWriter {
 
     //나머지 Unauthorized, Forbidden, AuthException
     public Mono<Void> writeGatewayAuthException(
-            ServerWebExchange exchange,CustomException e){;
+            ServerWebExchange exchange,CustomException e){
         return writeException(exchange, e);
     }
 
@@ -80,12 +81,11 @@ public class GatewayExceptionWriter {
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         //dto 생성 및 로그 찍기
         ExceptionResponse bodyDto = new ExceptionResponse(e);
-        log.error("{}/{}/{}/{}/{}",
-                e.getCause(),
-                e.getCode(),
-                e.getMessage(),
-                e.getClass(),
-                e.getUUID());
+        try {
+            log.error(om.writeValueAsString(new LogResponse(e)));
+        } catch (JsonProcessingException ex) {
+            log.error("unknown");
+        }
         //dto 파싱, om사용
         byte[] body;
         try {

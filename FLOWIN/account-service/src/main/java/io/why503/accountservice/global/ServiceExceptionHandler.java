@@ -1,15 +1,21 @@
 package io.why503.accountservice.global;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.accountservice.global.exception.NotFound;
+import io.why503.accountservice.global.exception.ServiceUnavailable;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.exception.account.domain.AccountAccountException;
 import io.why503.commonbase.exception.account.domain.AccountAuthException;
 import io.why503.commonbase.exception.account.domain.AccountCompanyException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
+import io.why503.commonbase.model.dto.LogResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,17 +29,22 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class ServiceExceptionHandler {
+
+    private final ObjectMapper om;
+
     //커스텀 전체 핸들러, 이건 그대로 가져다 쓰면 됨.
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ExceptionResponse> customExceptionHandler(
             CustomException e
-    ){
+    ) throws Exception {
         return loggingCustomException(e);
     }
     //url이 없을 때
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ExceptionResponse> noHandlerFoundExceptionHandler(){
+    public ResponseEntity<ExceptionResponse> noHandlerFoundExceptionHandler()
+            throws Exception {
         CustomException ex = new NotFound("url not found");
         return loggingCustomException(ex);
     }
@@ -44,14 +55,12 @@ public class ServiceExceptionHandler {
             MethodArgumentNotValidException e,
             HttpServletRequest request
     ) throws Exception{
-        //이 오류의 도메인이 어디인지 찾기 위한 uri찾기
-        String s = request.getRequestURI().split("/")[1];
         //notnull(그냥 단어)하면 여기서 취합해서 메시지로 만들어줌
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(i -> i.getDefaultMessage())
                 .collect(Collectors.joining(", ")) + "이(가) 누락되거나 옳바르지 않습니다";
         //makeExceptionURI 참조
-        CustomException ex = makeExceptionByURI(s, message, HttpStatus.BAD_REQUEST);
+        CustomException ex = makeExceptionByPath(request, message, HttpStatus.BAD_REQUEST);
         if(ex == null){
             throw new Exception(
                     "MethodArgumentNotValidException -> Exception : 없는 uri인데 MethodArgumentNotValidException"
@@ -61,18 +70,14 @@ public class ServiceExceptionHandler {
         return loggingCustomException(ex);
     }
 
-    /*json 파싱 실패(위 함수와 같은 부분은 주석 생략)
-    간단하게 설명하면 java->json에서 발생하는 오류 */
+    /*JPA의 json 매칭 실패(위 함수와 같은 부분은 주석 생략)
+    간단하게 설명하면 java->json에서 필요한 조건이 안맞으면 발생하는 오류 */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ExceptionResponse> JsonParseExceptionHandler(
+    public ResponseEntity<ExceptionResponse> JsonMatchExceptionHandler(
             HttpMessageNotReadableException e,
             HttpServletRequest request
     ) throws Exception {
-        String s = request.getRequestURI().split("/")[1];
-
-        String message = "형식 문제";
-
-        CustomException ex = makeExceptionByURI(s, message, HttpStatus.BAD_REQUEST);
+        CustomException ex = makeExceptionByPath(request, "형식 문제", HttpStatus.BAD_REQUEST);
 
         if(ex == null){
             throw new Exception(
@@ -88,12 +93,11 @@ public class ServiceExceptionHandler {
             DataIntegrityViolationException e,
             HttpServletRequest request
     ) throws Exception{
-        String s = request.getRequestURI().split("/")[1];
         //우리가 사용하는 jdbc가 오류 코드를 찾아줌, 그걸 꺼내기 위한 과정
         if(NestedExceptionUtils.getRootCause(e) instanceof SQLException se){
             //notnull 오류, 즉 값 누락, 혹시 우리가 못 잡은 걸 막기 위해 있음, 400
             if(se.getErrorCode() == 1048){
-                CustomException exception = makeExceptionByURI(s, "값 누락", HttpStatus.BAD_REQUEST);
+                CustomException exception = makeExceptionByPath(request, "값 누락", HttpStatus.BAD_REQUEST);
                 if(exception == null){
                     throw new Exception("DBExceptionHandler 1048 location is unknown");
                 }
@@ -101,7 +105,7 @@ public class ServiceExceptionHandler {
             }
             //unique 위반, 즉 중복, 409
             else if(se.getErrorCode() == 1062){
-                CustomException exception = makeExceptionByURI(s, "개체 중복", HttpStatus.CONFLICT);
+                CustomException exception = makeExceptionByPath(request, "개체 중복", HttpStatus.CONFLICT);
                 if(exception == null){
                     throw new Exception("DBExceptionHandler 1062 location is unknown");
                 }
@@ -109,8 +113,8 @@ public class ServiceExceptionHandler {
             }
             //기타 등등 자세한 건 노출하면 안되니까 위치랑 내용만 찍고 500
             else{
-                CustomException exception = makeExceptionByURI(
-                        s,
+                CustomException exception = makeExceptionByPath(
+                        request,
                         "sorry, just wait a minute :)",
                         HttpStatus.INTERNAL_SERVER_ERROR);
                 if(exception == null){
@@ -122,6 +126,15 @@ public class ServiceExceptionHandler {
         throw new Exception("DBExceptionHandler meet unknown Exception");
     }
 
+    //redis가 안켜져 있음
+    @ExceptionHandler(RedisConnectionFailureException.class)
+    public ResponseEntity<ExceptionResponse> RedisConnectionExceptionHandler(
+            RedisConnectionFailureException e
+    ) throws Exception {
+        CustomException ex = new ServiceUnavailable(e);
+        return loggingCustomException(ex);
+    }
+
     //나머지 모르는 거 전체 핸들러(로그만 찍고 모르는 에러라고 메시지)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> unknownExceptionHandler(
@@ -131,8 +144,9 @@ public class ServiceExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("UnknownError");
     }
-    //uri로 도메인 찾기
-    private CustomException makeExceptionByURI(String s, String message, HttpStatus status){
+    //이 오류의 도메인이 어디인지 찾기 위한 uri로 도메인 찾기 함수
+    private CustomException makeExceptionByPath(HttpServletRequest request, String message, HttpStatus status){
+        String s = request.getRequestURI().split("/")[1];
         return switch (s) {
             case "accounts" -> new AccountAccountException(message, status);
             case "company" -> new AccountCompanyException(message, status);
@@ -141,13 +155,8 @@ public class ServiceExceptionHandler {
         };
     }
     //CustomException 로그 출력 후, ResponseEntity<ExceptionResponse>반환
-    private ResponseEntity<ExceptionResponse> loggingCustomException(CustomException e){
-        log.error("{}/{}/{}/{}/{}",
-                e.getCause(),
-                e.getCode(),
-                e.getMessage(),
-                e.getClass(),
-                e.getUUID());
+    private ResponseEntity<ExceptionResponse> loggingCustomException(CustomException e) throws Exception {
+        log.error(om.writeValueAsString(new LogResponse(e)));
         return ResponseEntity.status(e.getStatus())
                 .body(new ExceptionResponse(e));
     }

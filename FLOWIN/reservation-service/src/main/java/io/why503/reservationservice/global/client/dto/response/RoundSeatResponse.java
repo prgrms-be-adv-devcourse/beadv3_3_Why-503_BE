@@ -14,6 +14,8 @@ public record RoundSeatResponse(
         Integer seatAreaNum,
         String showName,
         String hallName,
-        LocalDateTime roundDt
+        LocalDateTime roundDt,
+        String category,
+        String genre
 ) {
 }

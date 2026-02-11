@@ -1,6 +1,5 @@
 package io.why503.paymentservice.domain.point.util.exception;
 
-import io.why503.commonbase.exception.payment.domain.PaymentBookingException;
 import io.why503.commonbase.exception.payment.domain.PaymentPointException;
 import org.springframework.http.HttpStatus;
 

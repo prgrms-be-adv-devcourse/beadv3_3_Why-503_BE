@@ -27,7 +27,7 @@ public class TicketMapper {
                 ticket.getUserSq(),
                 status,
                 ticket.getOriginalPrice(),
-                ticket.getDiscount(),
+                ticket.getDiscountPolicy(),
                 ticket.getFinalPrice(),
                 ticket.getCreatedDt()
         );

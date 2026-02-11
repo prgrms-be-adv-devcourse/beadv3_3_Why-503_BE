@@ -1,6 +1,7 @@
 package io.why503.reservationservice.domain.booking.mapper;
 
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
+import io.why503.reservationservice.domain.booking.model.dto.response.BookingSeatResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
 import io.why503.reservationservice.domain.booking.model.entity.BookingSeat;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
@@ -22,26 +23,28 @@ public class BookingMapper {
             throw BookingExceptionFactory.bookingBadRequest("변환할 Booking Entity는 필수입니다.");
         }
 
-        List<Long> roundSeatSqs = extractRoundSeatSqs(booking.getBookingSeats());
+        List<BookingSeatResponse> seatResponses = toSeatResponses(booking.getBookingSeats());
 
         return new BookingResponse(
                 booking.getSq(),
                 booking.getUserSq(),
                 booking.getOrderId(),
                 booking.getStatus().name(),
-                roundSeatSqs,
+                seatResponses,
                 booking.getCreatedDt()
         );
     }
 
-    // 예매 정보에 포함된 개별 좌석들의 식별자만 추출
-    private List<Long> extractRoundSeatSqs(List<BookingSeat> bookingSeats) {
+    private List<BookingSeatResponse> toSeatResponses(List<BookingSeat> bookingSeats) {
         if (bookingSeats == null || bookingSeats.isEmpty()) {
             return Collections.emptyList();
         }
 
         return bookingSeats.stream()
-                .map(seat -> seat.getRoundSeatSq())
+                .map(seat -> new BookingSeatResponse(
+                        seat.getRoundSeatSq(),
+                        seat.getDiscountPolicy()
+                ))
                 .toList();
     }
 }

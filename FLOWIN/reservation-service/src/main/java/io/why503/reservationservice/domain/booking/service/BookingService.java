@@ -1,6 +1,7 @@
 package io.why503.reservationservice.domain.booking.service;
 
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
+import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
 
@@ -14,6 +15,8 @@ public interface BookingService {
 
     // 새로운 예매 정보 생성 및 좌석 선점 처리
     BookingResponse createBooking(Long userSq, BookingCreateRequest request);
+
+    BookingResponse applyDiscounts(Long userSq, Long bookingSq, BookingDiscountRequest request);
 
     BookingResponse findBooking(Long userSq, Long bookingSq);
 

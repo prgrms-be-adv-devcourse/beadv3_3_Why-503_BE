@@ -20,12 +20,16 @@ import io.why503.paymentservice.global.client.PgClient;
 import io.why503.paymentservice.global.client.ReservationClient;
 import io.why503.paymentservice.global.client.dto.request.PointUseRequest;
 import io.why503.paymentservice.global.client.dto.response.BookingResponse;
+import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
+import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 결제 승인 및 환불과 관련된 핵심 비즈니스 로직을 수행하는 서비스
@@ -97,32 +101,88 @@ public class PaymentServiceImpl implements PaymentService {
             throw PaymentExceptionFactory.paymentConflict("결제 가능한 상태가 아닙니다.");
         }
 
-        long usePoint = request.usePointAmount();
-        long pgAmount = request.totalAmount() - usePoint;
+        List<Long> seatIds = booking.bookingSeats().stream()
+                .map(seat -> seat.roundSeatSq())
+                .toList();
 
-        if (usePoint > 0) {
-            accountClient.decreasePoint(userSq, new PointUseRequest(usePoint));
+        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(seatIds);
+        Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
+                .collect(Collectors.toMap(
+                        data -> data.roundSeatSq(),
+                        data -> data
+                ));
+
+        long serverTotalAmount = 0;
+
+        for (BookingSeatResponse seat : booking.bookingSeats()) {
+            RoundSeatResponse seatInfo = seatMap.get(seat.roundSeatSq());
+            if (seatInfo == null) {
+                throw PaymentExceptionFactory.paymentNotFound("좌석 정보를 찾을 수 없습니다: " + seat.roundSeatSq());
+            }
+
+            long originalPrice = seatInfo.price();
+            long discountPercent = seat.discountPolicy().getDiscountPercent();
+            long discountAmount = (originalPrice * discountPercent) / 100;
+
+            serverTotalAmount += (originalPrice - discountAmount);
         }
 
-        String approvedPgKey = null;
-        if (pgAmount > 0) {
+        // 요청 금액과 서버 계산 금액이 다르면 예외 발생 (변조 방지)
+        if (request.totalAmount() != serverTotalAmount) {
+            log.warn("결제 금액 불일치. 요청: {}, 서버계산: {}", request.totalAmount(), serverTotalAmount);
+            throw PaymentExceptionFactory.paymentBadRequest("요청된 결제 총액이 올바르지 않습니다.");
+        }
+
+        long usePoint = request.usePointAmount();
+        if (usePoint > serverTotalAmount) {
+            throw PaymentExceptionFactory.paymentBadRequest("결제 금액보다 많은 포인트를 사용할 수 없습니다.");
+        }
+        if (usePoint < 0) {
+            throw PaymentExceptionFactory.paymentBadRequest("포인트 사용액은 0보다 작을 수 없습니다.");
+        }
+
+        long finalPgAmount = serverTotalAmount - usePoint;
+
+        if (usePoint > 0) {
             try {
-                approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), pgAmount);
+                // AccountService가 존재한다고 가정
+                accountClient.decreasePoint(userSq, new PointUseRequest(usePoint));
             } catch (Exception e) {
-                if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
-                throw PaymentExceptionFactory.paymentConflict("PG 결제 승인 실패");
+                throw PaymentExceptionFactory.paymentConflict("포인트 차감 실패: 잔액 부족 또는 시스템 오류");
             }
         }
 
+        String approvedPgKey = null;
+
+        if (finalPgAmount > 0) {
+            try {
+                approvedPgKey = pgClient.approvePayment(request.paymentKey(), request.orderId(), finalPgAmount);
+            } catch (Exception e) {
+                // PG 실패 시 포인트 롤백
+                if (usePoint > 0) {
+                    accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
+                }
+                throw PaymentExceptionFactory.paymentConflict("PG 결제 승인 실패");
+            }
+        } else {
+            // 전액 포인트 결제인 경우
+            approvedPgKey = "POINT_FULL_PAYMENT";
+        }
+
         try {
-            List<Long> seatIds = booking.roundSeatSqs();
             performanceClient.confirmRoundSeats(userSq, seatIds);
             reservationClient.confirmPaid(userSq, booking.sq());
 
         } catch (Exception e) {
             log.error("결제 후처리 실패 - 롤백 수행: {}", e.getMessage());
-            if (approvedPgKey != null) pgClient.cancelPayment(approvedPgKey, "시스템 오류: 좌석 확정 실패", pgAmount);
-            if (usePoint > 0) accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
+
+            // 보상 트랜잭션 수행
+            if (finalPgAmount > 0 && !"POINT_FULL_PAYMENT".equals(approvedPgKey)) {
+                pgClient.cancelPayment(approvedPgKey, "시스템 오류: 좌석 확정 실패", finalPgAmount);
+            }
+            if (usePoint > 0) {
+                accountClient.increasePoint(userSq, new PointUseRequest(usePoint));
+            }
 
             throw PaymentExceptionFactory.paymentConflict("좌석 확정 처리에 실패하여 결제가 취소되었습니다.");
         }
@@ -131,7 +191,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.complete(approvedPgKey);
         payment = paymentRepository.save(payment);
 
-        ticketService.issueTickets(userSq, payment, booking.sq(), booking.roundSeatSqs());
+        ticketService.issueTickets(userSq, payment, booking.sq(), booking.bookingSeats());
 
         return payment;
     }
@@ -211,7 +271,9 @@ public class PaymentServiceImpl implements PaymentService {
             refundAmount = payment.getRemainPgAmount() + payment.getRemainPointAmount();
 
             if (booking != null) {
-                cancelSeatIds = booking.roundSeatSqs();
+                cancelSeatIds = booking.bookingSeats().stream()
+                        .map(bookingSeatResponse -> bookingSeatResponse.roundSeatSq())
+                        .toList();
             }
         } else {
             List<TicketResponse> ticketsToCancel = ticketService.findTicketsByRoundSeats(cancelSeatIds);

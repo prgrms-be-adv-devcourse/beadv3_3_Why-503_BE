@@ -3,6 +3,7 @@ package io.why503.paymentservice.domain.ticket.service;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
 import io.why503.paymentservice.domain.ticket.model.dto.request.TicketCreateRequest;
 import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
+import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public interface TicketService {
     TicketResponse findMyTicket(Long userSq, Long ticketSq);
 
     // 결제 완료 시점에 맞춘 티켓 소유권 할당 및 발권 확정
-    void issueTickets(Long userSq, Payment payment, Long bookingSq, List<Long> roundSeatSqs);
+    void issueTickets(Long userSq, Payment payment, Long bookingSq, List<BookingSeatResponse> bookingSeats);
 
     // 환불 또는 거래 무효화 시 티켓 정보를 판매 전 상태로 복구
     void resetTickets(List<Long> roundSeatSqs);

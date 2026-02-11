@@ -1,5 +1,6 @@
 package io.why503.reservationservice.domain.booking.model.entity;
 
+import io.why503.reservationservice.domain.booking.model.enums.DiscountPolicy;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -31,12 +32,17 @@ public class BookingSeat {
     @Column(name = "round_seat_sq", nullable = false)
     private Long roundSeatSq;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "discount_policy", length = 20)
+    private DiscountPolicy discountPolicy = DiscountPolicy.NONE;
+
     @Builder
-    public BookingSeat(Long roundSeatSq) {
+    public BookingSeat(Long roundSeatSq, DiscountPolicy discountPolicy) {
         if (roundSeatSq == null) {
             throw BookingExceptionFactory.bookingBadRequest("회차 좌석 ID는 필수입니다.");
         }
         this.roundSeatSq = roundSeatSq;
+        this.discountPolicy = (discountPolicy != null) ? discountPolicy : DiscountPolicy.NONE;
     }
 
     // 예매 엔티티와의 양방향 연관 관계 설정 및 데이터 무결성 검증
@@ -45,5 +51,9 @@ public class BookingSeat {
             throw BookingExceptionFactory.bookingConflict("이미 예매 정보가 설정된 좌석입니다.");
         }
         this.booking = booking;
+    }
+
+    public void changeDiscountPolicy(DiscountPolicy discountPolicy) {
+        this.discountPolicy = (discountPolicy != null) ? discountPolicy : DiscountPolicy.NONE;
     }
 }

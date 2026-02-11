@@ -5,6 +5,9 @@ import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.service.PaymentService;
 import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
+import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
+import io.why503.paymentservice.global.client.AccountClient;
+import io.why503.paymentservice.global.client.dto.response.AccountResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentController {
 
+    private final AccountClient accountClient;
     private final PaymentService paymentService;
 
     // 결제 수단 검증 및 최종 결제 승인 처리
@@ -62,6 +66,15 @@ public class PaymentController {
 
         validateUserHeader(userSq);
         return ResponseEntity.ok(paymentService.cancelPayment(userSq, paymentSq, request));
+    }
+
+    @GetMapping("/points")
+    public ResponseEntity<AccountResponse> findMyPoints(
+            @RequestHeader("X-USER-SQ") Long userSq) {
+
+        validateUserHeader(userSq);
+        AccountResponse response = accountClient.getAccount(userSq);
+        return ResponseEntity.ok(response);
     }
 
     // 게이트웨이를 통해 전달된 필수 사용자 식별값 검증

@@ -42,7 +42,7 @@ ext {
 
 dependencies {
 
-    implementation 'io.why503:common-base:0.0.2'
+    implementation 'io.why503:common-base:0.0.3'
 
     // web / jpa
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -70,6 +70,8 @@ dependencies {
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }
 
 dependencyManagement {

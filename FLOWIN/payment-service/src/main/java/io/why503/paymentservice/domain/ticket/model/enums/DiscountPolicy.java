@@ -11,11 +11,12 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum DiscountPolicy {
-    NONE("할인 없음"),
-    YOUTH("청소년 할인"),
-    SENIOR("노약자 할인"),
-    DISABLED("장애인 할인"),
-    VETERAN("국가유공자 할인");
+    NONE("할인 없음", 0),
+    YOUTH("청소년 할인", 20),      // 20%
+    SENIOR("노약자 할인", 30),     // 30%
+    DISABLED("장애인 할인", 50),   // 50%
+    VETERAN("국가유공자 할인", 50); // 50%
 
     private final String description;
+    private final int discountPercent;
 }

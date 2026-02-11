@@ -6,9 +6,11 @@ import io.why503.paymentservice.domain.ticket.mapper.TicketMapper;
 import io.why503.paymentservice.domain.ticket.model.dto.request.TicketCreateRequest;
 import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.ticket.model.entity.Ticket;
+import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.ticket.repository.TicketRepository;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
 import io.why503.paymentservice.global.client.PerformanceClient;
+import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -128,23 +130,34 @@ public class TicketServiceImpl implements TicketService {
     // 결제 완료 정보를 티켓 데이터에 반영하여 최종 발권 처리
     @Override
     @Transactional
-    public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<Long> roundSeatSqs) {
-        List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
+    public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<BookingSeatResponse> bookingSeats) {
 
+        List<Long> roundSeatSqs = bookingSeats.stream()
+                .map(seat -> seat.roundSeatSq())
+                .toList();
+
+        List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
         List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(roundSeatSqs);
 
         Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
-                .collect(Collectors.toMap(roundSeatResponse -> roundSeatResponse.roundSeatSq(), Function.identity()));
+                .collect(Collectors.toMap(seat -> seat.roundSeatSq(), Function.identity()));
+
+        Map<Long, DiscountPolicy> discountMap = bookingSeats.stream()
+                .collect(Collectors.toMap(seat -> seat.roundSeatSq(), seat -> seat.discountPolicy()));
 
         for (Ticket ticket : tickets) {
             RoundSeatResponse seatInfo = seatMap.get(ticket.getRoundSeatSq());
+            DiscountPolicy policy = discountMap.getOrDefault(ticket.getRoundSeatSq(), DiscountPolicy.NONE);
 
-            long price = 0L;
+            long originalPrice = 0L;
             if (seatInfo != null && seatInfo.price() != null) {
-                price = seatInfo.price();
+                originalPrice = seatInfo.price();
             }
 
-            ticket.issue(userSq, payment, bookingSq, price, null, price);
+            long discountAmount = (originalPrice * policy.getDiscountPercent()) / 100;
+            long finalPrice = originalPrice - discountAmount;
+
+            ticket.issue(userSq, payment, bookingSq, originalPrice, policy.name(), finalPrice);
         }
     }
 

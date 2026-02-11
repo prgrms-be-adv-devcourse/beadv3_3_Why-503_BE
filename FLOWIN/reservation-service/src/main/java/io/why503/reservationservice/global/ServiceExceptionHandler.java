@@ -139,7 +139,7 @@ public class ServiceExceptionHandler {
     private CustomException makeExceptionByPath(HttpServletRequest request, String message, HttpStatus status){
         String s = request.getRequestURI().split("/")[1];
         return switch (s) {
-            case "booking" -> new ReservationBookingException(message, status);
+            case "bookings" -> new ReservationBookingException(message, status);
             case "entry" -> new ReservationEntryException(message, status);
             case "wait" -> new ReservationWaitException(message, status);
             default -> null;

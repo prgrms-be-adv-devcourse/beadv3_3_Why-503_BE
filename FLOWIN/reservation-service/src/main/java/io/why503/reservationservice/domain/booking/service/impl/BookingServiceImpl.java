@@ -2,14 +2,18 @@ package io.why503.reservationservice.domain.booking.service.impl;
 
 import io.why503.reservationservice.domain.booking.mapper.BookingMapper;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
+import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
+import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountSeatRequest;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
 import io.why503.reservationservice.domain.booking.model.entity.BookingSeat;
 import io.why503.reservationservice.domain.booking.model.enums.BookingStatus;
+import io.why503.reservationservice.domain.booking.model.enums.DiscountPolicy;
 import io.why503.reservationservice.domain.booking.repository.BookingRepository;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.reservationservice.global.client.PerformanceClient;
+import io.why503.reservationservice.global.client.dto.response.RoundSeatResponse;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +60,22 @@ public class BookingServiceImpl implements BookingService {
             throw BookingExceptionFactory.bookingConflict("요청한 좌석 중 이미 선점된 좌석이 존재합니다.");
         }
 
+        List<RoundSeatResponse> seatDetails;
+        try {
+            seatDetails = performanceClient.findRoundSeats(requestedSeats);
+        } catch (Exception e) {
+            log.error("공연 정보 조회 실패: {}", e.getMessage());
+            throw BookingExceptionFactory.bookingBadRequest("공연 정보를 불러오는 데 실패했습니다.");
+        }
+
+        if (seatDetails == null || seatDetails.isEmpty()) {
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 좌석 정보입니다.");
+        }
+
+        // 첫 번째 좌석의 공연 정보를 대표값으로 사용 (한 번에 같은 공연의 좌석만 예매한다고 가정)
+        String category = seatDetails.get(0).category();
+        String genre = seatDetails.get(0).genre();
+
         try {
             performanceClient.reserveRoundSeats(userSq, requestedSeats);
         } catch (Exception e) {
@@ -67,16 +87,53 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = Booking.builder()
                 .userSq(userSq)
                 .orderId(orderId)
+                .category(category) // [추가]
+                .genre(genre)
                 .build();
 
         for (Long seatSq : requestedSeats) {
-            booking.addBookingSeat(BookingSeat.builder().roundSeatSq(seatSq).build());
+            booking.addBookingSeat(BookingSeat.builder()
+                    .roundSeatSq(seatSq)
+                    .discountPolicy(DiscountPolicy.NONE) // 명시적 기본값
+                    .build());
         }
 
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("예매 생성 및 좌석 선점 완료. OrderId: {}, UserSq: {}", orderId, userSq);
+        log.info("예매 생성 및 좌석 선점 완료. Category: {}, Genre: {}, OrderId: {}, UserSq: {}", category, genre, orderId, userSq);
 
         return bookingMapper.entityToResponse(savedBooking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse applyDiscounts(Long userSq, Long bookingSq, BookingDiscountRequest request) {
+        // 1. 예매 조회
+        Booking booking = bookingRepository.findById(bookingSq)
+                .orElseThrow(() -> BookingExceptionFactory.bookingNotFound("존재하지 않는 예매입니다."));
+
+        // 2. 권한 및 상태 검증
+        if (!booking.getUserSq().equals(userSq)) {
+            throw BookingExceptionFactory.bookingForbidden("본인의 예매에만 할인을 적용할 수 있습니다.");
+        }
+        if (booking.getStatus() == BookingStatus.PAID) {
+            throw BookingExceptionFactory.bookingConflict("이미 결제된 예매는 변경할 수 없습니다.");
+        }
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw BookingExceptionFactory.bookingConflict("취소된 예매에는 할인을 적용할 수 없습니다.");
+        }
+
+        // 3. 요청된 좌석별 할인 정책 업데이트 (Dirty Checking)
+        if (request.seats() != null) {
+            for (BookingDiscountSeatRequest seatRequest : request.seats()) {
+                booking.getBookingSeats().stream()
+                        .filter(seat -> seat.getRoundSeatSq().equals(seatRequest.roundSeatSq()))
+                        .findFirst()
+                        .ifPresent(seat -> seat.changeDiscountPolicy(seatRequest.discountPolicy()));
+            }
+        }
+
+        // 4. 변경된 결과 반환
+        return bookingMapper.entityToResponse(booking);
     }
 
     @Override
@@ -123,8 +180,6 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        booking.cancel();
-
         List<Long> seatsToCancel = booking.getBookingSeats().stream()
                 .map((seat) -> seat.getRoundSeatSq())
                 .toList();
@@ -137,6 +192,9 @@ public class BookingServiceImpl implements BookingService {
                 throw BookingExceptionFactory.bookingBadRequest("좌석 해제 중 오류가 발생했습니다.");
             }
         }
+        bookingRepository.delete(booking);
+
+        booking.cancel();
 
         return bookingMapper.entityToResponse(booking);
     }
@@ -165,6 +223,8 @@ public class BookingServiceImpl implements BookingService {
                 if (!seatsToCancel.isEmpty()) {
                     performanceClient.cancelRoundSeats(seatsToCancel);
                 }
+
+                bookingRepository.delete(booking);
 
                 cancelCount++;
             } catch (Exception e) {
@@ -246,6 +306,4 @@ public class BookingServiceImpl implements BookingService {
             booking.cancel();
         }
     }
-
-
 }

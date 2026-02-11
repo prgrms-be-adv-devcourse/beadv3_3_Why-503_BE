@@ -4,9 +4,11 @@ import io.why503.paymentservice.domain.payment.config.TossPaymentConfig;
 import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.domain.point.service.PointService;
+import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.ReservationClient;
 import io.why503.paymentservice.global.client.dto.response.BookingResponse;
+import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 결제 진입점 및 결과 화면 렌더링을 담당하는 뷰 컨트롤러
@@ -32,7 +37,7 @@ public class PaymentViewController {
     private final PointService pointService;
     private final TossPaymentConfig tossPaymentConfig;
 
-    // 예매된 좌석 상세 정보와 결제 금액을 포함한 체크아웃 화면 렌더링
+    // 예매된 좌석의 원가와 적용된 할인 정책을 결합하여 최종 결제 필요 금액 계산 및 화면 렌더링
     @GetMapping("/checkout/booking/{bookingSq}")
     public String renderBookingCheckout(
             @PathVariable Long bookingSq,
@@ -40,18 +45,40 @@ public class PaymentViewController {
             Model model) {
         try {
             BookingResponse booking = reservationClient.getBooking(userSq, bookingSq);
-            List<RoundSeatResponse> seats = performanceClient.findRoundSeats(booking.roundSeatSqs());
+
+            List<Long> roundSeatSqs = booking.bookingSeats().stream()
+                    .map(bookingSeatResponse -> bookingSeatResponse.roundSeatSq())
+                    .toList();
+
+            List<RoundSeatResponse> seats = performanceClient.findRoundSeats(roundSeatSqs);
 
             if (seats == null || seats.isEmpty()) {
                 throw PaymentExceptionFactory.paymentNotFound("예매된 좌석 정보를 찾을 수 없습니다.");
             }
 
             if (!"PENDING".equals(booking.status())) {
-                return renderFailWithMsg("결제 가능한 상태가 아닙니다. (현재 상태: " + booking.status() + ")", "INVALID_STATUS", model);
+                return renderFailWithMsg("결제 가능한 상태가 아닙니다.", "INVALID_STATUS", model);
+            }
+
+            Map<Long, RoundSeatResponse> seatMap = seats.stream()
+                    .collect(Collectors.toMap(roundSeatResponse -> roundSeatResponse.roundSeatSq(), Function.identity()));
+
+            long totalAmount = 0;
+
+            for (BookingSeatResponse bookingSeat : booking.bookingSeats()) {
+                RoundSeatResponse seatInfo = seatMap.get(bookingSeat.roundSeatSq());
+
+                if (seatInfo != null) {
+                    long originalPrice = seatInfo.price();
+                    DiscountPolicy policy = bookingSeat.discountPolicy();
+
+                    // 각 좌석별 할인율을 적용하여 실결제 대상 누적 합계 산출
+                    long discountAmount = (originalPrice * policy.getDiscountPercent()) / 100;
+                    totalAmount += (originalPrice - discountAmount);
+                }
             }
 
             RoundSeatResponse firstSeat = seats.get(0);
-
             model.addAttribute("productName", firstSeat.showName());
 
             String dateInfo = firstSeat.roundDt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
@@ -70,12 +97,7 @@ public class PaymentViewController {
 
             model.addAttribute("seatGrade", seatGrade);
             model.addAttribute("seatArea", seatArea);
-
-            long totalAmount = seats.stream()
-                    .mapToLong(roundSeatResponse -> roundSeatResponse.price())
-                    .sum();
             model.addAttribute("amount", totalAmount);
-
             model.addAttribute("orderId", booking.orderId());
             model.addAttribute("clientKey", tossPaymentConfig.getClientKey());
             model.addAttribute("customerKey", "USER-" + userSq);

@@ -2,9 +2,7 @@ package io.why503.reservationservice.global.client;
 
 import io.why503.reservationservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,7 +12,18 @@ import java.util.List;
 @FeignClient(name = "performance-service")
 public interface PerformanceClient {
 
-    // 선택한 좌석에 대해 타 사용자의 접근을 제한하는 임시 점유 권한 획득
+    // >>>>>>>>예메 페이지 진입 이전>>>>>>>>>>>>>
+
+    // 회차 예매 가능 여부 확인
+    @GetMapping("/round/{roundSq}/bookable")
+    Boolean checkRoundBookable(
+                @PathVariable("roundSq") Long roundSq
+    );
+
+
+    // >>>>>>>>예매 페이지 진입 이후>>>>>>>>>>>>>
+
+    // 특정 사용자를 위한 좌석 점유권 확보 요청
     @PostMapping("/round-seats/reserve")
     List<RoundSeatResponse> reserveRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,

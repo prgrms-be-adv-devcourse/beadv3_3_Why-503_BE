@@ -11,6 +11,12 @@ jobs:
   code-test:
     name: 코드 테스트
     runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
 
     permissions:
       contents: read

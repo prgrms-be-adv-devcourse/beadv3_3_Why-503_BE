@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum RoundSeatStatus {
+    WAIT("판매 대기"),
     AVAILABLE("판매 가능"),
     RESERVED("선점됨"),
     SOLD("판매완료"),

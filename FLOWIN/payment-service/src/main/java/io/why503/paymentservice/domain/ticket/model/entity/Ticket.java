@@ -1,6 +1,7 @@
 package io.why503.paymentservice.domain.ticket.model.entity;
 
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -46,8 +47,8 @@ public class Ticket {
     @Column(name = "original_price")
     private Long originalPrice;
 
-    @Column(name = "discount", length = 20)
-    private String discount;
+    @Column(name = "discount_policy", length = 20)
+    private String discountPolicy;
 
     @Column(name = "final_price")
     private Long finalPrice;
@@ -63,23 +64,23 @@ public class Ticket {
     @Builder
     public Ticket(Long roundSeatSq) {
         if (roundSeatSq == null) {
-            throw new IllegalArgumentException("회차 좌석 ID(RoundSeatSq)는 필수입니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("회차 좌석 ID(RoundSeatSq)는 필수입니다.");
         }
         this.roundSeatSq = roundSeatSq;
     }
 
     // 결제 정보를 기반으로 티켓 소유권 할당 및 가격 확정
     public void issue(Long userSq, Payment payment, Long bookingSq,
-                      Long originalPrice, String discount, Long finalPrice) {
+                      Long originalPrice, String discountPolicy, Long finalPrice) {
         if (this.userSq != null || this.payment != null) {
-            throw new IllegalStateException("이미 판매된 티켓 슬롯입니다. TicketSQ: " + this.sq);
+            throw PaymentExceptionFactory.paymentConflict("이미 판매된 티켓 슬롯입니다. TicketSQ: " + this.sq);
         }
 
         this.userSq = userSq;
         this.payment = payment;
         this.bookingSq = bookingSq;
         this.originalPrice = originalPrice;
-        this.discount = discount;
+        this.discountPolicy = discountPolicy;
         this.finalPrice = finalPrice;
     }
 
@@ -89,7 +90,7 @@ public class Ticket {
         this.payment = null;
         this.bookingSq = null;
         this.originalPrice = null;
-        this.discount = null;
+        this.discountPolicy = null;
         this.finalPrice = null;
     }
 

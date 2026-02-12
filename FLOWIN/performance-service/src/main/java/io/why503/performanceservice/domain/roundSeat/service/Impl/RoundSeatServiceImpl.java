@@ -43,7 +43,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse createRoundSeat(Long userSq, RoundSeatRequest request) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 등록이 가능합니다."));
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
@@ -93,7 +93,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse patchRoundSeatStatus(Long userSq, Long roundSeatSq, RoundSeatStatus newStatus) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 상태 변경이 가능합니다."));
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
@@ -226,43 +226,44 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         }
     }
 
+    // 요청된 좌석 목록에 대해 공연장 정보와 좌석 등급별 가격 데이터를 결합하여 상세 정보 추출
     @Override
     public List<SeatReserveResponse> getRoundSeatDetails(List<Long> roundSeatSqs) {
+        // 전달된 식별자 목록이 비어있는 경우 즉시 빈 결과 반환
         if (roundSeatSqs == null || roundSeatSqs.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 1. 회차 좌석 조회 (N건)
+        // 데이터베이스에서 해당 식별자에 대응하는 회차별 좌석 실데이터 확인
         List<RoundSeatEntity> roundSeats = roundSeatRepository.findAllById(roundSeatSqs);
         if (roundSeats.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 2. 공연 좌석 정보 조회 (1:N 관계 고려하여 ID 추출)
+        // 각 좌석의 등급 정보와 가격을 일괄 조회하기 위해 원천 좌석 식별자 수집
         List<Long> showSeatSqs = new ArrayList<>();
         for (RoundSeatEntity rs : roundSeats) {
             showSeatSqs.add(rs.getShowSeatSq());
         }
 
-        // ShowSeat 조회
+        // 수집된 식별자를 기반으로 좌석 등급 데이터를 일괄 조회하여 매핑 구조 생성
         List<ShowSeatEntity> showSeats = showSeatRepository.findAllById(showSeatSqs);
         Map<Long, ShowSeatEntity> showSeatMap = new HashMap<>();
         for (ShowSeatEntity ss : showSeats) {
             showSeatMap.put(ss.getSq(), ss);
         }
 
-        // 공연장 이름 조회를 위한 샘플 데이터 (모두 같은 공연/회차라고 가정)
-        // 안전을 위해 첫 번째 좌석 기준으로 조회
+        // 동일 회차 내 좌석들이므로 첫 번째 좌석을 기준으로 연관된 공연장 명칭 추출
         RoundSeatEntity firstSeat = roundSeats.get(0);
         String hallName = firstSeat.getRound().getShow().getHall().getName();
 
         List<SeatReserveResponse> responseList = new ArrayList<>();
 
+        // 회차별 좌석과 등급별 가격 정보를 병합하여 최종 응답 객체 구성
         for (RoundSeatEntity rs : roundSeats) {
             ShowSeatEntity ss = showSeatMap.get(rs.getShowSeatSq());
             if (ss == null) continue;
 
-            // 기존 Mapper 메서드 재활용 (Entity -> SeatReserveResponse)
             SeatReserveResponse response = roundSeatMapper.entityToReserveResponse(
                     rs,
                     ss,

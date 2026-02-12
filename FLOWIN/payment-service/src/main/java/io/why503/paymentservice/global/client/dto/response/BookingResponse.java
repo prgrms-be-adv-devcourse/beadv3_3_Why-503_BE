@@ -11,7 +11,7 @@ public record BookingResponse(
         Long userSq,
         String orderId,
         String status,
-        List<Long> roundSeatSqs,
+        List<BookingSeatResponse> bookingSeats,
         LocalDateTime createdDt
 ) {
 }

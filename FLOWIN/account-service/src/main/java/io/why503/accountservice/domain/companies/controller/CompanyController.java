@@ -16,7 +16,6 @@ import io.why503.accountservice.domain.companies.service.CompanyService;
 import io.why503.accountservice.domain.companies.util.CompanyExceptionFactory;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,12 +51,12 @@ public class CompanyController {
                 companyService.getCompanyBySq(companySq) // 회사 정보 조회 결과 반환
         );
     }
-    @GetMapping("/member/{companySq}") // 회사 조회 API
+    @GetMapping("/member/{companySq}") // 회사 맴버 조회 API
     public ResponseEntity<List<UserRoleResponse>> getCompanyMembers(
             @PathVariable Long companySq // 조회할 회사 식별자
     ) {
         return ResponseEntity.ok(
-                accountService.readCompanyMember(companySq) //회사 맨버 전체 조회
+                accountService.readCompanyMember(companySq) //회사 맴버 전체 조회
         );
     }
 }

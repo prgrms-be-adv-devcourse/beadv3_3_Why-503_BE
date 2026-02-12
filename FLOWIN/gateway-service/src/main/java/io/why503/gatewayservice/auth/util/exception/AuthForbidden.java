@@ -8,6 +8,6 @@ public class AuthForbidden extends GatewayAuthException{
         super(message, HttpStatus.FORBIDDEN);
     }
     public AuthForbidden(Throwable cause) {
-        super(cause, HttpStatus.UNAUTHORIZED);
+        super(cause, HttpStatus.FORBIDDEN);
     }
 }

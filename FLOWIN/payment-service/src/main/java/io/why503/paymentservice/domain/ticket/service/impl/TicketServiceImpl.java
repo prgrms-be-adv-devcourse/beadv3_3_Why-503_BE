@@ -6,19 +6,26 @@ import io.why503.paymentservice.domain.ticket.mapper.TicketMapper;
 import io.why503.paymentservice.domain.ticket.model.dto.request.TicketCreateRequest;
 import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
 import io.why503.paymentservice.domain.ticket.model.entity.Ticket;
+import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.ticket.repository.TicketRepository;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
+import io.why503.paymentservice.global.client.PerformanceClient;
+import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
+import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * 티켓의 생성, 조회 및 발권 상태 전환을 관리하는 서비스 구현체
- * - 거래 흐름에 따른 티켓 데이터의 정합성과 소유권 보호를 수행
+ * 티켓 발권 라이프사이클 및 소유권 전환을 관리하는 서비스 구현체
+ * - 거래 결과에 따른 데이터 정합성 유지와 가격 산정 로직을 포함
  */
 @Slf4j
 @Service
@@ -28,8 +35,9 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
     private final TicketMapper ticketMapper;
+    private final PerformanceClient performanceClient;
 
-    // 새로운 공연 회차 정보에 대응하는 티켓 기초 데이터를 일괄 확보
+    // 공연 회차 정보와 연동하여 판매 가능한 티켓 데이터 슬롯을 일괄 생성
     @Override
     @Transactional
     public void createTicketSlots(TicketCreateRequest request) {
@@ -51,7 +59,7 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
 
         ticketRepository.saveAll(newTickets);
-        log.info("티켓 슬롯 일괄 생성 완료. (RoundSq: {}, Count: {})", request.roundSq(), newTickets.size());
+        log.info("티켓 슬롯 일괄 생성 완료. (Count: {})", newTickets.size());
     }
 
     @Override
@@ -66,7 +74,7 @@ public class TicketServiceImpl implements TicketService {
         return ticketMapper.entityToResponse(ticket);
     }
 
-    // 요청된 좌석 목록과 실제 데이터의 일치 여부를 검증하며 정보 추출
+    // 다수의 좌석 식별자를 기반으로 현재 티켓의 발권 현황 정보를 일괄 추출
     @Override
     public List<TicketResponse> findTicketsByRoundSeats(List<Long> roundSeatSqs) {
         if (roundSeatSqs == null || roundSeatSqs.isEmpty()) {
@@ -119,22 +127,46 @@ public class TicketServiceImpl implements TicketService {
         return ticketMapper.entityToResponse(ticket);
     }
 
-    // 결제 완료 정보를 티켓 데이터에 반영하여 최종 발권 처리
+    // 결제 성공 정보와 적용된 혜택을 기반으로 실거래 가격을 산출하여 티켓 소유권 확정
     @Override
     @Transactional
-    public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<Long> roundSeatSqs) {
+    public void issueTickets(Long userSq, Payment payment, Long bookingSq, List<BookingSeatResponse> bookingSeats) {
+
+        List<Long> roundSeatSqs = bookingSeats.stream()
+                .map(seat -> seat.roundSeatSq())
+                .toList();
+
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
+        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(roundSeatSqs);
+
+        Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
+                .collect(Collectors.toMap(seat -> seat.roundSeatSq(), Function.identity()));
+
+        Map<Long, DiscountPolicy> discountMap = bookingSeats.stream()
+                .collect(Collectors.toMap(seat -> seat.roundSeatSq(), seat -> seat.discountPolicy()));
 
         for (Ticket ticket : tickets) {
-            ticket.issue(userSq, payment, bookingSq, 0L, null, 0L);
+            RoundSeatResponse seatInfo = seatMap.get(ticket.getRoundSeatSq());
+            DiscountPolicy policy = discountMap.getOrDefault(ticket.getRoundSeatSq(), DiscountPolicy.NONE);
+
+            long originalPrice = 0L;
+            if (seatInfo != null && seatInfo.price() != null) {
+                originalPrice = seatInfo.price();
+            }
+
+            // 적용된 할인 정책에 따라 최종 결제 금액 및 혜택 내역 계산
+            long discountAmount = (originalPrice * policy.getDiscountPercent()) / 100;
+            long finalPrice = originalPrice - discountAmount;
+
+            ticket.issue(userSq, payment, bookingSq, originalPrice, policy.name(), finalPrice);
         }
     }
 
-    // 취소 또는 환불 발생 시 티켓 정보를 초기화하여 재판매 가능 상태로 변경
+    // 거래 무효화 또는 환불 발생 시 발권된 티켓 정보를 초기화하여 판매 가능 상태로 전환
     @Override
     @Transactional
     public void resetTickets(List<Long> roundSeatSqs) {
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
-        tickets.forEach(Ticket::clear);
+        tickets.forEach(ticket -> ticket.clear());
     }
 }

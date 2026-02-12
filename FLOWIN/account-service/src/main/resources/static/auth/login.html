@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Login</title>
+</head>
+<body>
+<div class="flex justify-center items-center min-h-center">
+  <div class="flex flex-col w-72 border border-black p-6 gap-4">
+    <h1 class="text-center font-bold">Login</h1>
+    <form action="/auth/login" method="POST" class="flex flex-col gap-3">
+      <div class="flex flex-col">
+        <span class="text-xs font-bold">id</span>
+        <input type="text" name="username" class="border border-black p-1 outline-none">
+      </div>
+      <div class="flex flex-col">
+        <span class="text-xs font-bold">password</span>
+        <input type="password" name="password" class="border border-black p-1 outline-none">
+      </div>
+      <button type="submit" class="border border-black bg-black text-white p-2 text-sm mt-2">
+        login
+      </button>
+    </form>
+
+  </div>
+</div>
+</body>
+</html>

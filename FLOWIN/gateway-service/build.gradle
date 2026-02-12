@@ -37,7 +37,7 @@ ext {
 }
 
 dependencies {
-    implementation 'io.why503:common-base:0.0.2'
+    implementation 'io.why503:common-base:0.0.3'
     // cloud
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

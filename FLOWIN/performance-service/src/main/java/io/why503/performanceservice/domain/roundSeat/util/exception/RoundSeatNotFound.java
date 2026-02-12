@@ -1,9 +1,9 @@
 package io.why503.performanceservice.domain.roundSeat.util.exception;
 
-import io.why503.commonbase.exception.performance.domain.PerformanceHallException;
+import io.why503.commonbase.exception.performance.domain.PerformanceRoundSeatException;
 import org.springframework.http.HttpStatus;
 
-public class RoundSeatNotFound extends PerformanceHallException {
+public class RoundSeatNotFound extends PerformanceRoundSeatException {
     public RoundSeatNotFound(String message) {
         super(message, HttpStatus.NOT_FOUND);
     }

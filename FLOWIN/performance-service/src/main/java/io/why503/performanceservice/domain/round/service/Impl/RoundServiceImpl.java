@@ -13,10 +13,13 @@ import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.show.service.ShowService;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
+import io.why503.performanceservice.global.client.paymentservice.PaymentServiceClient;
+import io.why503.performanceservice.global.client.paymentservice.dto.TicketCreateRequest;
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundMapper;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,6 +41,7 @@ public class RoundServiceImpl implements RoundService {
     private final ShowService showService;
     private final ShowSeatService showSeatService;
     private final UserValidator userValidator;
+    private final PaymentServiceClient ticketClient;
 
     //회차 생성
     @Override
@@ -44,7 +49,7 @@ public class RoundServiceImpl implements RoundService {
     public RoundResponse createRound(Long userSq, RoundRequest request) {
 
         // 권한 검증
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 등록이 가능합니다."));
 
         ShowEntity show = showService.findShowBySq(request.showSq());
 
@@ -110,7 +115,21 @@ public class RoundServiceImpl implements RoundService {
         List<RoundSeatEntity> roundSeats = roundSeatMapper.showSeatListToRoundSeatList(showSeats, round);
 
         // 좌석 일괄 저장
-        roundSeatRepository.saveAll(roundSeats);
+        List<RoundSeatEntity> savedSeats = roundSeatRepository.saveAll(roundSeats);
+
+        if (!savedSeats.isEmpty()) {
+            List<Long> seatIds = savedSeats.stream()
+                    .map(roundSeatEntity -> roundSeatEntity.getSq())
+                    .toList();
+
+            try {
+                ticketClient.createTicketSlots(new TicketCreateRequest(seatIds));
+                log.info("티켓 서비스 호출 완료: 좌석 {}개에 대한 티켓 생성 요청", seatIds.size());
+            } catch (Exception e) {
+                log.error("티켓 생성 요청 실패: {}", e.getMessage());
+                throw RoundExceptionFactory.roundBadRequest("티켓 슬롯 생성에 실패하여 회차 생성을 취소합니다.");
+            }
+        }
 
         return roundResponse;
     }
@@ -119,7 +138,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     public List<RoundResponse> getRoundListByShow(Long userSq, Long showSq) {
         //기업,관리자 회원인지 확인
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 등록이 가능합니다."));
         //요청된 공연 정보를 찾음
         ShowEntity show = showService.findShowBySq(showSq);
         //해당 공연에 소속된 모든 회차를 가져옴
@@ -148,7 +167,7 @@ public class RoundServiceImpl implements RoundService {
     @Override
     @Transactional
     public RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus) {
-        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 공연장 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden("기업 또는 관리자만 회차 상태 변경이 가능합니다."));
         //변경할 회차를 DB에서 찾아옴
         RoundEntity entity = findRoundBySq(roundSq);
 
@@ -168,6 +187,16 @@ public class RoundServiceImpl implements RoundService {
     private RoundEntity findRoundBySq(Long roundSq) {
         return roundRepository.findById(roundSq)
                 .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
+    }
+
+    //예매 가능한 회차인지 확인
+    @Override
+    public boolean isRoundBookable(Long roundSq) {
+        RoundEntity round = roundRepository.findById(roundSq)
+                .orElseThrow(() -> RoundExceptionFactory.roundNotFound("존재하지 않는 회차입니다."));
+
+        // AVAILABLE이면 진입 가능
+        return RoundStatus.AVAILABLE.equals(round.getStatus());
     }
 
 }

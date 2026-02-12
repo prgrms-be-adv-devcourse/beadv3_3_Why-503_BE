@@ -2,6 +2,7 @@ package io.why503.reservationservice.domain.booking.controller;
 
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCancelRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
+import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
@@ -34,6 +35,18 @@ public class BookingController {
         validateUserHeader(userSq);
         BookingResponse response = bookingService.createBooking(userSq, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // 선점된 예매 건에 좌석별 할인 정책 적용
+    @PatchMapping("/{bookingSq}/discount")
+    public ResponseEntity<BookingResponse> applyDiscounts(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable Long bookingSq,
+            @RequestBody @Valid BookingDiscountRequest request) {
+
+        validateUserHeader(userSq);
+        BookingResponse response = bookingService.applyDiscounts(userSq, bookingSq, request);
+        return ResponseEntity.ok(response);
     }
 
     // 본인의 전체 예매 이력 조회
@@ -101,7 +114,7 @@ public class BookingController {
     // 필수 사용자 정보 헤더 존재 여부 확인
     private void validateUserHeader(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자 헤더(X-USER-SQ)입니다.");
+            throw BookingExceptionFactory.bookingBadRequest("유효하지 않은 사용자입니다.");
         }
     }
 }

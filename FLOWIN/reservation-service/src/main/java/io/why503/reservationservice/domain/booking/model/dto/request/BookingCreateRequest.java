@@ -1,7 +1,6 @@
 package io.why503.reservationservice.domain.booking.model.dto.request;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
@@ -10,9 +9,6 @@ import java.util.List;
  * - 선점하려는 좌석 정보와 사용자 정보를 전달
  */
 public record BookingCreateRequest(
-        @NotNull(message = "사용자 ID는 필수입니다.")
-        Long userSq,
-
         @NotEmpty(message = "예매할 좌석 ID 목록은 필수입니다.")
         List<Long> roundSeatSqs
 ) {

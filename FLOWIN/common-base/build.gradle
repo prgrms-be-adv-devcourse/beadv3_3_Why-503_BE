@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'io.why503'
-version = '0.0.2'
+version = '0.0.4'
 description = 'common-base'
 
 java {
@@ -64,6 +64,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compileOnly 'org.projectlombok:lombok'
     compileOnly 'org.springframework.boot:spring-boot-starter-web'
 }
 

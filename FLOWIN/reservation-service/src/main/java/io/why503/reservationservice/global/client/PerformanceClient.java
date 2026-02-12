@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 공연 서비스와의 통신을 통해 좌석 점유 상태를 동기화하는 클라이언트
+ * 공연 서비스와 통신하여 실시간 좌석 가용 상태를 동기화하고 점유 권한을 제어하는 클라이언트
  */
-@FeignClient(name = "performance-service", url = "http://localhost:8200")
+@FeignClient(name = "performance-service")
 public interface PerformanceClient {
 
     // >>>>>>>>예메 페이지 진입 이전>>>>>>>>>>>>>
@@ -30,14 +30,18 @@ public interface PerformanceClient {
             @RequestBody List<Long> roundSeatSqs
     );
 
-    // 유효 시간 만료 또는 취소 요청에 따른 좌석 점유 해제
+    // 결제 미이행 또는 예매 철회 시 점유 중인 좌석 자원을 다시 판매 가능 상태로 방출
     @PostMapping("/round-seats/cancel")
     void cancelRoundSeats(@RequestBody List<Long> roundSeatSqs);
 
-    // 실결제 완료 후 점유된 좌석의 영구 상태 전환 요청
+    // 결제 승인 완료에 따른 좌석의 최종 소유권 확정 및 판매 완료 처리
     @PostMapping("/round-seats/confirm")
     void confirmRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
             @RequestBody List<Long> roundSeatSqs
     );
+
+    // 다건의 좌석 식별자를 기반으로 공연 정보 및 가격 상세 데이터 추출
+    @PostMapping("/round-seats/details")
+    List<RoundSeatResponse> findRoundSeats(@RequestBody List<Long> roundSeatSqs);
 }

@@ -1,10 +1,10 @@
 package io.why503.performanceservice.domain.roundSeat.service.Impl;
 
+import io.why503.commonbase.exception.CustomException;
 import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.round.model.entity.RoundEntity;
 import io.why503.performanceservice.domain.round.model.enums.RoundStatus;
 import io.why503.performanceservice.domain.round.repository.RoundRepository;
-import io.why503.performanceservice.domain.round.util.RoundExceptionFactory;
 import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.SeatReserveResponse;
@@ -18,13 +18,16 @@ import io.why503.performanceservice.domain.showseat.repository.ShowSeatRepositor
 import io.why503.performanceservice.global.validator.UserValidator;
 import io.why503.performanceservice.util.mapper.RoundSeatMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,7 +46,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse createRoundSeat(Long userSq, RoundSeatRequest request) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 등록이 가능합니다."));
+        userValidator.validateEnterprise(userSq, RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 등록이 가능합니다."));
 
         //회차 정보 조회
         RoundEntity roundEntity = roundRepository.findById(request.roundSq())
@@ -72,7 +75,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
     //전체 좌석 조회
     @Override
-    public List<RoundSeatResponse> getRoundSeatList(Long userSq,Long roundSq) {
+    public List<RoundSeatResponse> getRoundSeatList(Long userSq, Long roundSq) {
         // userValidator.validateEnterprise(userSq,RoundExceptionFactory.roundForbidden(""));
         //해당 회차에 속한 모든 좌석을 가져옴
         List<RoundSeatEntity> entities = roundSeatRepository.findByRound_Sq(roundSq);
@@ -93,7 +96,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
     @Override
     @Transactional
     public RoundSeatResponse patchRoundSeatStatus(Long userSq, Long roundSeatSq, RoundSeatStatus newStatus) {
-        userValidator.validateEnterprise(userSq,RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 상태 변경이 가능합니다."));
+        userValidator.validateEnterprise(userSq, RoundSeatExceptionFactory.roundSeatForbidden("기업 또는 관리자만 회차 좌석 상태 변경이 가능합니다."));
 
         //변경할 좌석을 DB에서 찾음
         RoundSeatEntity entity = roundSeatRepository.findById(roundSeatSq)
@@ -107,7 +110,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         return roundSeatMapper.entityToResponse(entity);
     }
 
-    //좌석 선점 Redis 사용
+    //좌석 선점 Redis사용, 낙관적락
     @Override
     @Transactional
     public List<SeatReserveResponse> reserveSeats(Long userSq, List<Long> roundSeatSqs) {
@@ -121,13 +124,44 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         // 좌석 조회
         List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
 
+        // 요청 개수와 조회 개수가 다를 때, 정확히 어떤 ID가 없는지 찾아서 에러 메시지에 포함
         if (seats.size() != roundSeatSqs.size()) {
-            throw RoundSeatExceptionFactory.roundSeatNotFound("요청하신 좌석 중 존재하지 않는 좌석이 포함되어 있습니다.");        }
 
-        for (RoundSeatEntity seat : seats) {
-            if (seat.getStatus() != RoundSeatStatus.AVAILABLE) {
-                throw RoundSeatExceptionFactory.roundSeatConflict("이미 선택되었거나 예매가 불가능한 좌석 입니다.");            }
+            // DB에서 찾아온 좌석 ID들만 추출
+            List<Long> foundIds = new ArrayList<>();
+            for (RoundSeatEntity seat : seats) {
+                Long sq = seat.getSq();
+                foundIds.add(sq);
+            }
+
+            // 요청한 리스트 중에서 DB에 없는 ID만 걸러냄
+            List<Long> missingIds = roundSeatSqs.stream()
+                    .filter(reqId -> !foundIds.contains(reqId))
+                    .toList();
+
+            // 구체적인 ID를 포함한 에러 메시지 발생
+            throw RoundSeatExceptionFactory.roundSeatNotFound(
+                    "요청하신 좌석 중 존재하지 않는 좌석이 있습니다. (확인된 없는 ID: " + missingIds + ")"
+            );
         }
+
+        // 메모리 상태 변경 및 DB 반영
+        for (RoundSeatEntity seat : seats) {
+            // 이미 예약된 좌석인지 검증
+            if (seat.getStatus() != RoundSeatStatus.AVAILABLE) {
+                throw RoundSeatExceptionFactory.roundSeatConflict("이미 선택되었거나 예매가 불가능한 좌석 입니다.");
+            }
+            // 상태 변경 (AVAILABLE -> RESERVED)
+            seat.reserve();
+        }
+
+        //변경된 상태를 DB에 반영, 버전 체크가 일어남 , 누가 먼저 선점 했다면 예외 발생
+        try {
+            roundSeatRepository.saveAllAndFlush(seats);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw RoundSeatExceptionFactory.roundSeatConflict("이미 다른 사용자가 선택한 좌석입니다. 다시 선택해주세요.");
+        }
+
         // 같은 회차의 좌석들이므로 공연장 정보를 얻어올때 첫번째 좌석의 정보를 이용
         RoundSeatEntity firstSeat = seats.get(0);
 
@@ -136,6 +170,7 @@ public class RoundSeatServiceImpl implements RoundSeatService {
 
         // 공연장 이름 조회
         String fixedConcertHallName = hallEntity.getName();
+
         // 좌석 등급 추출
         List<Long> showSeatSqs = new ArrayList<>();
         for (RoundSeatEntity seat : seats) {
@@ -148,10 +183,8 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             showSeatMap.put(showSeat.getSq(), showSeat);
         }
 
-        // 좌석 선점 루프
+        // Redis 저장 및 응답 생성 루프
         for (RoundSeatEntity roundSeat : seats) {
-            // DB 상태 변경 (AVAILABLE -> RESERVED)
-            roundSeat.reserve();
 
             String key = "seat_owner:" + roundSeat.getSq();
 
@@ -163,8 +196,9 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             // 좌석 등급/가격 정보 Map에서 꺼내기
             ShowSeatEntity showSeat = showSeatMap.get(roundSeat.getShowSeatSq());
             if (showSeat == null) {
+                // 등급 정보가 없으면 롤백
                 throw RoundSeatExceptionFactory.roundSeatConflict(
-                    "좌석 등급 정보가 존재하지 않습니다. (showSeatSq=" + roundSeat.getShowSeatSq() + ")"
+                        "좌석 등급 정보가 존재하지 않습니다. (showSeatSq=" + roundSeat.getShowSeatSq() + ")"
                 );
             }
 
@@ -181,16 +215,33 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         return responseList;
     }
 
+
     //선점 해제 ,redis락 삭제
     @Override
     @Transactional
-    public void releaseSeats(List<Long> roundSeatSqs) {
-        //해제할 좌석을 찾아옴
-        List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
+    public void releaseSeats(Long userSq, List<Long> roundSeatSqs) {
+        if (roundSeatSqs == null || roundSeatSqs.isEmpty()) return;
 
+        for (Long seatId : roundSeatSqs) {
+            String key = "seat_owner:" + seatId;
+            Object savedValue = redisTemplate.opsForValue().get(key);
+
+            // 선점 정보가 없으면 이미 해제되었거나 만료된 것임
+            if (savedValue == null) {
+                continue; // 혹은 예외 발생 선택
+            }
+
+            // 소유주 확인
+            String savedUserSq = String.valueOf(savedValue).replace("\"", "");
+            if (!savedUserSq.equals(String.valueOf(userSq))) {
+                throw RoundSeatExceptionFactory.roundSeatForbidden("본인이 선점한 좌석만 취소할 수 있습니다. (좌석ID: " + seatId + ")");
+            }
+        }
+
+        // 본인 확인이 완료된 후 상태 변경 및 Redis 데이터 삭제
+        List<RoundSeatEntity> seats = roundSeatRepository.findAllById(roundSeatSqs);
         for (RoundSeatEntity seat : seats) {
-           //좌석 상태를 예매가능으로 되돌림
-            seat.release();
+            seat.release(); // 상태를 AVAILABLE로 변경
             redisTemplate.delete("seat_owner:" + seat.getSq());
         }
     }
@@ -274,5 +325,36 @@ public class RoundSeatServiceImpl implements RoundSeatService {
         }
 
         return responseList;
+    }
+
+    @Override
+    @Transactional
+    public void cleanupExpiredReservations() {
+        // DB에서 현재 RESERVED(선점됨) 상태인 좌석 조회
+        List<RoundSeatEntity> reservedSeats = roundSeatRepository.findAllByStatus(RoundSeatStatus.RESERVED);
+
+        for (RoundSeatEntity seat : reservedSeats) {
+            try {
+                // Redis 키 확인
+                String key = "seat_owner:" + seat.getSq();
+
+                // Redis에 키가 없는지 확인 - 10분이 지나 만료되었는지
+                if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
+                    // 키가 없으면 만료된 것이므로 DB 상태 복구
+                    seat.release();
+                    log.info("스케줄러: 만료된 좌석 자동 해제 완료 - 좌석번호: {}", seat.getSq());
+                }
+
+            } catch (Exception e) {
+                // 예외 발생 시 서비스가 멈추지 않도록 로그만 남기고 넘어감
+                // 에러 메시지 생성
+                CustomException customEx = RoundSeatExceptionFactory.roundSeatBadRequest(
+                        "스케줄러 처리 중 오류 발생 (좌석번호: " + seat.getSq() + ")"
+                );
+
+                log.error(customEx.getMessage(), e);
+
+            }
+        }
     }
 }

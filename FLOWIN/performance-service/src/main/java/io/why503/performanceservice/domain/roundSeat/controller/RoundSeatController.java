@@ -3,6 +3,7 @@ package io.why503.performanceservice.domain.roundSeat.controller;
 
 import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatRequest;
 import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeatStatusRequest;
+import io.why503.performanceservice.domain.roundSeat.model.dto.request.SeatReserveRequest;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.SeatReserveResponse;
 import io.why503.performanceservice.domain.roundSeat.service.RoundSeatService;
@@ -60,32 +61,38 @@ public class RoundSeatController {
     // 좌석 선점
     @PostMapping("/reserve")
     public ResponseEntity<List<SeatReserveResponse>> reserveSeats(
-            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq,
-            @RequestBody List<Long> roundSeatSqs) {
-        List<SeatReserveResponse> response = roundSeatService.reserveSeats(userSq, roundSeatSqs);
+            @RequestHeader(value = "X-USER-SQ") Long userSq,
+            @Valid @RequestBody SeatReserveRequest request) {
+
+        List<SeatReserveResponse> response = roundSeatService.reserveSeats(userSq, request.roundSeatSqs());
         return ResponseEntity.ok(response);
     }
 
     // 좌석 선점 해제
     @PostMapping("/cancel")
-    public ResponseEntity<String> cancelSeats(@RequestBody List<Long> roundSeatSqs) {
-        roundSeatService.releaseSeats(roundSeatSqs);
+    public ResponseEntity<String> cancelSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @Valid @RequestBody SeatReserveRequest request) {
+
+        roundSeatService.releaseSeats(userSq, request.roundSeatSqs());
         return ResponseEntity.ok("선점이 취소되었습니다.");
     }
 
     // 좌석 판매 확정
     @PostMapping("/confirm")
     public ResponseEntity<String> confirmSeats(
-            @RequestHeader(value = "X-USER-SQ", required = false) Long userSq,
-            @RequestBody List<Long> roundSeatSqs) {
-        roundSeatService.confirmSeats(userSq, roundSeatSqs);
+            @RequestHeader(value = "X-USER-SQ") Long userSq,
+            @Valid @RequestBody SeatReserveRequest request) {
+
+        roundSeatService.confirmSeats(userSq, request.roundSeatSqs());
         return ResponseEntity.ok("판매가 확정되었습니다.");
     }
 
     // 좌석 정보 조회
     @PostMapping("/details")
     public ResponseEntity<List<SeatReserveResponse>> getRoundSeatDetails(
-            @RequestBody List<Long> roundSeatSqs) {
-        return ResponseEntity.ok(roundSeatService.getRoundSeatDetails(roundSeatSqs));
+            @Valid @RequestBody SeatReserveRequest request) {
+
+        return ResponseEntity.ok(roundSeatService.getRoundSeatDetails(request.roundSeatSqs()));
     }
 }

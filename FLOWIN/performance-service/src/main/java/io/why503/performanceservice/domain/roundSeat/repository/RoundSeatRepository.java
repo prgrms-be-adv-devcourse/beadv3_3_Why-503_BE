@@ -17,4 +17,7 @@ public interface RoundSeatRepository extends JpaRepository<RoundSeatEntity,Long>
 
     //특정 회차에 특정좌석SQ를 자진 데이터가 존재하는지 확인
     boolean existsByRoundAndShowSeatSq(RoundEntity round, Long showSeatSq);
+
+    //좌석의 상태를 기준으로 좌석 리스트를 가져옴
+    List<RoundSeatEntity> findAllByStatus(RoundSeatStatus status);
 }

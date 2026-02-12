@@ -14,7 +14,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class ReservationServiceApplicationTests {
 
     /**
-     * Redis TestContainer
      * - redis 7 사용
      * - TTL 만료 이벤트 활성화 (Ex)
      */

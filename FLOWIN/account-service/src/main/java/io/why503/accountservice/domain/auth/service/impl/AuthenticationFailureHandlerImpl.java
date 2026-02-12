@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.accountservice.domain.auth.util.AuthExceptionFactory;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
-import io.why503.commonbase.model.dto.LogResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -37,7 +37,19 @@ public class AuthenticationFailureHandlerImpl implements AuthenticationFailureHa
         //로그를 던지기 위한 예외 생성
         CustomException e = AuthExceptionFactory.authUnauthorized(exception.getCause());
         //로그 던지기
-        log.error(om.writeValueAsString(new LogResponse(e)));
+        try {
+            //내가 원하는 값 채워넣기
+            MDC.put("code", e.getCode());
+            MDC.put("message", e.getMessage());
+            MDC.put("id", e.getId());
+            //없다면 알아서 null있다면 넣음
+            if (e.getCause() != null) {
+                MDC.put("cause", e.getCause().toString());
+            }
+            log.error("CustomException", e);
+        } finally {
+            MDC.clear();
+        }
         //예외로 dto 생성
         ExceptionResponse exceptionResponse = new ExceptionResponse(e);
         //응답 던지기

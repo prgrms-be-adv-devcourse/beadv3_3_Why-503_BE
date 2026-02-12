@@ -9,7 +9,6 @@ import io.why503.accountservice.domain.accounts.model.dto.response.UserCompanyRe
 import io.why503.accountservice.domain.accounts.model.dto.response.UserPointResponse;
 import io.why503.accountservice.domain.accounts.model.dto.response.UserRoleResponse;
 import io.why503.accountservice.domain.accounts.service.AccountService;
-import io.why503.accountservice.domain.accounts.util.AccountExceptionFactory;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.service.CompanyService;
 import jakarta.validation.Valid;

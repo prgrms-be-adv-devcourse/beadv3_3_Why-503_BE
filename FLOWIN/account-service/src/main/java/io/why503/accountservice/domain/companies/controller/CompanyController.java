@@ -16,7 +16,6 @@ import io.why503.accountservice.domain.companies.service.CompanyService;
 import io.why503.accountservice.domain.companies.util.CompanyExceptionFactory;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

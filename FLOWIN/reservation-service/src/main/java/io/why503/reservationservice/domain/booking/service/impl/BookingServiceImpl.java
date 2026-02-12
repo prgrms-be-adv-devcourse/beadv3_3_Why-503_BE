@@ -34,7 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final EntityManager entityManager;
     private final PerformanceClient performanceClient;
-    
+
     // 신규 예매 요청 시 중복 점유를 방지하고 외부 서비스에 좌석 선점 기록
     @Override
     @Transactional
@@ -221,7 +221,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<Long> validSqs = booking.getBookingSeats().stream()
                 .map((seat) -> seat.getRoundSeatSq())
-                .filter(sq -> roundSeatSqs.contains(sq))
+                .filter((sq) -> roundSeatSqs.contains(sq))
                 .toList();
 
         if (validSqs.isEmpty()) {

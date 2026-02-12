@@ -18,6 +18,8 @@ public class RedisQueueServiceImpl implements QueueService {
 
     // 고정 동시 진입 수 (동적 조절 로직을 만들면 좋을거 같은데 일단 고정 값으로 진행하였음)
     private static final int MAX_ACTIVE = 1;
+    // Redis Pub/Sub 채널명 ( active 자리가 비었을때의 승격 트리거로 사용 )
+    private static final String PROMOTE_CHANNEL = "queue:promote";
 
     // Queue 키
     private static String queueKey(Long roundSq) {
@@ -28,8 +30,7 @@ public class RedisQueueServiceImpl implements QueueService {
         return "active:round:" + roundSq;
     }
 
-    private static final String PROMOTE_CHANNEL = "queue:promote";
-
+    // 대기열 진입 시도
     @Override
     public QueueResult tryEnter(Long roundSq, Long userSq) {
 
@@ -43,7 +44,7 @@ public class RedisQueueServiceImpl implements QueueService {
             return QueueResult.enter();
         }
 
-        // 0-2) 이미 queue에 있는지 확인
+        // 0-2) 이미 queue(대기열)에 있는지 확인
         Long existingRank = redisTemplate.opsForZSet().rank(qKey, member);
         if (existingRank != null) {
             return QueueResult.waiting(existingRank + 1);
@@ -57,7 +58,7 @@ public class RedisQueueServiceImpl implements QueueService {
             return QueueResult.enter();
         }
 
-        // 2) 대기열 등록
+        // 2) 자리가 없으면 대기열(ZSET)에 등록
         redisTemplate.opsForZSet()
                 .add(qKey, member, System.currentTimeMillis());
 
@@ -76,10 +77,14 @@ public class RedisQueueServiceImpl implements QueueService {
         // 먼저 active key를 지워버리고
         redisTemplate.opsForSet().remove(aKey, member);
 
-        // Redis pub/sub 발행
-        redisPubTemplate.convertAndSend(PROMOTE_CHANNEL, roundSq.toString());
+        // Redis pub/sub 발행(승격 이벤트)
+        redisPubTemplate.convertAndSend(
+            PROMOTE_CHANNEL, 
+            roundSq.toString()
+        );
     }
 
+    // 다음 대기자 승격 처리
     @Override
     public void promoteNext(Long roundSq) {
 
@@ -93,6 +98,7 @@ public class RedisQueueServiceImpl implements QueueService {
             return;
         }
 
+        // 대기열에서 가장 앞 순번 유저 추출
         var tuple = redisTemplate.opsForZSet().popMin(qKey);
 
         if (tuple == null) {
@@ -101,10 +107,9 @@ public class RedisQueueServiceImpl implements QueueService {
 
         String next_user = tuple.getValue();
 
+        // 꺼낸 앞 순번 유저를 active SET에 등록시키기
         redisTemplate.opsForSet().add(aKey, next_user);
 
-        // 챱츄 챱츄츄 챱츄 챱츄 챱챱츄
-        // 여기서 entry token 발급
-        // 또는 pub/sub 이벤트 발행 가능
+        // 자동 승격은 되지만 아직 entry token 발급은 다음 이슈에서 
     }
 }

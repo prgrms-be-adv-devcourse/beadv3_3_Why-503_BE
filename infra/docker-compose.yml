@@ -1,0 +1,29 @@
+name: log-exp
+
+services:
+
+  elasticsearch:
+    image: elasticsearch:9.2.2
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node              
+      - xpack.security.enabled=false            
+      - xpack.security.http.ssl.enabled=false   
+
+  kibana:
+    image: kibana:9.2.2
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+  logstash:
+    image: logstash:9.2.2
+    container_name: logstash
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./libs/logstash.conf:/usr/share/logstash/pipeline/logstash.conf

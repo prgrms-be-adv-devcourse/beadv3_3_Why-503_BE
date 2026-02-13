@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 @RestControllerAdvice
-public class ServiceExceptionHandlerImpl extends ServiceExceptionHandler {
+public class AccountExceptionHandler extends ServiceExceptionHandler {
 
-    protected ServiceExceptionHandlerImpl(PathFinder pathFinder) {
+    protected AccountExceptionHandler(PathFinder pathFinder) {
         super(pathFinder);
     }
     //url이 없을 때

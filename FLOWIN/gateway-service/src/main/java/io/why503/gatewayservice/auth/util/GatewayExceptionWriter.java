@@ -4,10 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.commonbase.exception.CustomException;
 import io.why503.commonbase.model.dto.ExceptionResponse;
-import io.why503.commonbase.model.dto.LogResponse;
 import io.why503.gatewayservice.auth.util.exception.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -82,9 +82,18 @@ public class GatewayExceptionWriter {
         //dto 생성 및 로그 찍기
         ExceptionResponse bodyDto = new ExceptionResponse(e);
         try {
-            log.error(om.writeValueAsString(new LogResponse(e)));
-        } catch (JsonProcessingException ex) {
-            log.error("unknown");
+            //내가 원하는 값 채워넣기
+            MDC.put("code", e.getCode());
+            MDC.put("message", e.getMessage());
+            MDC.put("id", e.getId());
+            //없다면 알아서 null있다면 넣음
+            if (e.getCause() != null) {
+                MDC.put("cause", e.getCause().toString());
+            }
+            //로그 던지기
+            log.error("CustomException", e);
+        } finally {
+            MDC.clear();
         }
         //dto 파싱, om사용
         byte[] body;

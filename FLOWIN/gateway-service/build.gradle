@@ -60,6 +60,11 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
     implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
+    //집킨
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
 }
 
 dependencyManagement {

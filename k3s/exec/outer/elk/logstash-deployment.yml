@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: infra-elk
+  labels:
+    app: logstash
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:8.17.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 9600
+              name: monitoring
+
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xmx512m -Xms512m"
+
+            - name: ELASTICSEARCH_USERNAME
+              value: "elastic"
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elastic-credentials
+                  key: password
+
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+
+          volumeMounts:
+            - name: logstash-config-volume
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+            - name: logstash-config-volume
+              mountPath: /usr/share/logstash/pipeline/logstash.conf
+              subPath: logstash.conf
+            - name: logstash-config-volume
+              mountPath: /usr/share/logstash/templates/es-template.json
+              subPath: es-template.json
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9600
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9600
+            initialDelaySeconds: 90
+            periodSeconds: 30
+
+      volumes:
+        - name: logstash-config-volume
+          configMap:
+            name: logstash-config
+            items:
+              - key: logstash.yml
+                path: logstash.yml
+              - key: logstash.conf
+                path: logstash.conf
+              - key: es-template.json
+                path: es-template.json

@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: infra-gateway  # [중요] ConfigMap과 같은 동네
+  labels:
+    app: gateway-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          # 사용자님의 이미지
+          image: kkoj/why-503-gateway-service:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 8000  # [수정] 8000번 포트 개방
+              name: http
+
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config/application.yml
+              subPath: application.yml
+
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: "file:/config/application.yml"
+
+            - name: SERVER_PORT
+              value: "8000"
+
+            # 3. JWT 비밀키 (Secret에서 가져오기)
+            # (kubectl create secret generic jwt-secret --from-literal=secret-key=값... 명령어로 미리 생성 필요)
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret-key
+                  optional: true
+
+          resources:
+            requests:
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: gateway-config
+            items:
+              - key: application.yml
+                path: application.yml

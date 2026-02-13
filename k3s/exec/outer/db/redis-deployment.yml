@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: infra-db
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999
+
+      containers:
+        - name: redis
+          image: redis:8.6.0-alpine
+          imagePullPolicy: IfNotPresent
+
+          command: ["redis-server"]
+          args: ["/usr/local/etc/redis/redis.conf", "--requirepass", "$(REDIS_PASSWORD)"]
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis-password
+            - name: TZ
+              value: "Asia/Seoul"
+
+          ports:
+            - containerPort: 6379
+              name: redis
+
+          volumeMounts:
+            - name: redis-config
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+            - name: redis-data
+              mountPath: /data
+
+          resources:
+            requests:
+              memory: "128Mi"
+            limits:
+              memory: "256Mi"
+
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: performance-service
+  namespace: infra-performance
+spec:
+  selector:
+    app: performance-service
+  ports:
+    - port: 8200       # [수정] Nginx가 8000번으로 들어옴
+      targetPort: 8200 # [수정] 컨테이너의 8000번으로 연결
+  type: ClusterIP

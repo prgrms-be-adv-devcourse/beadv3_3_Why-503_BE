@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chroma-service
+  namespace: infra-db
+spec:
+  selector:
+    app: chroma
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP

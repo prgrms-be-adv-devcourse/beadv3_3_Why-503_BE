@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: infra-elk
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    queue.type: memory
+    pipeline.workers: 1
+    monitoring.enabled: false
+    path.config: /usr/share/logstash/pipeline
+
+  logstash.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "kafka-service.infra-mq.svc.cluster.local:9092"
+        topics => ["infra-logs"]
+        group_id => "logstash-group"
+        codec => json
+        consumer_threads => 1
+        auto_offset_reset => "latest"
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-service.infra-elk.svc.cluster.local:9200"]
+        user => "${ELASTICSEARCH_USERNAME}"
+        password => "${ELASTICSEARCH_PASSWORD}"
+        index => "logs-%{+YYYY.MM.dd}"
+        manage_template => true
+        template_overwrite => true
+        template_name => "logstash-custom"
+        template => "/usr/share/logstash/templates/es-template.json"
+      }
+    }
+
+  es-template.json: |
+    {
+      "index_patterns": ["logs-*"],
+      "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "index.lifecycle.name": "logs-policy",
+        "index.lifecycle.rollover_alias": "logs"
+      },
+      "mappings": {
+        "dynamic_templates": [
+          {
+            "strings_as_keywords": {
+              "match_mapping_type": "string",
+              "mapping": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        ],
+        "properties": {
+          "message": { "type": "text" },
+          "@timestamp": { "type": "date" }
+        }
+      }
+    }

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+  namespace: infra-elk
+data:
+  elasticsearch.yml: |
+    cluster.name: "k3s-cluster"
+    node.name: "es-node-01"
+    network.host: 0.0.0.0
+
+    discovery.type: single-node
+
+    xpack.security.enabled: false
+    xpack.security.enrollment.enabled: false
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false
+
+    xpack.ml.enabled: false             
+    xpack.watcher.enabled: false       
+    ingest.geoip.downloader.enabled: false 
+
+    indices.memory.index_buffer_size: 10%
+    indices.queries.cache.size: 5%
+
+    path.data: /usr/share/elasticsearch/data
+    path.logs: /usr/share/elasticsearch/logs

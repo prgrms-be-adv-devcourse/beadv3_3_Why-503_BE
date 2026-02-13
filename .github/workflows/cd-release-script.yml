@@ -29,12 +29,14 @@ jobs:
       - name: versioning and tagging
         id: tag_version #GITHUB_OUTPUT는 반환값 묶음, GITHUB_OUTPUT의 new_tag와 changelog에 값 저장
         run: |
-          RANDOM_STR=$(openssl rand -hex 8)   # 예: a3f9c1d2bb44e21f
+          RANDOM_STR=$(openssl rand -hex 8)  
           echo "Generated random string: $RANDOM_STR"
           echo "new_tag=$RANDOM_STR" >> $GITHUB_OUTPUT 
           echo "changelog=자동 생성된 릴리즈 노트입니다." >> $GITHUB_OUTPUT
+        # 예: a3f9c1d2bb44e21f
+        # 랜덤인 이유가 업데이트 할때 계속 생성되는데 중복으로 충돌이 없게하기 위함
 
-      - name: releasing
+      - name: releasing # 배포 기록?
         uses: ncipollo/release-action@v1 #git release 해주는 서드파티
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
@@ -55,6 +57,13 @@ jobs:
       - name: Check out Repository
         uses: actions/checkout@v5
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
       - name: Sign in github container registry #도커 로그인
         uses: docker/login-action@v3
         with:
@@ -66,7 +75,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with: #이미지 이름이랑 메타데이터 작성
-          images: ${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}
+          images: ${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }} #docker.io/username/OOOO-service
+          # 버전 붙여주는거
           tags: |
             type=sha
             type=raw,value=${{ needs.tagging.outputs.tag_name }}
@@ -115,7 +125,10 @@ jobs:
       #이후 더 필요한 yml 추가
       - name: Build with Gradle
         working-directory: ./FLOWIN/${{ inputs.service-name }}
-        run: ./gradlew clean build -x test # 이미 CI에서는 테스트가 마무리 되었을테니 -x test를 통해 테스트 스킵하고 빌드
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
+        # 이미 CI에서는 테스트가 마무리 되었을테니 -x test를 통해 테스트 스킵하고 빌드
 
       - name: Push Image #빌드하고 푸시
         uses: docker/build-push-action@v6
@@ -124,8 +137,9 @@ jobs:
           file: ./FLOWIN/${{ inputs.service-name }}/Dockerfile #  이미지를 만드는 설계도인 Dockerfile의 정확한 위치
           push: true # 빌드가 완료된 후, 결과물(이미지)을 지정된 레지스트리에 즉시 업로드
           tags: ${{ steps.meta.outputs.tags }} # 이미지의 버전 이름(예: v1.0.0, latest)을 지정
-          labels: ${{ steps.meta.outputs.labels }} # 이미지에 메타데이터(제작자, 빌드 날짜 등)를 추가
+          labels: ${{ steps.meta.outputs.labels }} # 이미지에 메타데이터(제작자, 빌드 날짜 등)를 추가 < 부가 정보
 
       # 이후 AWS EC2 내에 있는 도커 컴포즈 실행 로직 추가
       # AWS에서 GIT Action이 접속 할 수 있게 열어 놓는거 중요
       # GIT Action Secrets에 AWS API KEY 올려 놓으면 될듯
+

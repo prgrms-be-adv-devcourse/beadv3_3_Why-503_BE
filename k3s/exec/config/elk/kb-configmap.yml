@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-config
+  namespace: infra-elk
+data:
+  kibana.yml: |
+    server.name: "kibana"
+    server.host: "0.0.0.0"
+    elasticsearch.hosts: [ "http://elasticsearch-service.infra-elk.svc.cluster.local:9200" ]
+    
+    xpack.security.enabled: false
+    
+    i18n.locale: "ko-KR"
+
+    xpack.fleet.enabled: false
+    xpack.ml.enabled: false
+    xpack.reporting.enabled: false
+    xpack.observability.enabled: false
+    xpack.securitySolution.enabled: false
+
+    xpack.task_manager.poll_interval: 60000
+    telemetry.enabled: false
+
+    logging:
+      appenders:
+        console:
+          type: console
+          layout:
+            type: pattern
+      root:
+        appenders: [console]
+        level: warn

@@ -111,7 +111,9 @@ public class RedisQueueServiceImpl implements QueueService {
         // 꺼낸 앞 순번 유저를 active SET에 등록시키기
         redisTemplate.opsForSet().add(aKey, next_user);
 
-        // 자동 승격은 되지만 아직 entry token 발급은 다음 이슈에서 
+        // entry token 발급
+        Long userSq = Long.parseLong(next_user);
+        entryTokenService.issue(userSq, roundSq);
     }
 
     @Override

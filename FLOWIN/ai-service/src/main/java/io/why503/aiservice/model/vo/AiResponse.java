@@ -1,7 +1,6 @@
 package io.why503.aiservice.model.vo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.util.List;
 import java.util.Map;
 
@@ -16,9 +15,9 @@ public record AiResponse(
         //추천 결과 정보
         List<AiRecommendation> recommendations,
         //장르 점수
-        Map<String, Double>categoryScore,
+        Map<String, String>categoryScore,
         //분위기 점수
-        Map<String, Double>moodScore,
+        Map<String, String>moodScore,
         //상위 장르
         List<String> topCategory,
         //상위 분위기

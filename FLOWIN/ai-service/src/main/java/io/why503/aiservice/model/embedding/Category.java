@@ -1,4 +1,4 @@
-package io.why503.aiservice.model.vo;
+package io.why503.aiservice.model.embedding;
 
 import lombok.Getter;
 import java.util.*;
@@ -21,6 +21,19 @@ public enum Category {
     private final Set<? extends ShowCategory> types;
 
 
+
+    private static final Map<String, Category> ALIAS = Map.of(
+            "뮤지컬", MUSICAL,
+            "musical", MUSICAL,
+            "대중음악", CONCERT,
+            "concert", CONCERT,
+            "연극", PLAY,
+            "play", PLAY,
+            "서양음악(클래식)", CLASSIC,
+            "classic", CLASSIC
+    );
+
+
     //카테고리 생성자
     Category(String mood, Set<? extends ShowCategory> types) {
         this.mood = mood;
@@ -33,21 +46,23 @@ public enum Category {
         if (value == null || value.isBlank()) {
             return Optional.empty();
         }
-        // 1. 원본 그대로
-        Optional<Category> direct = tryParse(value);
+
+        String raw = value.trim();
+
+        //alias 먼저 체크
+        if (ALIAS.containsKey(raw)) {
+            return Optional.of(ALIAS.get(raw));
+        }
+
+        //enum 직접 매칭
+        Optional<Category> direct = tryParse(raw.toUpperCase());
         if (direct.isPresent()) return direct;
 
-        // 2. 공백 제거 + 대소문자
-        String normalized = value.trim().toUpperCase();
-        Optional<Category> normalizedResult = tryParse(normalized);
-        if (normalizedResult.isPresent()) return normalizedResult;
-
-        // 3. 특수문자 제거
-        String filtered = normalized.replaceAll("[^A-Z]", "");
-        Optional<Category> filteredResult = tryParse(filtered);
+        //특수문자 제거 후 매칭
+        String filtered = raw.replaceAll("[^a-zA-Z가-힣]", "");
+        Optional<Category> filteredResult = tryParse(filtered.toUpperCase());
         if (filteredResult.isPresent()) return filteredResult;
 
-        // 4. 실패시 null
         return Optional.empty();
     }
 
@@ -60,13 +75,13 @@ public enum Category {
     }
 
     //공연 종류 찾기
-    public ShowCategory findShowType(String raw) {
+    public ShowCategory findShowType(String category) {
 
-        if (raw == null || raw.isBlank()) {
+        if (category == null || category.isBlank()) {
             return types.stream().findFirst().orElse(null);
         }
 
-        String normalized = raw.trim().toLowerCase();
+        String normalized = category.trim().toLowerCase();
 
         return types.stream()
                 .filter(type ->

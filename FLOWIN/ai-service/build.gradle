@@ -32,6 +32,8 @@ ext {
 dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-csv
+    implementation("org.apache.commons:commons-csv:1.14.1")
 
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -42,6 +44,9 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
     // service discovery
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+
+    implementation("org.apache.poi:poi-ooxml:5.5.1")
 
     //test
     testRuntimeOnly 'com.h2database:h2'

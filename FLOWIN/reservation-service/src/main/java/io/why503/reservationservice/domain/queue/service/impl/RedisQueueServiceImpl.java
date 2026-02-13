@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import io.why503.reservationservice.domain.entry.service.EntryTokenService;
 import io.why503.reservationservice.domain.queue.model.QueueResult;
+import io.why503.reservationservice.domain.queue.model.QueueStatusResponse;
 import io.why503.reservationservice.domain.queue.service.QueueService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import lombok.RequiredArgsConstructor;
@@ -112,4 +113,51 @@ public class RedisQueueServiceImpl implements QueueService {
 
         // 자동 승격은 되지만 아직 entry token 발급은 다음 이슈에서 
     }
+
+    @Override
+    public QueueStatusResponse getStatus(Long roundSq, Long userSq) {
+        String aKey = activeKey(roundSq);
+        String qKey = queueKey(roundSq);
+        String member = userSq.toString();
+
+        // 1. active 자리가 비어있으면 자동 승격 시도
+        Long activeSize = redisTemplate.opsForSet().size(aKey);
+        if (activeSize == null || activeSize < MAX_ACTIVE) {
+            promoteNext(roundSq);
+        }
+
+        Boolean isActive = redisTemplate.opsForSet().isMember(aKey, member);
+        if (Boolean.TRUE.equals(isActive)) {
+            return new QueueStatusResponse(
+                    "ENTER",
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        Long rank = redisTemplate.opsForZSet().rank(qKey, member);
+
+        if (rank == null) {
+            return new QueueStatusResponse(
+                    "WAITING",
+                    null,
+                    0L,
+                    0L,
+                    300L
+            );
+        }
+
+        Long totalWaiting = redisTemplate.opsForZSet().size(qKey);
+
+        return new QueueStatusResponse(
+                "WAITING",
+                rank + 1,
+                totalWaiting,
+                100L,
+                300L
+        );
+    }
+
 }

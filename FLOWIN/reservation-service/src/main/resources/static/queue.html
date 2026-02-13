@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>대기열</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    text-align: center;
+    padding-top: 100px;
+}
+
+.card {
+    background: white;
+    width: 400px;
+    margin: auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.number {
+    font-size: 50px;
+    margin: 20px 0;
+}
+
+.progress {
+    height: 10px;
+    background: #ddd;
+    border-radius: 5px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    width: 0%;
+    background: #4CAF50;
+    transition: width 0.5s;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>나의 대기 순서</h2>
+
+    <div class="number" id="position">-</div>
+
+    <div class="progress">
+        <div class="bar" id="progressBar"></div>
+    </div>
+
+    <p>현재 대기 인원: <span id="total">-</span> 명</p>
+    <p>남은 좌석: <span id="remain">-</span> 석</p>
+    <p>예상 대기시간: <span id="eta">-</span> 초</p>
+</div>
+
+<script>
+
+const urlParams = new URLSearchParams(window.location.search);
+const roundSq = urlParams.get("roundSq");
+
+// 로그인 쿠키에서 JWT는 자동으로 포함됨 (credentials: include)
+// gateway에서 JWT 파싱 후 X-USER-SQ로 내려주도록 설계되어 있다면
+// 여기서는 헤더 안 넣어도 된다.
+// 하지만 reservation-service가 직접 받는 구조라면 헤더 필요.
+
+if (!roundSq) {
+    alert("잘못된 접근입니다.");
+    location.href = "/";
+}
+
+// 3초마다 상태 조회
+setInterval(checkStatus, 3000);
+
+async function checkStatus() {
+
+    const res = await fetch(`/queue/status?roundSq=${roundSq}`, {
+        method: "GET",
+        credentials: "include"   // 쿠키 자동 포함
+    });
+
+    if (!res.ok) {
+        console.error("Queue API Error", res.status);
+        return;
+    }
+
+    const data = await res.json();
+
+    // ENTER면 자동 이동
+    if (data.status === "ENTER") {
+        window.location.href = `/booking.html?roundSq=${roundSq}`;
+        return;
+    }
+
+    // WAITING 상태 UI 반영
+    document.getElementById("position").innerText =
+        data.myPosition ?? "-";
+
+    document.getElementById("total").innerText =
+        data.totalWaiting ?? "-";
+
+    document.getElementById("remain").innerText =
+        data.remainingTickets ?? "-";
+
+    // 평균 처리 인원 기반 예상 시간 계산
+    if (data.myPosition && data.avgProcessPerMinute) {
+        const seconds =
+            Math.ceil((data.myPosition / data.avgProcessPerMinute) * 60);
+        document.getElementById("eta").innerText = seconds;
+    } else {
+        document.getElementById("eta").innerText = "-";
+    }
+
+    // progress 계산
+    if (data.myPosition && data.totalWaiting) {
+        const percent =
+            ((data.totalWaiting - data.myPosition + 1) / data.totalWaiting) * 100;
+        document.getElementById("progressBar").style.width = percent + "%";
+    }
+}
+
+// 최초 1회 실행
+checkStatus();
+
+</script>
+
+</body>
+</html>

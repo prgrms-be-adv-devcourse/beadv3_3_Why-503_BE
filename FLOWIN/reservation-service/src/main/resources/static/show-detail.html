@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>공연 상세</title>
+</head>
+<body>
+
+<h2>공연 상세 페이지</h2>
+
+<button onclick="enterBooking()">예매하기</button>
+
+<script>
+async function enterBooking() {
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roundSq = urlParams.get("roundSq");
+
+    if (!roundSq) {
+        alert("잘못된 접근입니다.");
+        return;
+    }
+
+    const response = await fetch("/bookings/enter", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        credentials: "include",   // ⭐ 쿠키 자동 포함 (중요)
+        body: JSON.stringify({ roundSq: Number(roundSq) })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "ENTER") {
+
+        localStorage.setItem("entryToken", data.entryToken);
+        window.location.href = `/booking.html?roundSq=${roundSq}`;
+
+    } else if (data.status === "WAITING") {
+
+        window.location.href =
+            `/queue.html?roundSq=${roundSq}`;
+
+    } else {
+        alert("현재 예매가 불가능합니다.");
+    }
+}
+</script>
+
+</body>
+</html>

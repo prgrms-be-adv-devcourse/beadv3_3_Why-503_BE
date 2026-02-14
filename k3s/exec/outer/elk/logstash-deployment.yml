@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash
-  namespace: infra-elk
+  namespace: flowin
   labels:
     app: logstash
 spec:
@@ -22,11 +22,14 @@ spec:
           image: docker.elastic.co/logstash/logstash:8.17.0
           imagePullPolicy: IfNotPresent
 
+          # [참고] Logstash는 Kafka에서 '당겨오는(Pull)' 구조라
+          # 굳이 포트를 열어줄 필요는 없지만, 모니터링용으로 9600은 둡니다.
           ports:
             - containerPort: 9600
               name: monitoring
 
           env:
+            # [핵심] T3.large 생존용 JVM 힙 메모리 제한 (이거 없으면 OOM 킬 당함)
             - name: LS_JAVA_OPTS
               value: "-Xmx512m -Xms512m"
 
@@ -44,6 +47,7 @@ spec:
             limits:
               memory: "1Gi"
 
+          # [수정] 없는 파일(template) 마운트 제거함 -> 이제 에러 안 남!
           volumeMounts:
             - name: logstash-config-volume
               mountPath: /usr/share/logstash/config/logstash.yml
@@ -51,9 +55,6 @@ spec:
             - name: logstash-config-volume
               mountPath: /usr/share/logstash/pipeline/logstash.conf
               subPath: logstash.conf
-            - name: logstash-config-volume
-              mountPath: /usr/share/logstash/templates/es-template.json
-              subPath: es-template.json
 
           readinessProbe:
             httpGet:
@@ -77,5 +78,3 @@ spec:
                 path: logstash.yml
               - key: logstash.conf
                 path: logstash.conf
-              - key: es-template.json
-                path: es-template.json

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka
-  namespace: infra-mq
+  namespace: flowin
   labels:
     app: kafka
 spec:
@@ -38,7 +38,7 @@ spec:
 
           env:
             - name: KAFKA_CLUSTER_ID
-              value: "4e528575-52d4-436b-92ea-9786a57052d4"
+              value: "748e65ec-5278-4357-897d-691060f64797"
 
           envFrom:
             - configMapRef:
@@ -51,10 +51,8 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "250m"
             limits:
               memory: "1Gi"
-              cpu: "1000m"
 
           readinessProbe:
             tcpSocket:

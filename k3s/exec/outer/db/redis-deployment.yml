@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: infra-db
+  namespace: flowin  # [통일]
   labels:
     app: redis
 spec:
@@ -15,15 +15,13 @@ spec:
       labels:
         app: redis
     spec:
-      securityContext:
-        runAsUser: 999
-        fsGroup: 999
-
       containers:
         - name: redis
-          image: redis:8.6.0-alpine
-          imagePullPolicy: IfNotPresent
+          # [수정] 고민할 필요 없는 최신 버전!
+          image: redis:latest
+          imagePullPolicy: Always # latest는 내용이 바뀔 수 있으니 항상 확인
 
+          # [설정] 비밀번호 설정 (유지)
           command: ["redis-server"]
           args: ["/usr/local/etc/redis/redis.conf", "--requirepass", "$(REDIS_PASSWORD)"]
 
@@ -32,7 +30,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: redis-password
+                  key: password
             - name: TZ
               value: "Asia/Seoul"
 
@@ -40,13 +38,7 @@ spec:
             - containerPort: 6379
               name: redis
 
-          volumeMounts:
-            - name: redis-config
-              mountPath: /usr/local/etc/redis/redis.conf
-              subPath: redis.conf
-            - name: redis-data
-              mountPath: /data
-
+          # [T3.large 생존] 리소스 제한 (유지)
           resources:
             requests:
               memory: "128Mi"
@@ -58,13 +50,18 @@ spec:
               port: 6379
             initialDelaySeconds: 15
             periodSeconds: 20
-            failureThreshold: 3
-
           readinessProbe:
             tcpSocket:
               port: 6379
             initialDelaySeconds: 5
             periodSeconds: 5
+
+          volumeMounts:
+            - name: redis-config
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+            - name: redis-data
+              mountPath: /data
 
       volumes:
         - name: redis-config

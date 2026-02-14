@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: npm-pvc
-  namespace: infra-gateway
+  namespace: flowin
 spec:
   accessModes:
     - ReadWriteOnce

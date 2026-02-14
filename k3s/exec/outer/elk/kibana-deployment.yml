@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: infra-elk
+  namespace: flowin
   labels:
     app: kibana
 spec:
@@ -19,15 +19,14 @@ spec:
         - name: kibana
           image: docker.elastic.co/kibana/kibana:8.17.0
           imagePullPolicy: IfNotPresent
-
           ports:
             - containerPort: 5601
               name: ui
 
+          # [중요] 환경변수는 그대로 유지 (비밀번호 전달용)
           env:
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch-service:9200"
-
             - name: ELASTICSEARCH_USERNAME
               value: "elastic"
             - name: ELASTICSEARCH_PASSWORD
@@ -35,11 +34,10 @@ spec:
                 secretKeyRef:
                   name: elastic-credentials
                   key: password
-
             - name: I18N_LOCALE
               value: "ko-KR"
-            - name: XPACK_MONITORING_UI_CONTAINER_ELASTICSEARCH_ENABLED
-              value: "false"
+            # ConfigMap 설정을 덮어쓰지 않도록 환경변수 일부 제거해도 되지만,
+            # 안전하게 둬도 상관없습니다.
 
           resources:
             requests:
@@ -61,3 +59,19 @@ spec:
             initialDelaySeconds: 120
             periodSeconds: 30
             failureThreshold: 3
+
+          # [추가됨] 여기가 핵심입니다!
+          # 컨테이너가 우리가 만든 '다이어트 설정'을 읽도록 강제합니다.
+          volumeMounts:
+            - name: kibana-config
+              mountPath: /usr/share/kibana/config/kibana.yml
+              subPath: kibana.yml
+
+      volumes:
+        # [추가됨] ConfigMap을 볼륨으로 가져옵니다.
+        - name: kibana-config
+          configMap:
+            name: kibana-config
+            items:
+              - key: kibana.yml
+                path: kibana.yml

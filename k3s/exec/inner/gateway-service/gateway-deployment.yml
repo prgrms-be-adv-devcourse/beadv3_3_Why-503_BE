@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: gateway-service
-  namespace: infra-gateway  # [중요] ConfigMap과 같은 동네
+  namespace: flowin
   labels:
     app: gateway-service
 spec:
@@ -17,34 +17,31 @@ spec:
     spec:
       containers:
         - name: gateway-service
-          # 사용자님의 이미지
-          image: kkoj/why-503-gateway-service:latest
+          image: gateway-service:latest
           imagePullPolicy: Always
-
           ports:
-            - containerPort: 8000  # [수정] 8000번 포트 개방
-              name: http
-
-          volumeMounts:
-            - name: config-volume
-              mountPath: /config/application.yml
-              subPath: application.yml
+            - containerPort: 8000
 
           env:
+            # 1. [Pro의 선택] 설정 파일 위치를 명확하게 지정 (아주 좋습니다!)
             - name: SPRING_CONFIG_LOCATION
               value: "file:/config/application.yml"
 
-            - name: SERVER_PORT
-              value: "8000"
+            # 2. JVM 옵션 & 포트 (T3.large 최적화)
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -Dserver.port=8000"
 
-            # 3. JWT 비밀키 (Secret에서 가져오기)
-            # (kubectl create secret generic jwt-secret --from-literal=secret-key=값... 명령어로 미리 생성 필요)
-            - name: JWT_SECRET
+            # 3. Redis 연결
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis-service"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secret
-                  key: secret-key
-                  optional: true
+                  name: db-secret
+                  # [통일] 아까 Redis 배포할 때 쓰기로 한 키 이름
+                  key: redis-password
 
           resources:
             requests:
@@ -52,23 +49,26 @@ spec:
             limits:
               memory: "512Mi"
 
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
+          # Health Check (TCP 소켓 방식)
+          livenessProbe:
+            tcpSocket:
               port: 8000
             initialDelaySeconds: 30
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
               port: 8000
-            initialDelaySeconds: 60
-            periodSeconds: 30
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          # [핵심] ConfigMap을 파일로 마운트
+          volumeMounts:
+            - name: config-volume
+              # 위에서 지정한 SPRING_CONFIG_LOCATION 경로와 일치시킴
+              mountPath: /config/application.yml
+              subPath: application.yml
 
       volumes:
         - name: config-volume
           configMap:
             name: gateway-config
-            items:
-              - key: application.yml
-                path: application.yml

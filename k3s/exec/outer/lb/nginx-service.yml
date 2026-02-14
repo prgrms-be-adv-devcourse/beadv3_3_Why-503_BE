@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx-proxy-manager
-  namespace: infra-gateway
+  namespace: flowin
 spec:
   selector:
     app: nginx-proxy-manager

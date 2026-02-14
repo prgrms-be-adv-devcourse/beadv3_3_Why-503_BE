@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: chroma-config
-  namespace: infra-db
+  namespace: flowin
 data:
   IS_PERSISTENT: "TRUE"
   PERSIST_DIRECTORY: "/chroma/chroma"

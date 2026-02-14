@@ -2,11 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: gateway-service
-  namespace: infra-gateway
+  namespace: flowin   # [통일]
 spec:
   selector:
     app: gateway-service
   ports:
-    - port: 8000       # [수정] Nginx가 8000번으로 들어옴
-      targetPort: 8000 # [수정] 컨테이너의 8000번으로 연결
-  type: ClusterIP
+    - port: 8000       # [외부] 사용자가 접속할 포트 (http://IP:8000)
+      targetPort: 8000 # [내부] 스프링 부트 게이트웨이가 떠 있는 포트
+  type: LoadBalancer   # [핵심] 외부 접속 허용

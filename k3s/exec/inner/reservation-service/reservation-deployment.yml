@@ -45,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: password
+                  key: redis-password
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service:9092"
 

@@ -160,18 +160,17 @@ jobs:
       #    어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
       - name: Ensure Namespace and Secrets
         run: |
-      # 네임스페이스 flowin 확인
+        # 네임스페이스 flowin 확인
           kubectl create namespace flowin --dry-run=client -o yaml | kubectl apply -f -
           
-      # DB/Redis 비밀번호 Secret 갱신
+        # DB/Redis 비밀번호 Secret 갱신
           kubectl create secret generic db-secret \
             --namespace flowin \
             --from-literal=password='${{ secrets.DB_PASSWORD }}' \
             --from-literal=redis-password='${{ secrets.REDIS_PASSWORD }}' \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # [추가] ElasticSearch 비밀번호 Secret 갱신 (ELK 스택용)
-      # GitHub Secrets에 ELASTIC_PASSWORD를 등록해주세요.
+        # [추가] ElasticSearch 비밀번호 Secret 갱신 (ELK 스택용)
           kubectl create secret generic elastic-credentials \
             --namespace flowin \
             --from-literal=password='${{ secrets.ELASTIC_PASSWORD }}' \

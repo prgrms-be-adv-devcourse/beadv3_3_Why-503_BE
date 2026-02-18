@@ -30,7 +30,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: password
+                  key: redis-password
             - name: TZ
               value: "Asia/Seoul"
 

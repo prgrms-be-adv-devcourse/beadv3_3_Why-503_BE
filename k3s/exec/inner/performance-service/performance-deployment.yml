@@ -45,7 +45,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
-                  key: password  # [수정] 편의상 password로 통일
+                  key: redis-password  # [수정] 편의상 password로 통일
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service:9092"
 

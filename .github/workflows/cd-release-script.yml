@@ -160,20 +160,17 @@ jobs:
       #    어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
       - name: Ensure Namespace and Secrets
         run: |
-        # 네임스페이스 flowin 확인
           kubectl create namespace flowin --dry-run=client -o yaml | kubectl apply -f -
           
-        # DB/Redis 비밀번호 Secret 갱신
           kubectl create secret generic db-secret \
             --namespace flowin \
-            --from-literal=password='${{ secrets.DB_PASSWORD }}' \
-            --from-literal=redis-password='${{ secrets.REDIS_PASSWORD }}' \
+            --from-literal=password="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=redis-password="${{ secrets.REDIS_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
-
-        # [추가] ElasticSearch 비밀번호 Secret 갱신 (ELK 스택용)
+          
           kubectl create secret generic elastic-credentials \
             --namespace flowin \
-            --from-literal=password='${{ secrets.ELASTIC_PASSWORD }}' \
+            --from-literal=password="${{ secrets.ELASTIC_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       # 4. [조건부 배포 A] Gateway일 때 -> 전체 인프라(Config, Outer) + 게이트웨이 배포
@@ -207,6 +204,12 @@ jobs:
       #    태그가 latest로 같아도 강제로 파드를 껐다 켜서 새 이미지를 받게 함
       - name: Rollout Restart
         run: |
-          echo "Restarting pods to pull new image..."
-          kubectl rollout restart deployment/${{ inputs.service-name }} -n flowin
-          kubectl rollout status deployment/${{ inputs.service-name }} -n flowin --timeout=60s
+          echo "Checking deployment status..."
+          
+          if kubectl get deployment ${{ inputs.service-name }} -n flowin > /dev/null 2>&1; then
+            echo "Deployment found. Restarting pods to pull new image..."
+            kubectl rollout restart deployment/${{ inputs.service-name }} -n flowin
+            kubectl rollout status deployment/${{ inputs.service-name }} -n flowin --timeout=90s
+          else
+            echo "⚠️ Deployment not found. Skipping rollout restart (This might be the first deploy)."
+          fi

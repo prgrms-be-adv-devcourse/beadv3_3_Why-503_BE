@@ -3,9 +3,9 @@ name: Build and Docker release
 on:
   workflow_call: #불렀을 때만 사용
     inputs: #인자
-    service-name: #서비스 이름
-      required: true
-      type: string
+      service-name: #서비스 이름
+        required: true
+        type: string
     outputs: #반환값
       tag_name:
         value: ${{ jobs.tagging.outputs.tag_name }}

@@ -180,20 +180,20 @@ jobs:
         if: ${{ inputs.service-name == 'gateway-service' }}
         run: |
           echo "Deploying Configurations and PVCs..."
-          kubectl apply -f exec/config/db/
-          kubectl apply -f exec/config/mq/
-          kubectl apply -f exec/config/elk/
-          kubectl apply -f exec/config/gateway/
+          kubectl apply -f k3s/exec/config/db/
+          kubectl apply -f k3s/exec/config/mq/
+          kubectl apply -f k3s/exec/config/elk/
+          kubectl apply -f k3s/exec/config/gateway/
 
           echo "Deploying Infrastructure (DB, MQ, ELK, LB)..."
-          kubectl apply -f exec/outer/db/
-          kubectl apply -f exec/outer/mq/
-          kubectl apply -f exec/outer/elk/
-          kubectl apply -f exec/outer/lb/
-          kubectl apply -f exec/outer/zipkin/
+          kubectl apply -f k3s/exec/outer/db/
+          kubectl apply -f k3s/exec/outer/mq/
+          kubectl apply -f k3s/exec/outer/elk/
+          kubectl apply -f k3s/exec/outer/lb/
+          kubectl apply -f k3s/exec/outer/zipkin/
           
           echo "Deploying Gateway Service..."
-          kubectl apply -f exec/inner/gateway-service/
+          kubectl apply -f k3s/exec/inner/gateway-service/
 
       # 5. [조건부 배포 B] 일반 서비스일 때 -> 해당 서비스만 배포
       - name: Deploy Microservice
@@ -201,7 +201,7 @@ jobs:
         run: |
           echo "Deploying ${{ inputs.service-name }}..."
           # K8s YAML 파일 경로 수정 (exec/inner/...)
-          kubectl apply -f exec/inner/${{ inputs.service-name }}/
+          kubectl apply -f k3s/exec/inner/${{ inputs.service-name }}/
 
       # 6. [필수] 롤아웃 재시작 (이미지 갱신 반영)
       #    태그가 latest로 같아도 강제로 파드를 껐다 켜서 새 이미지를 받게 함

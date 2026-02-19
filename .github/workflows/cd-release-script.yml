@@ -188,6 +188,7 @@ jobs:
           kubectl apply -f exec/outer/mq/
           kubectl apply -f exec/outer/elk/
           kubectl apply -f exec/outer/lb/
+          kubectl apply -f exec/outer/zipkin/
           
           echo "Deploying Gateway Service..."
           kubectl apply -f exec/inner/gateway-service/

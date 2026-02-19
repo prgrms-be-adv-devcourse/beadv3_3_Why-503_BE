@@ -47,8 +47,8 @@ public class Ticket {
     @Column(name = "original_price")
     private Long originalPrice;
 
-    @Column(name = "discount", length = 20)
-    private String discount;
+    @Column(name = "discount_policy", length = 20)
+    private String discountPolicy;
 
     @Column(name = "final_price")
     private Long finalPrice;
@@ -71,7 +71,7 @@ public class Ticket {
 
     // 결제 정보를 기반으로 티켓 소유권 할당 및 가격 확정
     public void issue(Long userSq, Payment payment, Long bookingSq,
-                      Long originalPrice, String discount, Long finalPrice) {
+                      Long originalPrice, String discountPolicy, Long finalPrice) {
         if (this.userSq != null || this.payment != null) {
             throw PaymentExceptionFactory.paymentConflict("이미 판매된 티켓 슬롯입니다. TicketSQ: " + this.sq);
         }
@@ -80,7 +80,7 @@ public class Ticket {
         this.payment = payment;
         this.bookingSq = bookingSq;
         this.originalPrice = originalPrice;
-        this.discount = discount;
+        this.discountPolicy = discountPolicy;
         this.finalPrice = finalPrice;
     }
 
@@ -90,7 +90,7 @@ public class Ticket {
         this.payment = null;
         this.bookingSq = null;
         this.originalPrice = null;
-        this.discount = null;
+        this.discountPolicy = null;
         this.finalPrice = null;
     }
 

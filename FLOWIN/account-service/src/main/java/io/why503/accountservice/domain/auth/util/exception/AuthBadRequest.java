@@ -1,6 +1,5 @@
 package io.why503.accountservice.domain.auth.util.exception;
 
-import io.why503.commonbase.exception.account.domain.AccountAccountException;
 import io.why503.commonbase.exception.account.domain.AccountAuthException;
 import org.springframework.http.HttpStatus;
 

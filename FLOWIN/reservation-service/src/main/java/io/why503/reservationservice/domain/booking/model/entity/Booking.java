@@ -37,6 +37,12 @@ public class Booking {
     @Column(name = "order_id", nullable = false, unique = true, length = 64)
     private String orderId;
 
+    @Column(name = "category", length = 50)
+    private String category;
+
+    @Column(name = "genre", length = 50)
+    private String genre;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private BookingStatus status = BookingStatus.PENDING;
@@ -53,7 +59,7 @@ public class Booking {
     private LocalDateTime updatedDt;
 
     @Builder
-    public Booking(Long userSq, String orderId) {
+    public Booking(Long userSq, String orderId, String category, String genre) {
         if (userSq == null || userSq <= 0) {
             throw BookingExceptionFactory.bookingBadRequest("회원 번호는 필수이며 0보다 커야 합니다.");
         }
@@ -63,6 +69,8 @@ public class Booking {
 
         this.userSq = userSq;
         this.orderId = orderId;
+        this.category = category;
+        this.genre = genre;
     }
 
     // 예매와 선점 좌석 간의 객체 연관관계 설정

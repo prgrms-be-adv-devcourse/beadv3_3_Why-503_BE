@@ -1,5 +1,6 @@
 package io.why503.aiservice.model.vo;
 
+import io.why503.aiservice.model.embedding.*;
 import java.util.List;
 
 public record ResultRequest(

@@ -12,9 +12,9 @@ public record ResultResponse(
         //추천 결과 정보 ( category, reason, mood, showCategory)
         List<Recommendations> recommendations,
         //장르점수
-        Map<String, Double> categoryScore,
+        Map<String, String> categoryScore,
         //분위기점수
-        Map<String, Double>moodScore,
+        Map<String, String> moodScore,
         //상위 장르
         List<String> topCategory,
         //상위 분위기
@@ -22,6 +22,9 @@ public record ResultResponse(
         //최종 선정된 공연 추천
         List<String> topFinalShows,
         //유사한 장르
-        List<String> similarShows
+        List<String> similarShows,
+        List<String> similarTopShows,
+        List<String> topCategoryShowNames
 ) {
+
 }

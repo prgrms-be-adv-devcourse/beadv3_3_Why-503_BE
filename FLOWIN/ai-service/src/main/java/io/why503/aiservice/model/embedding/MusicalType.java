@@ -1,13 +1,15 @@
-package io.why503.aiservice.model.vo;
+package io.why503.aiservice.model.embedding;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 
 //뮤지컬
-public enum MusicalType implements ShowCategory{
+public enum MusicalType implements ShowCategory {
     CREATIVE(Category.MUSICAL,"창작", Set.of(MoodCategory.FANTASY)),      //창작뮤지컬
-    LICENSED(Category.MUSICAL,"라이센스", Set.of(MoodCategory.FANTASY)),      //라이센스뮤지컬
+    LICENSED(Category.MUSICAL,"라이센스", Set.of(MoodCategory.ROMANCE)),      //라이센스뮤지컬
     ORIGINAL(Category.MUSICAL,"오리지널", Set.of(MoodCategory.FANTASY));    //오리지널 내한
 
     @Getter

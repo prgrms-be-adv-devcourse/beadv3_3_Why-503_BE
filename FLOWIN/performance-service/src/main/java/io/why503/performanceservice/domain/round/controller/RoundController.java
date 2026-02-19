@@ -46,7 +46,7 @@ public class RoundController {
 
     // 일반 유저용 예매 가능 회차 조회
     @GetMapping("/available/{showSq}")
-    public ResponseEntity<List<RoundResponse>> getAvailableRounds(@PathVariable Long showSq) {
+    public ResponseEntity<List<RoundResponse>> getAvailableRounds(@PathVariable("showSq") Long showSq) {
         return ResponseEntity.ok(roundService.getAvailableRoundList(showSq));
     }
 
@@ -70,6 +70,14 @@ public class RoundController {
         // req.getRoundStatus()에 변경할 상태가 들어옴
         RoundResponse response = roundService.patchRoundStat(userSq, roundSq, status);
         return ResponseEntity.ok(response);
+    }
+
+    //예매 가능한 회차인지 확인
+    @GetMapping("/{roundSq}/bookable")
+    public ResponseEntity<Boolean> checkRoundBookable(
+            @PathVariable("roundSq") Long roundSq
+    ) {
+        return ResponseEntity.ok(roundService.isRoundBookable(roundSq));
     }
 
 }

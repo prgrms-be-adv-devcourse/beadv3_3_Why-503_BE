@@ -59,7 +59,9 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
-
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    
     // db
     runtimeOnly 'com.mysql:mysql-connector-j'
     testRuntimeOnly 'com.h2database:h2'
@@ -72,10 +74,18 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    testImplementation "org.testcontainers:testcontainers:1.19.2"
+    testImplementation "org.testcontainers:junit-jupiter:1.19.2"
+
 }
+
 
 dependencyManagement {
     imports {

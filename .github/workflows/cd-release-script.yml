@@ -125,6 +125,8 @@ jobs:
       #이후 더 필요한 yml 추가
       - name: Build with Gradle
         working-directory: ./FLOWIN/${{ inputs.service-name }}
+        env: # <--- 로봇에게 깃허브 패키지 출입증(토큰) 발급!
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x gradlew
           ./gradlew clean build -x test

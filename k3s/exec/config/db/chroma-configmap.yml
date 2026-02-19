@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chroma-config
+  namespace: flowin
+data:
+  IS_PERSISTENT: "TRUE"
+  PERSIST_DIRECTORY: "/chroma/chroma"
+  ANONYMIZED_TELEMETRY: "False"
+  CHROMA_WORKERS: "1"

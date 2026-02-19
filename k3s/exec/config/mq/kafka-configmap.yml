@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+  namespace: flowin
+data:
+  # 1. [심플] KRaft 모드 설정 (다른 팀과 동일)
+  KAFKA_NODE_ID: "1"
+  KAFKA_PROCESS_ROLES: "broker,controller"
+  KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9091"
+
+  # 2. [심플] 주소 단축 (다른 팀 장점 흡수!)
+  # 네임스페이스가 같으니 'kafka-service'만 불러도 됩니다.
+  KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9091"
+  KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-service:9092"
+
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+  KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+  # 3. [필수] T3.large 생존용 안전장치 (우리가 더 잘한 것!)
+  # 다른 팀은 이거 없어서 나중에 OOM(메모리 초과)으로 죽을 수 있습니다.
+  KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+
+  # 디스크 꽉 참 방지 (1GB 넘으면 삭제)
+  KAFKA_LOG_RETENTION_BYTES: "1073741824"
+  KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+
+  # 싱글 노드 설정
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"

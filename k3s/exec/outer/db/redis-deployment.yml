@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: flowin  # [통일]
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          # [수정] 고민할 필요 없는 최신 버전!
+          image: redis:latest
+          imagePullPolicy: Always # latest는 내용이 바뀔 수 있으니 항상 확인
+
+          # [설정] 비밀번호 설정 (유지)
+          command: ["redis-server"]
+          args: ["/usr/local/etc/redis/redis.conf", "--requirepass", "$(REDIS_PASSWORD)"]
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis-password
+            - name: TZ
+              value: "Asia/Seoul"
+
+          ports:
+            - containerPort: 6379
+              name: redis
+
+          # [T3.large 생존] 리소스 제한 (유지)
+          resources:
+            requests:
+              memory: "128Mi"
+            limits:
+              memory: "256Mi"
+
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: redis-config
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+            - name: redis-data
+              mountPath: /data
+
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc

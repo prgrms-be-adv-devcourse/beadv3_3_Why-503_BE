@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-config
+  namespace: flowin  # [통일]
+data:
+  kibana.yml: |
+    server.name: "kibana"
+    server.host: "0.0.0.0"
+    
+    # [수정 1] 주소 단축 (같은 flowin 동네)
+    elasticsearch.hosts: [ "http://elasticsearch-service:9200" ]
+    
+    # [수정 2] 보안 설정 (로그인 필수)
+    # Elasticsearch에 비번이 걸려있으므로 Kibana도 비번을 들고 가야 문을 열어줍니다.
+    elasticsearch.username: "${ELASTICSEARCH_USERNAME}"
+    elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+
+    # 한글 설정
+    i18n.locale: "ko-KR"
+
+    # [핵심] T3.large 생존용 다이어트 설정 (이건 그대로 유지! 아주 잘하셨습니다)
+    xpack.fleet.enabled: false        # 플릿(에이전트 관리) 끔
+    xpack.ml.enabled: false           # 머신러닝(메모리 먹는 하마) 끔
+    xpack.reporting.enabled: false    # PDF 리포트 생성 끔
+    xpack.observability.enabled: false # APM 등 복잡한 기능 끔
+    
+    # 모니터링 끔 (Kibana 스스로를 감시하는 기능인데 무거움)
+    monitoring.enabled: false
+    telemetry.enabled: false
+
+    # 로그 줄이기 (warn 이상만 출력)
+    logging:
+      root:
+        level: warn

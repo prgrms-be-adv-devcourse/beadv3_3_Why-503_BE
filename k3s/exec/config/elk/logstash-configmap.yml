@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: flowin
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+    pipeline.workers: 1
+
+  logstash.conf: |
+    input {
+      kafka {
+        bootstrap_servers => "kafka-service:9092"
+        topics => ["infra-logs"]
+        group_id => "logstash-group"
+        codec => json
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-service:9200"]
+        user => "${ELASTICSEARCH_USERNAME}"
+        password => "${ELASTICSEARCH_PASSWORD}"
+        index => "logs-%{+YYYY.MM.dd}"  # 날짜별로 이름만 지어준다
+      }
+    
+      stdout { codec => rubydebug }
+    }

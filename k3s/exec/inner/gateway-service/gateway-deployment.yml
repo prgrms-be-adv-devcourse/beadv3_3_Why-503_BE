@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: flowin
+  labels:
+    app: gateway-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: gateway-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+
+          env:
+            # 1. ConfigMap(file:)과 내부 파일(classpath:)을 모두 읽도록 수정!
+            - name: SPRING_CONFIG_LOCATION
+              value: "classpath:/,file:/config/application.yml"
+
+            # 2. Prod 프로필 활성화 (필수)
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
+            # 2. JVM 옵션 & 포트 (T3.large 최적화)
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -Dserver.port=8000"
+
+            # 3. Redis 연결
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis-service"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  # [통일] 아까 Redis 배포할 때 쓰기로 한 키 이름
+                  key: redis-password
+
+          resources:
+            requests:
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+
+          # Health Check (TCP 소켓 방식)
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          # [핵심] ConfigMap을 파일로 마운트
+          volumeMounts:
+            - name: config-volume
+              # 위에서 지정한 SPRING_CONFIG_LOCATION 경로와 일치시킴
+              mountPath: /config/application.yml
+              subPath: application.yml
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: gateway-config

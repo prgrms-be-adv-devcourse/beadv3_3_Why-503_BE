@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: flowin
+  labels:
+    app: ai-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          image: ai-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8500
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dserver.port=8500" # AI는 힙 메모리 자동 설정에 맡기거나 필요시 추가
+
+            # 벡터 DB 연결 정보 (Chroma)
+            - name: CHROMA_HOST
+              value: "chroma-service"
+            - name: CHROMA_PORT
+              value: "8000"
+
+            # 필요한 경우 RDB/Redis/Kafka 설정 추가 (위와 동일)
+
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+
+          livenessProbe:
+            tcpSocket:
+              port: 8500
+            initialDelaySeconds: 40
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8500
+            initialDelaySeconds: 20
+            periodSeconds: 10

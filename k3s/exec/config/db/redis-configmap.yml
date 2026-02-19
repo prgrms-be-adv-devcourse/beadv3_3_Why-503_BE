@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: flowin
+data:
+  redis.conf: |
+    bind 0.0.0.0
+    protected-mode yes
+    port 6379
+    appendonly no
+    save 900 1
+    save 300 100
+    maxmemory 200mb
+    maxmemory-policy allkeys-lru
+    tcp-keepalive 300

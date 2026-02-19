@@ -1,0 +1,216 @@
+name: Build and Docker release
+
+on:
+  workflow_call: #불렀을 때만 사용
+    inputs: #인자
+    service-name: #서비스 이름
+      required: true
+      type: string
+    outputs: #반환값
+      tag_name:
+        value: ${{ jobs.tagging.outputs.tag_name }}
+
+env:
+  DOCKER: docker.io
+
+jobs:
+
+  tagging:
+    name: tagging 및 git release
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag_version.outputs.new_tag }}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: versioning and tagging
+        id: tag_version #GITHUB_OUTPUT는 반환값 묶음, GITHUB_OUTPUT의 new_tag와 changelog에 값 저장
+        run: |
+          RANDOM_STR=$(openssl rand -hex 8)  
+          echo "Generated random string: $RANDOM_STR"
+          echo "new_tag=$RANDOM_STR" >> $GITHUB_OUTPUT 
+          echo "changelog=자동 생성된 릴리즈 노트입니다." >> $GITHUB_OUTPUT
+        # 예: a3f9c1d2bb44e21f
+        # 랜덤인 이유가 업데이트 할때 계속 생성되는데 중복으로 충돌이 없게하기 위함
+
+      - name: releasing # 배포 기록?
+        uses: ncipollo/release-action@v1 #git release 해주는 서드파티
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+
+  build-image:
+    name: 도커 이미지 빌드
+    runs-on: ubuntu-latest
+    needs: tagging #저 job의 반환값을 사용하겠다는 소리 -> tagging 끝나면 돌아간다는 소리
+
+    permissions: #권한
+      contents: read
+      packages: write
+      attestations: write
+
+    steps:
+      - name: Check out Repository
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Sign in github container registry #도커 로그인
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 메타데이터 작성
+        id: meta
+        uses: docker/metadata-action@v5
+        with: #이미지 이름이랑 메타데이터 작성
+          images: ${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }} #docker.io/username/OOOO-service
+          # 버전 붙여주는거
+          tags: |
+            type=sha
+            type=raw,value=${{ needs.tagging.outputs.tag_name }}
+            type=raw,value=latest
+
+      #yml 추가
+      #secrets에 추가되어 있는지 확인하고 사용
+      - name: account test yml pem 세팅
+        if: ${{ inputs.service-name == 'account-service' }}
+        run: |
+          mkdir -p ./FLOWIN/account-service/src/main/resources
+          echo '${{ secrets.ACCOUNT_PROD_YML }}' > ./FLOWIN/account-service/src/main/resources/application-prod.yml
+          echo '${{ secrets.PRIVATE_KEY_PEM }}' > ./FLOWIN/account-service/src/main/resources/private-key.pem
+
+      - name: gateway test yml pem 세팅
+        if: ${{ inputs.service-name == 'gateway-service' }}
+        run: |
+          mkdir -p ./FLOWIN/gateway-service/src/main/resources
+          echo '${{ secrets.GATEWAY_PROD_YML }}' > ./FLOWIN/gateway-service/src/main/resources/application-prod.yml
+          echo '${{ secrets.PUBLIC_KEY_PEM }}' > ./FLOWIN/gateway-service/src/main/resources/public-key.pem
+
+      - name: payment test yml pem 세팅
+        if: ${{ inputs.service-name == 'payment-service' }}
+        run: |
+          mkdir -p ./FLOWIN/payment-service/src/main/resources
+          echo '${{ secrets.PAYMENT_PROD_YML }}' > ./FLOWIN/payment-service/src/main/resources/application-prod.yml
+
+      - name: performance test yml pem 세팅
+        if: ${{ inputs.service-name == 'performance-service' }}
+        run: |
+          mkdir -p ./FLOWIN/performance-service/src/main/resources
+          echo '${{ secrets.PERFORMANCE_PROD_YML }}' > ./FLOWIN/performance-service/src/main/resources/application-prod.yml
+
+      - name: reservation test yml pem 세팅
+        if: ${{ inputs.service-name == 'reservation-service' }}
+        run: |
+          mkdir -p ./FLOWIN/reservation-service/src/main/resources
+          echo '${{ secrets.RESERVATION_PROD_YML }}' > ./FLOWIN/reservation-service/src/main/resources/application-prod.yml
+
+      - name: ai test yml pem 세팅
+        if: ${{ inputs.service-name == 'ai-service' }}
+        run: |
+          mkdir -p ./FLOWIN/ai-service/src/main/resources
+          echo '${{ secrets.AI_PROD_YML }}' > ./FLOWIN/ai-service/src/main/resources/application-prod.yml
+
+      #이후 더 필요한 yml 추가
+      - name: Build with Gradle
+        working-directory: ./FLOWIN/${{ inputs.service-name }}
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
+        # 이미 CI에서는 테스트가 마무리 되었을테니 -x test를 통해 테스트 스킵하고 빌드
+
+      - name: Push Image #빌드하고 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: ./FLOWIN/${{ inputs.service-name }} # 빌드에 필요한 소스 코드가 위치한 경로
+          file: ./FLOWIN/${{ inputs.service-name }}/Dockerfile #  이미지를 만드는 설계도인 Dockerfile의 정확한 위치
+          push: true # 빌드가 완료된 후, 결과물(이미지)을 지정된 레지스트리에 즉시 업로드
+          tags: ${{ steps.meta.outputs.tags }} # 이미지의 버전 이름(예: v1.0.0, latest)을 지정
+          labels: ${{ steps.meta.outputs.labels }} # 이미지에 메타데이터(제작자, 빌드 날짜 등)를 추가 < 부가 정보
+
+      # 이후 AWS EC2 내에 있는 도커 컴포즈 실행 로직 추가
+      # AWS에서 GIT Action이 접속 할 수 있게 열어 놓는거 중요
+      # GIT Action Secrets에 AWS API KEY 올려 놓으면 될듯
+
+      # 1. kubectl 도구 설치
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      # 2. 클러스터 연결 (Secrets에 KUBE_CONFIG 등록 필수!)
+      - name: Configure Kubernetes Context
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      # 3. 기초 공사 (Namespace & Secret)
+      #    어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
+      - name: Ensure Namespace and Secrets
+        run: |
+          kubectl create namespace flowin --dry-run=client -o yaml | kubectl apply -f -
+          
+          kubectl create secret generic db-secret \
+            --namespace flowin \
+            --from-literal=password="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=redis-password="${{ secrets.REDIS_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          kubectl create secret generic elastic-credentials \
+            --namespace flowin \
+            --from-literal=password="${{ secrets.ELASTIC_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # 4. [조건부 배포 A] Gateway일 때 -> 전체 인프라(Config, Outer) + 게이트웨이 배포
+      - name: Deploy Infrastructure & Gateway
+        if: ${{ inputs.service-name == 'gateway-service' }}
+        run: |
+          echo "Deploying Configurations and PVCs..."
+          kubectl apply -f exec/config/db/
+          kubectl apply -f exec/config/mq/
+          kubectl apply -f exec/config/elk/
+          kubectl apply -f exec/config/gateway/
+
+          echo "Deploying Infrastructure (DB, MQ, ELK, LB)..."
+          kubectl apply -f exec/outer/db/
+          kubectl apply -f exec/outer/mq/
+          kubectl apply -f exec/outer/elk/
+          kubectl apply -f exec/outer/lb/
+          kubectl apply -f exec/outer/zipkin/
+          
+          echo "Deploying Gateway Service..."
+          kubectl apply -f exec/inner/gateway-service/
+
+      # 5. [조건부 배포 B] 일반 서비스일 때 -> 해당 서비스만 배포
+      - name: Deploy Microservice
+        if: ${{ inputs.service-name != 'gateway-service' }}
+        run: |
+          echo "Deploying ${{ inputs.service-name }}..."
+          # K8s YAML 파일 경로 수정 (exec/inner/...)
+          kubectl apply -f exec/inner/${{ inputs.service-name }}/
+
+      # 6. [필수] 롤아웃 재시작 (이미지 갱신 반영)
+      #    태그가 latest로 같아도 강제로 파드를 껐다 켜서 새 이미지를 받게 함
+      - name: Rollout Restart
+        run: |
+          echo "Checking deployment status..."
+          
+          if kubectl get deployment ${{ inputs.service-name }} -n flowin > /dev/null 2>&1; then
+            echo "Deployment found. Restarting pods to pull new image..."
+            kubectl rollout restart deployment/${{ inputs.service-name }} -n flowin
+            kubectl rollout status deployment/${{ inputs.service-name }} -n flowin --timeout=90s
+          else
+            echo "⚠️ Deployment not found. Skipping rollout restart (This might be the first deploy)."
+          fi

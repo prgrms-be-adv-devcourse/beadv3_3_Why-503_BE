@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: flowin
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate # [필수] PVC 충돌 방지
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+
+          env:
+            # 1. 비밀번호 (앱들과 이름 통일: db-secret)
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret  # [수정] mysql-auth -> db-secret
+                  key: password
+            
+            # 2. DB 이름 설정 (자동 생성)
+            - name: MYSQL_DATABASE
+              value: "account_db"  # (필요하다면 기본 DB 하나 생성)
+
+            # 3. 시스템 시간 (로그 시간 맞추기)
+            - name: TZ
+              value: "Asia/Seoul"
+
+          # [T3.large 최적화] 메모리 제한
+          resources:
+            requests:
+              memory: "400Mi"
+            limits:
+              memory: "600Mi"
+
+          # Health Check (TCP 접속 확인)
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          # [수정] 설정 파일 마운트 (더 깔끔한 방식)
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: config-volume
+              mountPath: /etc/mysql/conf.d # [수정] 폴더 통째로 마운트 (subPath 삭제)
+
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: config-volume
+          configMap:
+            name: mysql-config # 아까 만든 명작 ConfigMap 연결

@@ -1,0 +1,19 @@
+name: Performance Service CD (Test)
+
+on:
+  push:
+    branches:
+      - FI-222_feat_cd-sc-2
+    paths:
+      - 'FLOWIN/performance-service/**'
+
+jobs:
+  releasing:
+    uses: ./.github/workflows/cd-release-script.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      attestations: write
+      packages: write
+    with:
+      service-name: performance-service

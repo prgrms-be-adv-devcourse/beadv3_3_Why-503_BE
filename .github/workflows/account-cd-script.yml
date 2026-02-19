@@ -1,7 +1,27 @@
-name: account-service ci/cd #필요 시 이거 이름 바꿔야 함
+#name: account-service ci/cd #필요 시 이거 이름 바꿔야 함
+#
+#on:
+#  workflow_call:
+#
+#jobs:
+#  releasing:
+#    uses: ./.github/workflows/cd-release-script.yml
+#    secrets: inherit
+#    permissions:
+#      contents: write
+#      attestations: write
+#      packages: write
+#    with:
+#      service-name: account-service #필요 시 이것도 바꿔야 함
+
+name: Account Service CD (Test)
 
 on:
-  workflow_call:
+  push:
+    branches:
+      - FI-222_feat_cd-sc-2
+    paths:
+      - 'FLOWIN/account-service/**'
 
 jobs:
   releasing:
@@ -12,4 +32,4 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: account-service #필요 시 이것도 바꿔야 함
+      service-name: account-service

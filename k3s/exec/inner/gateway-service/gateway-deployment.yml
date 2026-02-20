@@ -15,26 +15,27 @@ spec:
       labels:
         app: gateway-service
     spec:
-      # [추가] 깃허브 패키지에서 이미지를 가져오기 위한 열쇠 등록
-      imagePullSecrets:
-        - name: ghcr-secret
-
       containers:
         - name: gateway-service
-          # [수정] 그냥 이름이 아니라 깃허브 창고 전체 주소를 적어야 합니다.
-          # 형식: ghcr.io/계정아이디/이미지이름:latest
-          image: ghcr.io/s2ruby/gateway-service:latest
+          image: kkoj/gateway-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
 
           env:
+            # 1. ConfigMap(file:)과 내부 파일(classpath:)을 모두 읽도록 수정!
             - name: SPRING_CONFIG_LOCATION
               value: "classpath:/,file:/config/application.yml"
+
+            # 2. Prod 프로필 활성화 (필수)
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+
+            # 2. JVM 옵션 & 포트 (T3.large 최적화)
             - name: JAVA_TOOL_OPTIONS
               value: "-Xms256m -Xmx512m -Dserver.port=8000"
+
+            # 3. Redis 연결
             - name: SPRING_DATA_REDIS_HOST
               value: "redis-service"
             - name: SPRING_DATA_REDIS_PORT
@@ -43,6 +44,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: db-secret
+                  # [통일] 아까 Redis 배포할 때 쓰기로 한 키 이름
                   key: redis-password
 
           resources:
@@ -51,6 +53,7 @@ spec:
             limits:
               memory: "512Mi"
 
+          # Health Check (TCP 소켓 방식)
           livenessProbe:
             tcpSocket:
               port: 8000
@@ -62,8 +65,10 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
 
+          # [핵심] ConfigMap을 파일로 마운트
           volumeMounts:
             - name: config-volume
+              # 위에서 지정한 SPRING_CONFIG_LOCATION 경로와 일치시킴
               mountPath: /config/application.yml
               subPath: application.yml
 

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: ai-service
-          image: ai-service:latest
+          image: kkoj/-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8500

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: performance-service
-          image: performance-service:latest
+          image: kkoj/performance-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8200

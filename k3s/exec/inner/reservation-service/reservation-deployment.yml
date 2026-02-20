@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: reservation-service
-          image: reservation-service:latest
+          image: kkoj/reservation-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8400

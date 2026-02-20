@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: payment-service:latest
+          image: kkoj/payment-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8300

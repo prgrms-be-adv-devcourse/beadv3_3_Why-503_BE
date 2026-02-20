@@ -23,7 +23,7 @@ spec:
         - name: gateway-service
           # [수정] 그냥 이름이 아니라 깃허브 창고 전체 주소를 적어야 합니다.
           # 형식: ghcr.io/계정아이디/이미지이름:latest
-          image: ghcr.io/${{ github.repository_owner }}/gateway-service:latest
+          image: ghcr.io/s2ruby/gateway-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

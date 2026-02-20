@@ -45,7 +45,14 @@ dependencies {
 	implementation 'io.why503:account-base:0.0.1'
 	implementation 'io.why503:common-base:0.0.4'
 
+	//logstash
 	implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
+
+	//zipkin
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+	implementation 'io.github.openfeign:feign-micrometer'
 
 	// web / jpa
 	implementation 'org.springframework.boot:spring-boot-starter-web'

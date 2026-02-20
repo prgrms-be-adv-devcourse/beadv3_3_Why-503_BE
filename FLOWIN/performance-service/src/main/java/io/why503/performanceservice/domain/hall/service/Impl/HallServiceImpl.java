@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.why503.performanceservice.domain.hall.model.dto.request.HallRequest;
 import io.why503.performanceservice.domain.hall.model.dto.response.HallResponse;
-import io.why503.performanceservice.domain.hall.model.dto.enums.HallStatus;
+import io.why503.performanceservice.domain.hall.model.enums.HallStatus;
 import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.hall.repository.HallRepository;
 import io.why503.performanceservice.domain.seat.service.SeatService;

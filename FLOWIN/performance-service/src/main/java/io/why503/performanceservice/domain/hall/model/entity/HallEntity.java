@@ -1,6 +1,6 @@
 package io.why503.performanceservice.domain.hall.model.entity;
 
-import io.why503.performanceservice.domain.hall.model.dto.enums.HallStatus;
+import io.why503.performanceservice.domain.hall.model.enums.HallStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -34,7 +34,7 @@ public class HallEntity {
     private String detailAddr;
 
     // 공연장 상태 (Enum)
-    @Column(name = "status", nullable = false, length = 1)
+    @Column(name = "status", nullable = false, length = 20)
     private String status;
 
     // 공연장 총 좌석 수

@@ -1,4 +1,4 @@
-package io.why503.performanceservice.domain.hall.model.dto.enums;
+package io.why503.performanceservice.domain.hall.model.enums;
 
 import io.why503.performanceservice.domain.hall.util.HallExceptionFactory;
 import lombok.Getter;

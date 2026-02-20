@@ -21,7 +21,7 @@ data:
 
     # [핵심] T3.large 생존용 다이어트 설정 (이건 그대로 유지! 아주 잘하셨습니다)
     xpack.fleet.enabled: false        # 플릿(에이전트 관리) 끔
-    xpack.ml.enabled: false           # 머신러닝(메모리 먹는 하마) 끔
+    #xpack.ml.enabled: false           # 머신러닝(메모리 먹는 하마) 끔
     xpack.reporting.enabled: false    # PDF 리포트 생성 끔
     xpack.observability.enabled: false # APM 등 복잡한 기능 끔
     

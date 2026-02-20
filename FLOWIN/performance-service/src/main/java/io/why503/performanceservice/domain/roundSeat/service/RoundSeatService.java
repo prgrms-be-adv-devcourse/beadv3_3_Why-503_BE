@@ -28,10 +28,14 @@ public interface RoundSeatService {
     List<SeatReserveResponse> reserveSeats(Long userSq, List<Long> roundSeatSqs);
 
     //선점 해제
-    void releaseSeats(List<Long> roundSeatSqs);
+    void releaseSeats(Long userSq,List<Long> roundSeatSqs);
 
     //판매 확정
     void confirmSeats(Long userSq, List<Long> roundSeatSqs);
 
+    //회차 좌석 정보
     List<SeatReserveResponse> getRoundSeatDetails(List<Long> roundSeatSqs);
+
+    //스케줄러에 의해 호출되는 만료된 좌석 선점을 해제하는 로직
+    void cleanupExpiredReservations();
 }

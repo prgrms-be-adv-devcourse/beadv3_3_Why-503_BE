@@ -2,7 +2,7 @@ package io.why503.performanceservice.domain.hall.model.dto.response;
 
 import java.math.BigDecimal;
 
-import io.why503.performanceservice.domain.hall.model.dto.enums.HallStatus;
+import io.why503.performanceservice.domain.hall.model.enums.HallStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

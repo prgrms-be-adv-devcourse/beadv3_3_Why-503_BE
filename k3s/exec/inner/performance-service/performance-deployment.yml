@@ -31,10 +31,11 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-secret
-                  key: password
+              value: ""
+#              valueFrom:
+#                secretKeyRef:
+#                  name: db-secret
+#                  key: password
 
             # Redis & Kafka
             - name: SPRING_DATA_REDIS_HOST

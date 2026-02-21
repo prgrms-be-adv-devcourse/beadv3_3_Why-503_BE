@@ -58,10 +58,10 @@ spec:
           livenessProbe:
             tcpSocket:
               port: 8200
-            initialDelaySeconds: 40
+            initialDelaySeconds: 60
             periodSeconds: 20
           readinessProbe:
             tcpSocket:
               port: 8200
-            initialDelaySeconds: 20
+            initialDelaySeconds: 15
             periodSeconds: 10

@@ -5,7 +5,7 @@ public record BookingEnterResponse (
     boolean canEnter,       // true면 즉시 진입 가능
     String status,          // ENTER | WAITING | CLOSE
     String entryToken,      // ENTER일때만 존재하도록  
-    Long waitingPosi
+    Long waitingPosition
 ){
     public static BookingEnterResponse enter(String entryToken) {
         return new BookingEnterResponse(true, "ENTER", entryToken, null);

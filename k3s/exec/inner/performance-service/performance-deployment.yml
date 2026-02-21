@@ -27,7 +27,7 @@ spec:
 
             # DB 설정 (performance_db)
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:mysql://mysql-service:3306/performance_db?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul"
+              value: "jdbc:mysql://mysql-service.flowin:3306/performance_db?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul"
             - name: SPRING_DATASOURCE_USERNAME
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -38,7 +38,7 @@ spec:
 
             # Redis & Kafka
             - name: SPRING_DATA_REDIS_HOST
-              value: "redis-service"
+              value: "redis-service.flowin"
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             - name: SPRING_DATA_REDIS_PASSWORD
@@ -47,7 +47,7 @@ spec:
                   name: db-secret
                   key: redis-password  # [수정] 편의상 password로 통일
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka-service:9092"
+              value: "kafka-service.flowin:9092"
 
           resources:
             requests:

@@ -67,22 +67,6 @@ spec:
             limits:
               memory: "2Gi"
 
-          livenessProbe:
-            httpGet:
-              # [수정] v1/heartbeat -> v2/healthcheck 로 변경!
-              path: /api/v2/healthcheck
-              port: 8000
-            initialDelaySeconds: 120
-            periodSeconds: 20
-
-          readinessProbe:
-            httpGet:
-              # [수정] 여기도 똑같이 v2/healthcheck 로 변경!
-              path: /api/v2/healthcheck
-              port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 10
-
           volumeMounts:
             - name: chroma-data
               mountPath: /chroma/chroma

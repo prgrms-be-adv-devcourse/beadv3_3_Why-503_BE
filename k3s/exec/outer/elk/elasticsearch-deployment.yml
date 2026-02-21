@@ -69,12 +69,12 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 9200
-            initialDelaySeconds: 40
+            initialDelaySeconds: 120
             periodSeconds: 20
           livenessProbe:
             tcpSocket:
               port: 9200
-            initialDelaySeconds: 90
+            initialDelaySeconds: 150
             periodSeconds: 30
             failureThreshold: 3
 

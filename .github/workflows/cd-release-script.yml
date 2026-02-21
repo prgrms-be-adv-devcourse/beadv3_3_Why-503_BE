@@ -212,7 +212,7 @@ jobs:
           if kubectl get deployment ${{ inputs.service-name }} -n flowin > /dev/null 2>&1; then
             echo "Deployment found. Restarting pods to pull new image..."
             kubectl rollout restart deployment/${{ inputs.service-name }} -n flowin
-            kubectl rollout status deployment/${{ inputs.service-name }} -n flowin --timeout=90s
+            kubectl rollout status deployment/${{ inputs.service-name }} -n flowin --timeout=300s
           else
             echo "⚠️ Deployment not found. Skipping rollout restart (This might be the first deploy)."
           fi

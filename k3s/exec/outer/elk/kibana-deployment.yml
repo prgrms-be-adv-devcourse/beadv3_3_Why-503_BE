@@ -28,9 +28,15 @@ spec:
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch-service:9200"
             - name: ELASTICSEARCH_USERNAME
-              value: "elastic"
+              valueFrom:
+                secretKeyRef:
+                  name: kibana-auth-secret
+                  key: username
             - name: ELASTICSEARCH_PASSWORD
-              value: "RsrZYgHZP_j47Rh7-jzy"
+              valueFrom:
+                secretKeyRef:
+                  name: kibana-auth-secret
+                  key: password
             - name: I18N_LOCALE
               value: "ko-KR"
             # ConfigMap 설정을 덮어쓰지 않도록 환경변수 일부 제거해도 되지만,

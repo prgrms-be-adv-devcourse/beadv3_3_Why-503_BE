@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 예매 서비스와의 통신을 통해 예약 상태를 조회하고 결제 결과를 동기화하는 클라이언트
  */
-@FeignClient(name = "reservation-service", url = "http://reservation-account:8400")
+@FeignClient(name = "reservation-service", url = "http://reservation-service:8400")
 public interface ReservationClient {
 
     // 예매 식별자를 통한 예약 상세 정보 및 점유 좌석 현황 조회

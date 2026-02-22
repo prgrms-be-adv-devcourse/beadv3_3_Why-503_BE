@@ -7,6 +7,7 @@ metadata:
     app: elasticsearch
 spec:
   replicas: 1
+  # [핵심] 단일 노드 스토리지(PVC) 마운트 충돌을 완벽히 방지하는 재생성 전략
   strategy:
     type: Recreate
   selector:
@@ -17,17 +18,21 @@ spec:
       labels:
         app: elasticsearch
     spec:
+      # Elasticsearch 공식 권장 보안 유저(1000)로 파드 실행
       securityContext:
         runAsUser: 1000
         fsGroup: 1000
 
       initContainers:
+        # [해결사 1] ES 구동의 최대 난관인 가상 메모리 매핑 제한(vm.max_map_count)을 호스트 레벨에서 강제 확장
         - name: configure-sysctl
           image: busybox:latest
           command: ["sysctl", "-w", "vm.max_map_count=262144"]
           securityContext:
             privileged: true
             runAsUser: 0
+
+        # [해결사 2] PVC 볼륨 마운트 시 발생하는 권한(Permission Denied) 에러를 사전 타겟팅하여 교정
         - name: fix-permissions
           image: busybox:latest
           command: ["sh", "-c", "chown -R 1000:1000 /usr/share/elasticsearch/data"]
@@ -45,7 +50,9 @@ spec:
               name: http
             - containerPort: 9300
               name: transport
+
           env:
+            # 단일 노드 모드 설정 및 내부망 통신을 위한 HTTP SSL 비활성화
             - name: node.name
               value: "es-standalone"
             - name: discovery.type
@@ -54,18 +61,25 @@ spec:
               value: "true"
             - name: xpack.security.http.ssl.enabled
               value: "false"
+
+            # K8s Secret을 통한 최고 관리자(elastic) 비밀번호 동적 주입
             - name: ELASTIC_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: elastic-credentials
                   key: password
+
+            # [최고급 튜닝] 고정된 -Xmx 대신 컨테이너 Limit 대비 50%를 JVM 힙에 자동 할당 (나머지 50%는 Lucene 캐시용)
             - name: ES_JAVA_OPTS
               value: "-XX:MaxRAMPercentage=50.0 -XX:MinRAMPercentage=50.0"
+
           resources:
             requests:
               memory: "1Gi"
             limits:
               memory: "2Gi"
+
+          # [중요] 극단적으로 무거운 ES의 초기 구동(Booting) 시간을 고려한 넉넉한 대기 시간
           readinessProbe:
             tcpSocket:
               port: 9200
@@ -78,7 +92,6 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
 
-          # [추가된 부분] 컨테이너가 설정 파일을 쓰도록 지정
           volumeMounts:
             - name: data
               mountPath: /usr/share/elasticsearch/data
@@ -90,7 +103,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: elasticsearch-pvc
-        # [추가된 부분] ConfigMap을 볼륨으로 가져옴
         - name: config
           configMap:
             name: elasticsearch-config

@@ -11,7 +11,7 @@ spec:
     matchLabels:
       app: mysql
   strategy:
-    type: Recreate # [필수] PVC 충돌 방지
+    type: Recreate # [필수] PVC 다중 마운트 충돌 및 데이터 오염 방지
   template:
     metadata:
       labels:
@@ -26,29 +26,29 @@ spec:
               name: mysql
 
           env:
-            # 1. 비밀번호 (앱들과 이름 통일: db-secret)
+            # 1. 통합 Secret(db-secret)을 통한 관리형 패스워드 동적 주입
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secret  # [수정] mysql-auth -> db-secret
+                  name: db-secret
                   key: password
-            
-            # 2. DB 이름 설정 (자동 생성)
-            - name: MYSQL_DATABASE
-              value: "account_db"  # (필요하다면 기본 DB 하나 생성)
 
-            # 3. 시스템 시간 (로그 시간 맞추기)
+            # 2. 컨테이너 초기 구동 시 기본 데이터베이스 자동 생성
+            - name: MYSQL_DATABASE
+              value: "account_db"
+
+            # 3. KST 타임존 강제 할당 (애플리케이션 간 시간 오차 방지)
             - name: TZ
               value: "Asia/Seoul"
 
-          # [T3.large 최적화] 메모리 제한
+          # [중요] 제한된 EC2(t3.large) 자원 보호를 위한 메모리 한계선 설정
           resources:
             requests:
               memory: "400Mi"
             limits:
               memory: "600Mi"
 
-          # Health Check (TCP 접속 확인)
+          # TCP 소켓 기반의 경량 헬스 체크 (DB 커넥션 상태 검증)
           livenessProbe:
             tcpSocket:
               port: 3306
@@ -62,12 +62,12 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
 
-          # [수정] 설정 파일 마운트 (더 깔끔한 방식)
           volumeMounts:
             - name: mysql-data
               mountPath: /var/lib/mysql
+            # ConfigMap 갱신 시 파드 재시작 없이 반영하기 위한 디렉토리 통째 마운트 (subPath 배제)
             - name: config-volume
-              mountPath: /etc/mysql/conf.d # [수정] 폴더 통째로 마운트 (subPath 삭제)
+              mountPath: /etc/mysql/conf.d
 
       volumes:
         - name: mysql-data
@@ -75,4 +75,4 @@ spec:
             claimName: mysql-pvc
         - name: config-volume
           configMap:
-            name: mysql-config # 아까 만든 명작 ConfigMap 연결
+            name: mysql-config # 최적화 튜닝이 적용된 ConfigMap 연결

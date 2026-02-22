@@ -7,6 +7,6 @@ spec:
   selector:
     app: ai-service
   ports:
-    - port: 8500       # [수정] Nginx가 8000번으로 들어옴
-      targetPort: 8000 # [수정] 컨테이너의 8000번으로 연결
+    - port: 8500
+      targetPort: 8500
   type: ClusterIP

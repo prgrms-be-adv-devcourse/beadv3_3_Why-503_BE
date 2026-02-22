@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: ai-service
   namespace: flowin
-  labels:
-    app: ai-service
 spec:
   replicas: 1
   selector:
@@ -17,22 +15,23 @@ spec:
     spec:
       containers:
         - name: ai-service
-          image: kkoj/-service:latest
+          image: kkoj/ai-service:latest  # 이미지 경로 오타 수정됨
           imagePullPolicy: Always
           ports:
             - containerPort: 8500
-          env:
-            - name: JAVA_TOOL_OPTIONS
-              value: "-Dserver.port=8500" # AI는 힙 메모리 자동 설정에 맡기거나 필요시 추가
 
-            # 벡터 DB 연결 정보 (Chroma)
+          env:
+            # 힙 메모리 강제 고정(-Xmx)을 해제하여 JVM의 컨테이너 자동 인식(Ergonomics) 활용
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dserver.port=8500"
+
+            # RDB가 아닌 벡터 검색 전용 데이터베이스(ChromaDB) 연결
             - name: CHROMA_HOST
               value: "chroma-service"
             - name: CHROMA_PORT
               value: "8000"
 
-            # 필요한 경우 RDB/Redis/Kafka 설정 추가 (위와 동일)
-
+          # [중요] 일반 API 서비스(512Mi) 대비 2배의 넉넉한 메모리 한도 부여
           resources:
             requests:
               memory: "512Mi"
@@ -44,6 +43,7 @@ spec:
               port: 8500
             initialDelaySeconds: 40
             periodSeconds: 20
+
           readinessProbe:
             tcpSocket:
               port: 8500

@@ -16,6 +16,7 @@ spec:
         app: kafka
     spec:
       initContainers:
+        # [핵심] Kafka 데이터 디렉토리의 소유권(1000:1000)을 실행 전 자동 수정
         - name: volume-permissions
           image: busybox
           command: ["sh", "-c", "chown -R 1000:1000 /var/lib/kafka/data"]
@@ -37,9 +38,11 @@ spec:
               name: controller
 
           env:
+            # KRaft 클러스터 식별을 위한 고유 ID (이미 생성된 ID 유지)
             - name: KAFKA_CLUSTER_ID
               value: "748e65ec-5278-4357-897d-691060f64797"
 
+          # 상세 설정은 공통 ConfigMap(kafka-config)에서 일괄 주입
           envFrom:
             - configMapRef:
                 name: kafka-config
@@ -48,12 +51,14 @@ spec:
             - name: kafka-data
               mountPath: /var/lib/kafka/data
 
+          # [중요] JVM 힙 메모리 및 Kafka 프로세스 안정성을 위한 리소스 격리
           resources:
             requests:
               memory: "512Mi"
             limits:
               memory: "1Gi"
 
+          # Kafka 브로커 서비스 가용성 체크 (9092 포트 기반)
           readinessProbe:
             tcpSocket:
               port: 9092

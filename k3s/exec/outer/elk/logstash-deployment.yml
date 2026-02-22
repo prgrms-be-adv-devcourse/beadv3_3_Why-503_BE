@@ -22,14 +22,13 @@ spec:
           image: docker.elastic.co/logstash/logstash:8.17.0
           imagePullPolicy: IfNotPresent
 
-          # [참고] Logstash는 Kafka에서 '당겨오는(Pull)' 구조라
-          # 굳이 포트를 열어줄 필요는 없지만, 모니터링용으로 9600은 둡니다.
           ports:
+            # Kafka 컨슈머로서 데이터를 Pull 하는 구조이므로 수집용 포트 오픈 불필요. 모니터링용 9600 포트만 개방
             - containerPort: 9600
               name: monitoring
 
           env:
-            # [핵심] T3.large 생존용 JVM 힙 메모리 제한 (이거 없으면 OOM 킬 당함)
+            # [중요] 제한된 자원(t3.large) 환경에서 OOM 킬 방지를 위한 JVM 힙 메모리 고정 할당
             - name: LS_JAVA_OPTS
               value: "-Xmx512m -Xms512m"
 
@@ -47,8 +46,8 @@ spec:
             limits:
               memory: "1Gi"
 
-          # [수정] 없는 파일(template) 마운트 제거함 -> 이제 에러 안 남!
           volumeMounts:
+            # [핵심] 불필요한 템플릿 마운트로 인한 파드 크래시 에러(CrashLoopBackOff)를 해결하고 필수 파이프라인만 안전하게 주입
             - name: logstash-config-volume
               mountPath: /usr/share/logstash/config/logstash.yml
               subPath: logstash.yml

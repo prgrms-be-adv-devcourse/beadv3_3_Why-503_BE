@@ -3,12 +3,11 @@ kind: Deployment
 metadata:
   name: chroma
   namespace: flowin
-  labels:
-    app: chroma
 spec:
   replicas: 1
+  # [핵심] 기존 파드 완전 종료 후 새 파드 생성 (SQLite DB File 깨짐 완벽 방지)
   strategy:
-    type: Recreate # [필수] SQLite 파일 깨짐 방지
+    type: Recreate
   selector:
     matchLabels:
       app: chroma
@@ -21,7 +20,7 @@ spec:
         fsGroup: 0
         runAsUser: 0
 
-      # [권한 해결사] 볼륨 마운트 권한 자동 수정
+      # [핵심] 메인 앱 구동 전, K8s 고질병인 호스트 볼륨 권한 문제를 사전 타겟팅하여 교정
       initContainers:
         - name: fix-permissions
           image: busybox:latest
@@ -34,15 +33,10 @@ spec:
 
       containers:
         - name: chroma
-          # [수정] 고민할 필요 없이 항상 최신 버전!
           image: chromadb/chroma:latest
-
-          # [중요] latest를 쓸 때는 'Always'로 해야 진짜 최신 버전을 받아옵니다.
           imagePullPolicy: Always
-
           ports:
             - containerPort: 8000
-              name: http
           env:
             - name: IS_PERSISTENT
               value: "TRUE"
@@ -51,16 +45,16 @@ spec:
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
 
-            # [T3.large 최적화] 워커 1개로 메모리 절약
+            # t3.large 자원 보호를 위한 백그라운드 워커 스레드 제한
             - name: CHROMA_SERVER_WORKERS
               value: "1"
 
-            # [필수] 외부 접속 허용
             - name: CHROMA_SERVER_HOST
               value: "0.0.0.0"
             - name: CHROMA_SERVER_HTTP_PORT
               value: "8000"
 
+          # 임베딩/벡터 검색 시 순간적인 메모리 스파이크를 견디기 위한 넉넉한 Limit(2Gi)
           resources:
             requests:
               memory: "512Mi"

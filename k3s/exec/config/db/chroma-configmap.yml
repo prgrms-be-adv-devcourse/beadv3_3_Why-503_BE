@@ -4,7 +4,8 @@ metadata:
   name: chroma-config
   namespace: flowin
 data:
+  # ChromaDB(벡터 DB) 데이터 영구 저장 활성화. (기본값은 메모리 저장이라 파드 재시작 시 날아감)
   IS_PERSISTENT: "TRUE"
   PERSIST_DIRECTORY: "/chroma/chroma"
-  ANONYMIZED_TELEMETRY: "False"
-  CHROMA_WORKERS: "1"
+  ANONYMIZED_TELEMETRY: "False"     # 불필요한 원격 분석 데이터 전송 차단
+  CHROMA_WORKERS: "1"               # EC2 자원 한계를 고려하여 워커 프로세스 제한

@@ -7,8 +7,9 @@ metadata:
     app: nginx-proxy-manager
 spec:
   replicas: 1
+  # [핵심] 내장 SQLite 데이터베이스 파일의 동시 접근 부하 및 깨짐을 방지하는 재생성 전략
   strategy:
-    type: Recreate # [필수] SQLite DB 깨짐 방지
+    type: Recreate
   selector:
     matchLabels:
       app: nginx-proxy-manager
@@ -29,7 +30,7 @@ spec:
             - containerPort: 443
               name: https
 
-          # [T3.large 생존용] 리소스 제한 (NPM도 은근 메모리 먹습니다)
+          # [중요] SSL 핸드셰이크 및 트래픽 스파이크 시 전체 노드 자원 고갈을 막기 위한 상한선
           resources:
             requests:
               memory: "128Mi"
@@ -38,7 +39,7 @@ spec:
               memory: "512Mi"
               cpu: "500m"
 
-          # [Health Check]
+          # Admin UI(81번 포트)를 기준으로 한 웹 서버 구동 상태 헬스 체크
           livenessProbe:
             httpGet:
               path: /
@@ -52,16 +53,17 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
 
-          # [핵심 수정] subPath로 방 나누기 (가장 중요!)
           volumeMounts:
+            # [최고급 튜닝] 단 하나의 물리적 PVC(npm-pvc)를 논리적인 두 개의 폴더로 분할 마운트
             - name: npm-data
               mountPath: /data
-              subPath: data           # PVC 안에 'data' 폴더를 만들어 씀
+              subPath: data
             - name: npm-data
               mountPath: /etc/letsencrypt
-              subPath: letsencrypt    # PVC 안에 'letsencrypt' 폴더를 만들어 씀
+              subPath: letsencrypt
 
       volumes:
+        # 단일 볼륨 클레임으로 데이터와 인증서를 모두 영구 보관
         - name: npm-data
           persistentVolumeClaim:
             claimName: npm-pvc

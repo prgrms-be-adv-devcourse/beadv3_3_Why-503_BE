@@ -2,32 +2,30 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: elasticsearch-config
-  namespace: flowin  # [통일]
+  namespace: flowin
 data:
   elasticsearch.yml: |
     cluster.name: "k3s-cluster"
     node.name: "es-node-01"
     network.host: 0.0.0.0
 
-    # [핵심 1] 싱글 노드 모드 (클러스터 구성 안 함 -> 가벼움)
+    # [핵심] 클러스터 선출 과정 생략 (빠른 기동 및 리소스 절약)
     discovery.type: single-node
 
-    # [수정] 보안 켜기 (Logstash, Kibana와 짝을 맞추기 위해 필수!)
-    xpack.security.enabled: true           # 로그인 기능 ON
-    xpack.security.enrollment.enabled: false # 자동 등록 끔 (복잡함)
-    
-    # SSL(HTTPS)은 끕니다. (내부망이라서 HTTP로 통신해도 안전함 & 설정 쉬움)
+    # 최소한의 보안(ID/PW)만 켜고, 무거운 SSL 암호화는 내부망 신뢰를 바탕으로 비활성화
+    xpack.security.enabled: true
+    xpack.security.enrollment.enabled: false
     xpack.security.http.ssl.enabled: false
     xpack.security.transport.ssl.enabled: false
 
-    # [핵심 2] T3.large 생존용 다이어트 (이 설정은 진짜 완벽합니다!)
-    xpack.ml.enabled: false             # 머신러닝 끔 (메모리 1GB 아낌)
-    xpack.watcher.enabled: false        # 알림 기능 끔
-    ingest.geoip.downloader.enabled: false # 지도 데이터 다운로드 끔
+    # [중요] JVM 메모리 OOM(Out of Memory) 방지를 위한 무거운 플러그인 셧다운
+    xpack.ml.enabled: false                # 머신러닝 기능 OFF (최소 1GB 이상 메모리 절약)
+    xpack.watcher.enabled: false           # 알림 기능 OFF
+    ingest.geoip.downloader.enabled: false # GeoIP DB 실시간 업데이트 OFF
 
-    # [핵심 3] 메모리 튜닝
-    indices.memory.index_buffer_size: 10% # 색인용 버퍼 제한
-    indices.queries.cache.size: 5%        # 캐시 메모리 제한
-
+    # [중요] 인덱싱 및 쿼리 캐시 제한 (남은 메모리 보호)
+    indices.memory.index_buffer_size: 10%
+    indices.queries.cache.size: 5%
+    
     path.data: /usr/share/elasticsearch/data
     path.logs: /usr/share/elasticsearch/logs

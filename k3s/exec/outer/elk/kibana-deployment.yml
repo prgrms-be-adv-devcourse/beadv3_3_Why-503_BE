@@ -23,10 +23,12 @@ spec:
             - containerPort: 5601
               name: ui
 
-          # [중요] 환경변수는 그대로 유지 (비밀번호 전달용)
           env:
+            # K8s 내부 DNS를 활용한 Elasticsearch 통신
             - name: ELASTICSEARCH_HOSTS
               value: "http://elasticsearch-service:9200"
+
+            # [중요] Kibana가 ES에 접속하기 위한 인증 정보를 Secret에서 동적 추출
             - name: ELASTICSEARCH_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -37,24 +39,25 @@ spec:
                 secretKeyRef:
                   name: kibana-auth-secret
                   key: password
+
+            # 한글화 UI 적용
             - name: I18N_LOCALE
               value: "ko-KR"
-            # ConfigMap 설정을 덮어쓰지 않도록 환경변수 일부 제거해도 되지만,
-            # 안전하게 둬도 상관없습니다.
 
+          # Node.js 기반 Kibana의 힙 메모리 폭주를 막기 위한 리소스 상한선
           resources:
             requests:
               memory: "512Mi"
             limits:
               memory: "1Gi"
 
+          # [중요] 플러그인 최적화 및 초기 번들링 시간을 고려한 장기 대기 프로브
           readinessProbe:
             httpGet:
               path: /api/status
               port: 5601
             initialDelaySeconds: 60
             periodSeconds: 10
-
           livenessProbe:
             httpGet:
               path: /api/status
@@ -63,15 +66,13 @@ spec:
             periodSeconds: 30
             failureThreshold: 3
 
-          # [추가됨] 여기가 핵심입니다!
-          # 컨테이너가 우리가 만든 '다이어트 설정'을 읽도록 강제합니다.
           volumeMounts:
+            # [핵심] 컨테이너 내부의 기본 설정 파일을 우리가 만든 다이어트 설정으로 덮어쓰기
             - name: kibana-config
               mountPath: /usr/share/kibana/config/kibana.yml
               subPath: kibana.yml
 
       volumes:
-        # [추가됨] ConfigMap을 볼륨으로 가져옵니다.
         - name: kibana-config
           configMap:
             name: kibana-config

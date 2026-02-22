@@ -7,6 +7,6 @@ spec:
   selector:
     app: gateway-service
   ports:
-    - port: 8000       # [외부] 사용자가 접속할 포트 (http://IP:8000)
-      targetPort: 8000 # [내부] 스프링 부트 게이트웨이가 떠 있는 포트
-  type: LoadBalancer   # [핵심] 외부 접속 허용
+    - port: 8000       # 사용자가 접속할 포트 (NGM 사용)
+      targetPort: 8000 # 스프링 부트 게이트웨이가 떠 있는 포트
+  type: LoadBalancer   # 외부 접속 허용

@@ -7,6 +7,7 @@ data:
   logstash.yml: |
     http.host: "0.0.0.0"
     path.config: /usr/share/logstash/pipeline
+    # [핵심] t3.large의 vCPU(2개)를 고려한 워커 스레드 최소화
     pipeline.workers: 1
 
   logstash.conf: |
@@ -24,8 +25,8 @@ data:
         hosts => ["http://elasticsearch-service:9200"]
         user => "${ELASTICSEARCH_USERNAME}"
         password => "${ELASTICSEARCH_PASSWORD}"
-        index => "logs-%{+YYYY.MM.dd}"  # 날짜별로 이름만 지어준다
+        index => "logs-%{+YYYY.MM.dd}"  # 일자별 인덱스 롤링 보관
       }
-    
+      # 디버깅용 콘솔 출력
       stdout { codec => rubydebug }
     }

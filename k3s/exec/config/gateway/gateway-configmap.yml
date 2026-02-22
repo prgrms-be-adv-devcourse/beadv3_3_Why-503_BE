@@ -2,11 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: gateway-config
-  namespace: flowin  # [통일]
+  namespace: flowin
 data:
   application.yml: |
     server:
-      port: 8000  # Gateway Port
+      port: 8000
 
     spring:
       application:
@@ -14,7 +14,7 @@ data:
       
       cloud:
         gateway:
-          # CORS (프론트엔드 연동 필수)
+          # [중요] 프론트엔드(React/Vue 등) 연동 시 발생하는 CORS 에러 사전 차단
           globalcors:
             cors-configurations:
               '[/**]':
@@ -26,8 +26,9 @@ data:
             # ==========================================
             # 1. 인증/계정 (Account: 8100)
             # ==========================================
+            # [핵심] 로그인/회원가입은 토큰이 '없는' 상태로 들어오므로 JwtValidationFilter 생략
             - id: account-login
-              uri: http://account-service.flowin:8100
+              uri: http://account-service.flowin:8100  # 네임스페이스(.flowin)까지 명시하여 오작동 완벽 차단
               predicates:
                 - Path=/auth/login
                 - Method=POST
@@ -50,6 +51,7 @@ data:
                 - Path=/auth/login.html
                 - Method=GET
             
+            # [핵심] 여기서부터는 철저한 보안 구역 (JwtValidationFilter 통과 필수)
             - id: company-auth
               uri: http://account-service.flowin:8100
               predicates:

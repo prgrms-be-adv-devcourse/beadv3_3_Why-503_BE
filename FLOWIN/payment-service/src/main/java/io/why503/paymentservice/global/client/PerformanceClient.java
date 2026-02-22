@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 공연 서비스와 통신하여 좌석의 선점, 취소 및 예매 확정을 처리하는 클라이언트
  */
-@FeignClient(name = "performance-service")
+@FeignClient(name = "performance-service", url = "http://performance-account:8200")
 public interface PerformanceClient {
 
     // 예매 시작 시 선택한 좌석들에 대한 임시 선점 요청

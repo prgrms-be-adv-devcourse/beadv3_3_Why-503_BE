@@ -160,6 +160,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }} # 이미지의 버전 이름(예: v1.0.0, latest)을 지정
           labels: ${{ steps.meta.outputs.labels }} # 이미지에 메타데이터(제작자, 빌드 날짜 등)를 추가 < 부가 정보
 
+# 여기서 부터 분리를 해야 해.
+
       # -----------------------------------------------------------------
       # 4. K3s 원격 접속 및 기초 설정(Namespace, Secret)
       # kubectl을 설치하고 KUBE_CONFIG로 EC2에 연결한 뒤,
@@ -179,7 +181,7 @@ jobs:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       # 기초 공사 (Namespace & Secret)
-      #    어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
+      # 어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
       - name: Ensure Namespace and Secrets
         run: |
           kubectl create namespace flowin --dry-run=client -o yaml | kubectl apply -f -

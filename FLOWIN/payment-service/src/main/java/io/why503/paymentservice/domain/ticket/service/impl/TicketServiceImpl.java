@@ -10,6 +10,7 @@ import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.ticket.repository.TicketRepository;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
 import io.why503.paymentservice.global.client.PerformanceClient;
+import io.why503.paymentservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import lombok.RequiredArgsConstructor;
@@ -137,7 +138,8 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
 
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
-        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(roundSeatSqs);
+        List<RoundSeatResponse> seatDetails =
+        performanceClient.findRoundSeats(new SeatReserveRequest(roundSeatSqs));
 
         Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
                 .collect(Collectors.toMap(seat -> seat.roundSeatSq(), Function.identity()));

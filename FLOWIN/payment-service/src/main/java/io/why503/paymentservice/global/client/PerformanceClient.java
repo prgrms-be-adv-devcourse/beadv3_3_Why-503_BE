@@ -1,5 +1,6 @@
 package io.why503.paymentservice.global.client;
 
+import io.why503.paymentservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -16,20 +17,25 @@ public interface PerformanceClient {
     @PostMapping("/round-seats/reserve")
     List<RoundSeatResponse> reserveRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody List<Long> roundSeatSqs
+            @RequestBody SeatReserveRequest request
     );
 
     // 선점 기한 만료 또는 예매 취소 시 좌석 선점 해제 요청
     @PostMapping("/round-seats/cancel")
-    void cancelRoundSeats(@RequestBody List<Long> roundSeatSqs);
+    void cancelRoundSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody SeatReserveRequest request
+    );
 
     // 결제 완료 시 선점된 좌석을 최종 예매 확정 상태로 변경
     @PostMapping("/round-seats/confirm")
     void confirmRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody List<Long> roundSeatSqs
+            @RequestBody SeatReserveRequest request
     );
 
     @PostMapping("/round-seats/details")
-    List<RoundSeatResponse> findRoundSeats(@RequestBody List<Long> roundSeatSqs);
+    List<RoundSeatResponse> findRoundSeats(
+            @RequestBody SeatReserveRequest request
+    );
 }

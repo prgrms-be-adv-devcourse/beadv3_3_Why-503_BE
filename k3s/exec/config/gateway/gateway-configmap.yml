@@ -52,15 +52,15 @@ data:
                 - Method=GET
                 
             - id: zipkin
-              uri: http://account-service.flowin:8100
+              uri: http://zipkin-service.flowin:9411
               predicates:
-                - Path=/auth/login.html
+                - Path=/zipkin/**
                 - Method=GET
             
             - id: kibana
-              uri: http://account-service.flowin:8100
+              uri: http://kibana-service.flowin:5601
               predicates:
-                - Path=/auth/login.html
+                - Path=/kibana/**
                 - Method=GET
             
             # [핵심] 여기서부터는 철저한 보안 구역 (JwtValidationFilter 통과 필수)

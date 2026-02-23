@@ -29,6 +29,12 @@ jobs:
       - name: Check out Repository
         uses: actions/checkout@v5
 
+      # 클러스터 연결 (Secrets에 KUBE_CONFIG 등록 필수)
+      - name: Configure Kubernetes Context
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
       # Gateway 배포 시에는 인프라(DB, MQ, ELK 등) 공통 설정까지 함께 배포하고,
       # 일반 서비스일 경우 해당 서비스의 파드만 배포합니다.
 

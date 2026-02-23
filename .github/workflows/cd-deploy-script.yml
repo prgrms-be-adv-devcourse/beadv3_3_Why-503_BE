@@ -73,7 +73,7 @@ jobs:
       - name: Update deployment image
         run: |
           kubectl set image deployment/${{ inputs.service-name }} \
-            ${{ inputs.service-name }}=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }}
+            ${{ inputs.service-name }}=${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }}
 
       - name: Wait for rollout
         run: |

@@ -12,11 +12,9 @@ data:
 
   logstash.conf: |
     input {
-      kafka {
-        bootstrap_servers => "kafka-service:9092"
-        topics => ["infra-logs"]
-        group_id => "logstash-group"
-        codec => json
+      tcp {
+        port => 5000
+        codec => json_lines
       }
     }
 

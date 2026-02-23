@@ -8,6 +8,10 @@ data:
     server.name: "kibana"
     server.host: "0.0.0.0"
     
+    # [핵심 추가] SCG의 Path=/kibana/** 라우팅을 타기 위한 설정
+    server.basePath: "/kibana"
+    server.rewriteBasePath: true
+    
     # K8s 내부 DNS를 활용한 Elasticsearch 연결
     elasticsearch.hosts: [ "http://elasticsearch-service:9200" ]
     elasticsearch.username: "${ELASTICSEARCH_USERNAME}"

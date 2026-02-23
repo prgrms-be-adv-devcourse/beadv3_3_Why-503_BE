@@ -6,6 +6,7 @@ import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
 import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
+import io.why503.aiservice.global.client.entity.PerformanceMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -23,12 +24,13 @@ public class ShowEmbedService {
     private final VectorStore vectorStore;
     private final PerformanceRepository performanceRepository;
     private final PerformanceClient performanceClient;
+    private final PerformanceMapper performanceMapper;
 
 
     @Async
     public void upsert(List<PerformanceResponse> performanceResponses) {
         List<Performance> performances = performanceResponses.stream()
-                .map(response -> Performance.toDomain(response))
+                .map(response -> performanceMapper.toDomain(response))
                 .toList();
 
         if (performances.isEmpty()) {

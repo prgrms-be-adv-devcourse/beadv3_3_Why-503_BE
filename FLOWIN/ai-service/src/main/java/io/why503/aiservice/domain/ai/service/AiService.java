@@ -1,13 +1,17 @@
 package io.why503.aiservice.domain.ai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.why503.aiservice.domain.ai.model.embedding.*;
+import io.why503.aiservice.domain.ai.model.embedding.Booking;
+import io.why503.aiservice.domain.ai.model.embedding.Performance;
+import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
+import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.*;
 import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import io.why503.aiservice.global.client.entity.BookingMapper;
+import io.why503.aiservice.global.client.entity.PerformanceMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -54,6 +58,7 @@ public class AiService {
     private final ReservationClient reservationClient;
     private final PerformanceClient performanceClient;
     private final BookingMapper bookingMapper;
+    private final PerformanceMapper performanceMapper;
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest request) {
@@ -394,7 +399,7 @@ public class AiService {
                 List<Performance> performances =
                         performanceClient.getShowCategoryGenre(showCategory, genre)
                                 .stream()
-                                .map(performanceResponse -> Performance.toDomain(performanceResponse))
+                                .map(performanceResponse -> performanceMapper.toDomain(performanceResponse))
                                 .toList();
 
 

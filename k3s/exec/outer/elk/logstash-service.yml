@@ -7,6 +7,6 @@ spec:
   selector:
     app: logstash
   ports:
-    - port: 9600
-      targetPort: 9600
+    - port: 5000
+      targetPort: 5000
   type: ClusterIP

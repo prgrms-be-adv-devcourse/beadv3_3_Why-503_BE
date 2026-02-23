@@ -16,14 +16,14 @@ data:
     collation-server=utf8mb4_unicode_ci
     init-connect='SET NAMES utf8mb4'
 
-  # 타임존 충돌 방지 (KST 기준)
+    # 타임존 충돌 방지 (KST 기준)
     default-time-zone='+09:00'
 
-  # [중요] EC2 메모리 절약을 위한 최적화 설정
+    # [중요] EC2 메모리 절약을 위한 최적화 설정
     performance_schema=OFF
     innodb_buffer_pool_size=256M
 
-  # [중요] 클라이언트 접속 시 역방향 DNS 조회 비활성화 (접속 속도 대폭 향상)
+    # [중요] 클라이언트 접속 시 역방향 DNS 조회 비활성화 (접속 속도 대폭 향상)
     skip-name-resolve
     
     bind-address=0.0.0.0

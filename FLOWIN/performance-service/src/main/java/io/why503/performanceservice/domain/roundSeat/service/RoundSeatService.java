@@ -38,4 +38,7 @@ public interface RoundSeatService {
 
     //스케줄러에 의해 호출되는 만료된 좌석 선점을 해제하는 로직
     void cleanupExpiredReservations();
+
+    // 정산용: 특정 공연(showSq)에 속한 모든 회차 좌석(roundSeatSq)의 식별자 목록 조회
+    List<Long> getRoundSeatSqsByShowSq(Long showSq);
 }

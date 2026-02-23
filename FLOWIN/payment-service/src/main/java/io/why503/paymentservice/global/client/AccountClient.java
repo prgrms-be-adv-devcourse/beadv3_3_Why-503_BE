@@ -2,6 +2,7 @@ package io.why503.paymentservice.global.client;
 
 import io.why503.paymentservice.global.client.dto.response.AccountResponse;
 import io.why503.paymentservice.global.client.dto.request.PointUseRequest;
+import io.why503.paymentservice.global.client.dto.response.CompanySettlementResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,4 +27,8 @@ public interface AccountClient {
     void decreasePoint(
             @PathVariable("sq") Long userSq,
             @RequestBody PointUseRequest request);
+
+    // 정산용: 기획사 정산 계좌 정보 조회 (Account Service 호출)
+    @GetMapping("/company/{companySq}/settlement")
+    CompanySettlementResponse getCompanySettlementInfo(@PathVariable("companySq") Long companySq);
 }

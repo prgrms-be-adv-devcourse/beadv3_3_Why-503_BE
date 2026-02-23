@@ -38,4 +38,8 @@ public interface PerformanceClient {
     List<RoundSeatResponse> findRoundSeats(
             @RequestBody SeatReserveRequest request
     );
+
+    // 정산 처리를 위한 특정 공연(showSq)의 모든 회차 좌석 식별자(roundSeatSq) 목록 조회
+    @GetMapping("/round-seats/shows/{showSq}/sqs")
+    List<Long> getRoundSeatSqsByShowSq(@PathVariable("showSq") Long showSq);
 }

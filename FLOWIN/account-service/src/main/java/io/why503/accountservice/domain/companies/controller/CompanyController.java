@@ -59,4 +59,14 @@ public class CompanyController {
                 accountService.readCompanyMember(companySq) //회사 맴버 전체 조회
         );
     }
+
+    // 정산용: 기획사 정산 계좌 정보 조회 API (결제 서비스 등 외부 통신용)
+    @GetMapping("/{companySq}/settlement")
+    public ResponseEntity<io.why503.accountservice.domain.companies.model.dto.response.CompanySettlementResponse> getCompanySettlementInfo(
+            @PathVariable(name = "companySq") Long companySq
+    ) {
+        return ResponseEntity.ok(
+                companyService.getCompanySettlementInfo(companySq)
+        );
+    }
 }

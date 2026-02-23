@@ -9,6 +9,7 @@ package io.why503.accountservice.domain.companies.service.impl;
 import io.why503.accountbase.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanySettlementResponse;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;
 import io.why503.accountservice.domain.companies.model.entity.Company;
 import io.why503.accountservice.domain.companies.repository.CompanyRepository;
@@ -55,4 +56,19 @@ public class CompanyServiceImpl implements CompanyService {
     public Company readCompanyBySq(Long sq) {
         return findBySq(sq);
     }
+
+    @Override
+    public CompanySettlementResponse getCompanySettlementInfo(Long sq) {
+        // 이미 구현되어 있는 내부 메서드를 재사용하여 엔티티 조회 (예외 처리 포함됨)
+        Company company = findBySq(sq);
+
+        // Entity -> DTO 직접 변환 후 반환
+        return new CompanySettlementResponse(
+                sq,
+                company.getBank().name(),
+                company.getAccountNumber(),
+                company.getOwnerName()
+        );
+    }
+
 }

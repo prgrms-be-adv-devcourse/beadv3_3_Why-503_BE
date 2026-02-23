@@ -376,7 +376,7 @@ public class AiService {
 
 
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
-    public  CompletableFuture<ResultResponse> getRecommendations(ResultRequest request, Long userSq, Long bookingSq, Booking booking, ShowCategory showCategory, ShowGenre genre) {
+    public  CompletableFuture<ResultResponse> getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre) {
 
         try {
             return CompletableFuture.supplyAsync(() -> {

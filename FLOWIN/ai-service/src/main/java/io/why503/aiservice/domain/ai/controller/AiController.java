@@ -1,6 +1,5 @@
 package io.why503.aiservice.domain.ai.controller;
 
-import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
@@ -54,9 +53,9 @@ public class AiController {
     //추천 결과값 반환
     @PostMapping
     public CompletableFuture<ResultResponse> getRecommendations(
-            @RequestBody ResultRequest request, Long userSq, Long bookingSq, Booking booking, ShowCategory category, ShowGenre genre
+            @RequestBody ResultRequest request, Long userSq, ShowCategory category, ShowGenre genre
     ) {
-        return aiService.getRecommendations( request, userSq, bookingSq, booking, category, genre);
+        return aiService.getRecommendations( request, userSq, category, genre);
     }
 
 

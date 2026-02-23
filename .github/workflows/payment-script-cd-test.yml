@@ -8,7 +8,18 @@ on:
       - 'FLOWIN/payment-service/**'
 
 jobs:
+  tagging:
+    uses: ./.github/workflows/cd-tagging-script.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      attestations: write
+      packages: write
+    with:
+      service-name: payment-service
+
   releasing:
+    needs: tagging
     uses: ./.github/workflows/cd-release-script.yml
     secrets: inherit
     permissions:
@@ -17,3 +28,16 @@ jobs:
       packages: write
     with:
       service-name: payment-service
+      tag_name: ${{ needs.tagging.outputs.tag_name }}
+
+  deploy:
+    needs: tagging, releasing
+    uses: ./.github/workflows/cd-deploy-script.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      attestations: write
+      packages: write
+    with:
+      service-name: payment-service
+      tag_name: ${{ needs.tagging.outputs.tag_name }}

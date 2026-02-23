@@ -60,8 +60,6 @@ data:
               uri: http://kibana-service.flowin:5601
               predicates:
                 - Path=/kibana/**
-              filters:
-                - StripPrefix=1
             
             # [핵심] 여기서부터는 철저한 보안 구역 (JwtValidationFilter 통과 필수)
             - id: company-auth

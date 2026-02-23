@@ -23,6 +23,8 @@ configurations {
 repositories {
     mavenCentral()
 
+
+
 }
 
 ext {
@@ -31,6 +33,9 @@ ext {
 }
 dependencies {
 
+    implementation 'io.why503:account-base:0.0.1'
+
+    //web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-csv
     implementation("org.apache.commons:commons-csv:1.14.1")
@@ -47,6 +52,19 @@ dependencies {
 
 
     implementation("org.apache.poi:poi-ooxml:5.5.1")
+
+    // feign (service to service)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    //zipkin
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.github.openfeign:feign-micrometer'
+
+
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
 
     //test
     testRuntimeOnly 'com.h2database:h2'

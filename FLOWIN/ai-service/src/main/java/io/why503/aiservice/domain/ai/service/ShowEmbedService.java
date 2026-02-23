@@ -1,0 +1,60 @@
+package io.why503.aiservice.domain.ai.service;
+
+import io.why503.aiservice.domain.ai.model.embedding.Performance;
+import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
+import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
+import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
+import io.why503.aiservice.global.client.PerformanceClient;
+import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ShowEmbedService {
+
+    private final VectorStore vectorStore;
+    private final PerformanceRepository performanceRepository;
+    private final PerformanceClient performanceClient;
+
+
+    @Async
+    public void upsert(List<PerformanceResponse> performanceResponses) {
+        List<Performance> performances = performanceResponses.stream()
+                .map(response -> Performance.toDomain(response))
+                .toList();
+
+        if (performances.isEmpty()) {
+            log.warn("임베딩할 공연이 없습니다.");
+            return;
+        }
+
+        performanceRepository.saveAll(performances);
+        log.info("공연 {}건 메모리 저장 완료", performances.size());
+
+        List<Document> documents = performances.stream()
+                .map(p -> Performance.toDocument(p))
+                .toList();
+
+        vectorStore.add(documents);
+        log.info("공연 {}건 vectorStore upsert 완료", documents.size());
+
+    }
+
+    public void syncShows(ShowCategory category, ShowGenre genre) {
+        List<PerformanceResponse> responses =
+                performanceClient.getShowCategoryGenre(category, genre);
+
+        upsert(responses);
+    }
+}
+
+
+

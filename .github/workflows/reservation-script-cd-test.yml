@@ -31,7 +31,7 @@ jobs:
       tag_name: ${{ needs.tagging.outputs.tag_name }}
 
   deploy:
-    needs: tagging, releasing
+    needs: [tagging, releasing]
     uses: ./.github/workflows/cd-deploy-script.yml
     secrets: inherit
     permissions:

@@ -26,31 +26,6 @@ jobs:
       - name: Check out Repository
         uses: actions/checkout@v5
 
-      # 클러스터 연결 (Secrets에 KUBE_CONFIG 등록 필수)
-      - name: Configure Kubernetes Context
-        uses: azure/k8s-set-context@v3
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
-      # 기초 공사 (Namespace & Secret)
-      # 어떤 서비스가 배포되든 이 설정은 항상 체크 (없으면 생성, 있으면 패스)
-      - name: Ensure Namespace and Secrets
-        run: |
-          kubectl create namespace flowin --dry-run=client -o yaml | kubectl apply -f -
-          
-          kubectl create secret generic db-secret \
-            --namespace flowin \
-            --from-literal=password="${{ secrets.DB_PASSWORD }}" \
-            --from-literal=redis-password="${{ secrets.REDIS_PASSWORD }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          kubectl create secret generic elastic-credentials \
-            --namespace flowin \
-            --from-literal=password="${{ secrets.ELASTIC_PASSWORD }}" \
-            --dry-run=client -o yaml | kubectl apply -f -
-
-      # 2. 분기 배포 (Gateway vs 일반 마이크로서비스)
       # Gateway 배포 시에는 인프라(DB, MQ, ELK 등) 공통 설정까지 함께 배포하고,
       # 일반 서비스일 경우 해당 서비스의 파드만 배포합니다.
 
@@ -86,50 +61,11 @@ jobs:
       # 이미지가 latest로 동일하더라도 K3s가 새 이미지를 당겨오도록
       # 기존 파드를 안전하게 껐다 켜는 무중단 롤아웃을 수행합니다.
       # 3. 파드 재시작(Rollout)
-      - name: Rollout Restart
+      - name: Update deployment image
         run: |
-          echo "Checking status"
-          
-          SERVICE_NAME="${{ inputs.service-name }}"
-          NAMESPACE="flowin"
-          
-          if [ "$SERVICE_NAME" = "gateway-service" ]; then
-            echo "Restarting infra + gateway"
-          
-            # 인프라 리스트
-            INFRA_SERVICES=(
-              chroma
-              mysql
-              redis
-              elasticsearch
-              zipkin
-              kibana
-              logstash
-              kafka
-            )
-          
-            # 인프라 재시작
-            for INFRA in "${INFRA_SERVICES[@]}"; do
-              if kubectl get deployment $INFRA -n $NAMESPACE > /dev/null 2>&1; then
-                echo "Restarting $INFRA"
-                kubectl rollout restart deployment/$INFRA -n $NAMESPACE
-                kubectl rollout status deployment/$INFRA -n $NAMESPACE --timeout=240s
-              else
-                echo "$INFRA deployment not found"
-              fi
-            done
-          
-            # gateway도 재시작
-            kubectl rollout restart deployment/$SERVICE_NAME -n $NAMESPACE
-            kubectl rollout status deployment/$SERVICE_NAME -n $NAMESPACE --timeout=240s
-          
-          else
-            echo "Restarting only $SERVICE_NAME..."
-          
-            if kubectl get deployment $SERVICE_NAME -n $NAMESPACE > /dev/null 2>&1; then
-              kubectl rollout restart deployment/$SERVICE_NAME -n $NAMESPACE
-              kubectl rollout status deployment/$SERVICE_NAME -n $NAMESPACE --timeout=240s
-            else
-              echo "Deployment not found. Skipping rollout restart."
-            fi
-          fi
+          kubectl set image deployment.apps/${{ inputs.service-name }} \
+            ${{ inputs.service-name }}=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.image-tag }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment.apps/${{ inputs.service-name }}

@@ -20,7 +20,6 @@ jobs:
   build-image:
     name: 도커 이미지 빌드
     runs-on: ubuntu-latest
-    needs: tagging #저 job의 반환값을 사용하겠다는 소리 -> tagging 끝나면 돌아간다는 소리
 
     permissions: #권한
       contents: read

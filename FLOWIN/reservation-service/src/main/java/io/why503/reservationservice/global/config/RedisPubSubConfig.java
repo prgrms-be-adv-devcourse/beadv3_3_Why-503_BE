@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+
+import io.why503.reservationservice.domain.entry.listener.EntryTokenDeletedSubscriber;
 import io.why503.reservationservice.domain.entry.listener.EntryTokenExpiredSubscriber;
 import io.why503.reservationservice.domain.queue.listener.QueueEventSubscriber;
 
@@ -17,6 +19,9 @@ import io.why503.reservationservice.domain.queue.listener.QueueEventSubscriber;
  * ★ 테스트 할 때 주의사항 ★ 
  * config get notify-keyspace-events / config set notify-keyspace-events Ex
  * 켜야 이벤트 수신가능 
+ *  E: Keyevent 이벤트
+ *  x: expired
+ *  g: generic(del 포함)
  */
 @Configuration
 public class RedisPubSubConfig {
@@ -25,7 +30,8 @@ public class RedisPubSubConfig {
     public RedisMessageListenerContainer redisContainer(
         RedisConnectionFactory connectionFactory,
         QueueEventSubscriber subscriber,
-        EntryTokenExpiredSubscriber entryTokenExpiredSubscriber
+        EntryTokenExpiredSubscriber entryTokenExpiredSubscriber,
+        EntryTokenDeletedSubscriber entryTokenDeletedSubscriber
 ) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
@@ -45,6 +51,15 @@ public class RedisPubSubConfig {
                 new PatternTopic("__keyevent@0__:expired")
         );
 
+        // DEL(삭제) 이벤트 연결
+        container.addMessageListener(
+                entryTokenDeletedSubscriber,
+                // entry token을 직접 delete 하면 내부적으로
+                // publish __keyevent@0__:del "entry:round:{}:user:{}" 이런식으로 발생하고
+                // EntryTokenDeletedSubscriber가 수신
+                new PatternTopic("__keyevent@0__:del")
+        );
+        
         return container;
     }
 }

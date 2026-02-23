@@ -1,5 +1,6 @@
 package io.why503.reservationservice.global.client;
 
+import io.why503.reservationservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.reservationservice.global.client.dto.response.RoundSeatResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -27,21 +28,24 @@ public interface PerformanceClient {
     @PostMapping("/round-seats/reserve")
     List<RoundSeatResponse> reserveRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody List<Long> roundSeatSqs
+            @RequestBody SeatReserveRequest request
     );
 
     // 결제 미이행 또는 예매 철회 시 점유 중인 좌석 자원을 다시 판매 가능 상태로 방출
     @PostMapping("/round-seats/cancel")
-    void cancelRoundSeats(@RequestBody List<Long> roundSeatSqs);
+    void cancelRoundSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @RequestBody SeatReserveRequest request
+    );
 
     // 결제 승인 완료에 따른 좌석의 최종 소유권 확정 및 판매 완료 처리
     @PostMapping("/round-seats/confirm")
     void confirmRoundSeats(
             @RequestHeader("X-USER-SQ") Long userSq,
-            @RequestBody List<Long> roundSeatSqs
+            @RequestBody SeatReserveRequest request
     );
 
     // 다건의 좌석 식별자를 기반으로 공연 정보 및 가격 상세 데이터 추출
     @PostMapping("/round-seats/details")
-    List<RoundSeatResponse> findRoundSeats(@RequestBody List<Long> roundSeatSqs);
+    List<RoundSeatResponse> findRoundSeats(@RequestBody SeatReserveRequest request);
 }

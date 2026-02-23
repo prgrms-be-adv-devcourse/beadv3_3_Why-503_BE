@@ -7,6 +7,7 @@ import io.why503.paymentservice.domain.point.service.PointService;
 import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.ReservationClient;
+import io.why503.paymentservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.paymentservice.global.client.dto.response.BookingResponse;
 import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
@@ -49,7 +50,8 @@ public class PaymentViewController {
                     .map(bookingSeatResponse -> bookingSeatResponse.roundSeatSq())
                     .toList();
 
-            List<RoundSeatResponse> seats = performanceClient.findRoundSeats(roundSeatSqs);
+            List<RoundSeatResponse> seats =
+            performanceClient.findRoundSeats(new SeatReserveRequest(roundSeatSqs));
 
             if (seats == null || seats.isEmpty()) {
                 throw PaymentExceptionFactory.paymentNotFound("예매된 좌석 정보를 찾을 수 없습니다.");

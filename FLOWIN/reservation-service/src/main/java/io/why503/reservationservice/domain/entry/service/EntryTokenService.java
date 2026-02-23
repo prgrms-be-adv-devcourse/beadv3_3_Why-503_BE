@@ -5,4 +5,7 @@ public interface EntryTokenService {
 
     // entryToken 발급
     String issue(Long userSq, Long roundSq);
+
+    // userSq 기준으로 entryToken 삭제
+    void revokeByUserSq(Long userSq);
 }

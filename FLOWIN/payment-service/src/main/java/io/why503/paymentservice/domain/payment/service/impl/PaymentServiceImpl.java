@@ -19,6 +19,7 @@ import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.PgClient;
 import io.why503.paymentservice.global.client.ReservationClient;
 import io.why503.paymentservice.global.client.dto.request.PointUseRequest;
+import io.why503.paymentservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.paymentservice.global.client.dto.response.BookingResponse;
 import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
 import io.why503.paymentservice.global.client.dto.response.RoundSeatResponse;
@@ -105,7 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(seat -> seat.roundSeatSq())
                 .toList();
 
-        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(seatIds);
+        List<RoundSeatResponse> seatDetails = performanceClient.findRoundSeats(new SeatReserveRequest(seatIds));
         Map<Long, RoundSeatResponse> seatMap = seatDetails.stream()
                 .collect(Collectors.toMap(
                         data -> data.roundSeatSq(),
@@ -170,7 +171,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         try {
-            performanceClient.confirmRoundSeats(userSq, seatIds);
+            performanceClient.confirmRoundSeats(userSq, new SeatReserveRequest(seatIds));
             reservationClient.confirmPaid(userSq, booking.sq());
 
         } catch (Exception e) {
@@ -312,7 +313,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if (booking != null && !cancelSeatIds.isEmpty()) {
-            performanceClient.cancelRoundSeats(cancelSeatIds);
+            performanceClient.cancelRoundSeats(userSq, new SeatReserveRequest(cancelSeatIds));
             reservationClient.refundSeats(userSq, payment.getBookingSq(), cancelSeatIds);
             ticketService.resetTickets(cancelSeatIds);
         }

@@ -13,10 +13,13 @@ import io.why503.reservationservice.domain.booking.repository.BookingRepository;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
 import io.why503.reservationservice.global.client.PerformanceClient;
+import io.why503.reservationservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.reservationservice.global.client.dto.response.RoundSeatResponse;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import io.why503.reservationservice.domain.booking.listener.BookingPaidEvent;
 
 /**
  * 예매 및 좌석 선점 데이터의 생명주기를 관리하는 서비스 구현체
@@ -39,6 +44,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final EntityManager entityManager;
     private final PerformanceClient performanceClient;
+    private final ApplicationEventPublisher eventPublisher; // 이벤트 발행기
 
     // 신규 예매 요청 시 좌석의 중복 점유를 방지하고 외부 서비스에 선점 상태 기록
     @Override
@@ -62,7 +68,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<RoundSeatResponse> seatDetails;
         try {
-            seatDetails = performanceClient.findRoundSeats(requestedSeats);
+            seatDetails = performanceClient.findRoundSeats(new SeatReserveRequest(requestedSeats));
         } catch (Exception e) {
             log.error("공연 정보 조회 실패: {}", e.getMessage());
             throw BookingExceptionFactory.bookingBadRequest("공연 정보를 불러오는 데 실패했습니다.");
@@ -76,7 +82,7 @@ public class BookingServiceImpl implements BookingService {
         String genre = seatDetails.getFirst().genre();
 
         try {
-            performanceClient.reserveRoundSeats(userSq, requestedSeats);
+            performanceClient.reserveRoundSeats(userSq, new SeatReserveRequest(requestedSeats));
         } catch (Exception e) {
             log.error("공연 서비스 좌석 선점 요청 실패: {}", e.getMessage());
             throw BookingExceptionFactory.bookingBadRequest("좌석 선점에 실패했습니다.");
@@ -181,7 +187,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (!seatsToCancel.isEmpty()) {
             try {
-                performanceClient.cancelRoundSeats(seatsToCancel);
+                performanceClient.cancelRoundSeats(userSq, new SeatReserveRequest(seatsToCancel));
             } catch (Exception e) {
                 log.error("공연 서비스 좌석 선점 해제 실패. 주문번호: {}, 사유: {}", booking.getOrderId(), e.getMessage());
                 throw BookingExceptionFactory.bookingBadRequest("좌석 해제 중 오류가 발생했습니다.");
@@ -216,7 +222,7 @@ public class BookingServiceImpl implements BookingService {
                         .toList();
 
                 if (!seatsToCancel.isEmpty()) {
-                    performanceClient.cancelRoundSeats(seatsToCancel);
+                    performanceClient.cancelRoundSeats(booking.getUserSq(), new SeatReserveRequest(seatsToCancel));
                 }
 
                 bookingRepository.delete(booking);
@@ -262,6 +268,9 @@ public class BookingServiceImpl implements BookingService {
 
         booking.paid();
         log.info("예매 결제 완료 확정. 주문번호: {}", booking.getOrderId());
+
+        // 트랜젝션 커밋 이후 토큰 회수 하도록 이벤트 발행
+        eventPublisher.publishEvent(new BookingPaidEvent(userSq));
     }
 
     // 환불 절차에 따라 지정된 좌석들의 예매 기록을 제거하고 판매 가능 상태로 복구
@@ -289,7 +298,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         try {
-            performanceClient.cancelRoundSeats(validSqs);
+            performanceClient.cancelRoundSeats(userSq, new SeatReserveRequest(validSqs));
         } catch (Exception e) {
             log.error("환불 좌석 재고 해제 실패. 식별번호: {}, 좌석목록: {}, 사유: {}",
                     bookingSq, validSqs, e.getMessage());

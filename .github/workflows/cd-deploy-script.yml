@@ -69,12 +69,11 @@ jobs:
       # 3. 파드 재시작(Rollout)
       # 이미지가 latest로 동일하더라도 K3s가 새 이미지를 당겨오도록
       # 기존 파드를 안전하게 껐다 켜는 무중단 롤아웃을 수행합니다.
-      # 3. 파드 재시작(Rollout)
       - name: Update deployment image
         run: |
           kubectl set image deployment/${{ inputs.service-name }} \
-            ${{ inputs.service-name }}=${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }}
-
+            ${{ inputs.service-name }}=${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }} \
+            -n flowin
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/${{ inputs.service-name }}
+          kubectl rollout status deployment/${{ inputs.service-name }} -n flowin

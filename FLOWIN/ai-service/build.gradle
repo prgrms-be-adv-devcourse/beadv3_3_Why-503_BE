@@ -33,8 +33,6 @@ ext {
 }
 dependencies {
 
-    implementation 'io.why503:account-base:0.0.1'
-
     //web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-csv

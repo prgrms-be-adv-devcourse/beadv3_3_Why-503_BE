@@ -54,13 +54,13 @@ spec:
           # [중요] 플러그인 최적화 및 초기 번들링 시간을 고려한 장기 대기 프로브
           readinessProbe:
             httpGet:
-              path: /api/status
+              path: /kibana/api/status
               port: 5601
             initialDelaySeconds: 60
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /api/status
+              path: /kibana/api/status
               port: 5601
             initialDelaySeconds: 120
             periodSeconds: 30

@@ -7,6 +7,7 @@ import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
+import io.why503.aiservice.global.client.entity.BookingMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -52,7 +53,7 @@ public class AiService {
     private final PerformanceRepository performanceRepository;
     private final ReservationClient reservationClient;
     private final PerformanceClient performanceClient;
-
+    private final BookingMapper bookingMapper;
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest request) {
@@ -381,11 +382,12 @@ public class AiService {
         try {
             return CompletableFuture.supplyAsync(() -> {
 
+
                 List<Booking> bookings =
                         reservationClient.findMyBookings(userSq)
                                 .stream()
                                 .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
-                                .map(bookingResponse -> Booking.from(bookingResponse))
+                                .map(bookingResponse -> bookingMapper.from(bookingResponse))
                                 .toList();
 
 

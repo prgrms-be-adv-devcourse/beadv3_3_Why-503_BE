@@ -16,6 +16,7 @@ data:
     
     # [중요] Redis 메모리 제한 및 만료 정책 (EC2 OOM 방지)
     maxmemory 200mb
-    maxmemory-policy allkeys-lru    # 용량 초과 시 가장 오래 참조되지 않은 데이터부터 삭제
+    # 용량 초과 시 가장 오래 참조되지 않은 데이터부터 삭제
+    maxmemory-policy allkeys-lru
     
     tcp-keepalive 300

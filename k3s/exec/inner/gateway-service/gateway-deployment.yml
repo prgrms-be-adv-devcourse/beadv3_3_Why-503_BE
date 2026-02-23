@@ -42,6 +42,11 @@ spec:
                   name: db-secret
                   key: redis-password
 
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CLOUD_DISCOVERY_ENABLED
+              value: "false"
+
           resources:
             requests:
               memory: "256Mi"

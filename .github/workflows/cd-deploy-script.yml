@@ -6,6 +6,9 @@ on:
       service-name: #서비스 이름
         required: true
         type: string
+      tag_name:
+        required: true
+        type: string
 
 env:
   DOCKER: docker.io
@@ -64,7 +67,7 @@ jobs:
       - name: Update deployment image
         run: |
           kubectl set image deployment.apps/${{ inputs.service-name }} \
-            ${{ inputs.service-name }}=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.image-tag }}
+            ${{ inputs.service-name }}=${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }}
 
       - name: Wait for rollout
         run: |

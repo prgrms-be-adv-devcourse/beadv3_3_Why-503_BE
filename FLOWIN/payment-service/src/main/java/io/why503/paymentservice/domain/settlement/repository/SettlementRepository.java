@@ -7,17 +7,21 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * 정산 데이터의 영속성 관리 및 조건별 조회 기능을 제공하는 저장소
+ */
 @Repository
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
-    // 1. 특정 기획사의 모든 정산 내역 조회 (기획사 마이페이지/정산조회용)
+    // 기획사별 정산 이력을 최신순으로 제공
     List<Settlement> findByCompanySqOrderByCreatedDtDesc(Long companySq);
 
-    // 2. 특정 공연에 대한 정산 내역 조회 (공연별 정산 확인용)
+    // 공연별 정산 집계 내역 확인
     List<Settlement> findByShowSqOrderByCreatedDtDesc(Long showSq);
 
-    // 3. 특정 상태의 정산 내역 조회 (배치 스케줄러가 'READY' 상태인 건을 찾아서 처리할 때 사용)
+    // 특정 단계에 머물러 있는 정산 대상 추출
     List<Settlement> findBySettlementStatus(SettlementStatus settlementStatus);
 
+    // 공연에 대한 정산 데이터 존재 여부 확인
     boolean existsByShowSq(Long showSq);
 }

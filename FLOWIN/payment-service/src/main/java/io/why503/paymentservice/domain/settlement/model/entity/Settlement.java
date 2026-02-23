@@ -12,6 +12,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * 공연 정산 정보와 정산 상태 관리를 담당하는 엔티티
+ */
 @Entity
 @Table(name = "settlement")
 @Getter
@@ -63,6 +66,7 @@ public class Settlement {
         this.settlementStatus = settlementStatus;
     }
 
+    // 정산 프로세스 완료 처리 및 완료 시점 기록
     public void completeSettlement() {
         this.settlementStatus = SettlementStatus.COMPLETED;
         this.settledDt = LocalDateTime.now();

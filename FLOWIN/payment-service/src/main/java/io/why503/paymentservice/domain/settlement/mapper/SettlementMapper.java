@@ -7,9 +7,13 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 정산 엔티티 객체를 외부 응답용 DTO로 변환하는 매퍼
+ */
 @Component
 public class SettlementMapper {
 
+    // 단일 정산 도메인 객체를 응답 규격에 맞게 변환
     public SettlementResponse toResponse(Settlement settlement) {
         if (settlement == null) {
             return null;
@@ -28,6 +32,7 @@ public class SettlementMapper {
                 .build();
     }
 
+    // 다건의 정산 내역 목록을 응답 목록으로 일괄 변환
     public List<SettlementResponse> toResponseList(List<Settlement> settlements) {
         if (settlements == null || settlements.isEmpty()) {
             return new ArrayList<>();

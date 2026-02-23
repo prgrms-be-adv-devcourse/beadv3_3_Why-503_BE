@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 정산 내역 조회 및 정산 실행 프로세스 제어를 위한 외부 인터페이스
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/settlements")
@@ -15,7 +18,7 @@ public class SettlementController {
 
     private final SettlementService settlementService;
 
-    // 1. 특정 기획사의 모든 정산 내역 조회 (기획사 마이페이지용)
+    // 기획사 기준의 전체 정산 통계 및 내역 제공
     @GetMapping("/company/{companySq}")
     public ResponseEntity<List<SettlementResponse>> getSettlementsByCompanySq(
             @PathVariable(name = "companySq") Long companySq) {
@@ -24,7 +27,7 @@ public class SettlementController {
         return ResponseEntity.ok(response);
     }
 
-    // 2. 특정 공연의 정산 내역 조회 (공연별 정산 상태 확인용)
+    // 개별 공연의 정산 진행 현황 조회
     @GetMapping("/show/{showSq}")
     public ResponseEntity<List<SettlementResponse>> getSettlementsByShowSq(
             @PathVariable(name = "showSq") Long showSq) {
@@ -33,7 +36,7 @@ public class SettlementController {
         return ResponseEntity.ok(response);
     }
 
-    // 3. 특정 공연 종료 후 수동으로 정산 대기 데이터 생성 (관리자용)
+    // 공연 판매 종료에 따른 정산 기초 데이터 생성 요청
     @PostMapping("/show/{showSq}/company/{companySq}")
     public ResponseEntity<String> createSettlement(
             @PathVariable(name = "showSq") Long showSq,
@@ -43,7 +46,7 @@ public class SettlementController {
         return ResponseEntity.ok("정산 대기 데이터가 성공적으로 생성되었습니다.");
     }
 
-    // 4. 정산 대기 건 일괄 송금 처리 수동 트리거 (관리자용)
+    // 미결제 정산 건들에 대한 실제 송금 및 상태 업데이트 트리거
     @PostMapping("/process-pending")
     public ResponseEntity<String> processPendingSettlements() {
 

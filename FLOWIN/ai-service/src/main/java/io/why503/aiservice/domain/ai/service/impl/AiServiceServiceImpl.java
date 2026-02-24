@@ -541,7 +541,7 @@ public class AiServiceServiceImpl implements AiService {
                         .distinct()
                         .toList();
 
-                String prompt = AiServicePromptImpl.prompt.formatted(
+                String prompt = AiServicePromptImpl.prompt.formatted(categoryRule,performanceDocs,
                         ticketRequest.showCategory(),
                         ticketRequest.genre(),
                         topShowCategory,
@@ -605,6 +605,7 @@ public class AiServiceServiceImpl implements AiService {
                         fixedResponse.topFinalShows(),
                         similarShows,
                         similarTopShows
+
                 );
             });
         } catch (Exception e) {

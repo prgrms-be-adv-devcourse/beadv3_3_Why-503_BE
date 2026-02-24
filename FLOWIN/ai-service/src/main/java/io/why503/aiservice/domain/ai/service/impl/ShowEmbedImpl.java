@@ -38,7 +38,7 @@ public class ShowEmbedImpl implements ShowEmbed {
             return;
         }
 
-        performanceRepository.saveAll(performances);
+
         log.info("공연 {}건 메모리 저장 완료", performances.size());
 
         List<Document> documents = performances.stream()

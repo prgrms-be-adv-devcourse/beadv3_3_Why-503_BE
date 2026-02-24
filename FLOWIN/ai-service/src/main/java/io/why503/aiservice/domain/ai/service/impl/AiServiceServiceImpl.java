@@ -7,11 +7,9 @@ import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenreResolver;
 import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.*;
-import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
 import io.why503.aiservice.domain.ai.service.AiService;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
-import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import io.why503.aiservice.global.client.entity.mapper.BookingMapper;
 import io.why503.aiservice.global.client.entity.mapper.PerformanceMapper;
 import io.why503.aiservice.global.exception.AiException;
@@ -56,7 +54,6 @@ public class AiServiceServiceImpl implements AiService {
     private final ObjectMapper mapper;
     private final VectorStore vectorStore;
     private final EmbeddingModel embeddingModel;
-    private final PerformanceRepository performanceRepository;
     private final ReservationClient reservationClient;
     private final PerformanceClient performanceClient;
     private final BookingMapper bookingMapper;
@@ -441,10 +438,6 @@ public class AiServiceServiceImpl implements AiService {
                 //공연 장르 문서 검색
                 List<Document> categoryDocs =
                         searchCategoryRules(topShowCategory);
-
-                //외부 공연 데이터
-                List<PerformanceResponse> responsesPerformances =
-                        performanceRepository.findAllResponses();
 
 
 

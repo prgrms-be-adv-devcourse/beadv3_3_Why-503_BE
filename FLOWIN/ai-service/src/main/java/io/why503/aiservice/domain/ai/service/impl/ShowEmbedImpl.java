@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ShowEmbedServiceImpl implements ShowEmbed {
+public class ShowEmbedImpl implements ShowEmbed {
 
     private final VectorStore vectorStore;
     private final PerformanceRepository performanceRepository;

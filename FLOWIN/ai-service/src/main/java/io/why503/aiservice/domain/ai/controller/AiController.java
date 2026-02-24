@@ -5,7 +5,7 @@ import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
 import io.why503.aiservice.domain.ai.service.impl.AiServiceServiceImpl;
-import io.why503.aiservice.domain.ai.service.impl.ShowEmbedServiceImpl;
+import io.why503.aiservice.domain.ai.service.impl.ShowEmbedImpl;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class AiController {
 
     private final AiServiceServiceImpl aiServiceImpl;
     private final VectorStore vectorStore;
-    private final ShowEmbedServiceImpl showEmbedServiceImpl;
+    private final ShowEmbedImpl showEmbedImpl;
     private final PerformanceClient performanceClient;
     private final CategoryDocument categoryDocument;
 
@@ -39,7 +39,7 @@ public class AiController {
         //공연 문서
         List<PerformanceResponse> responses =
                 performanceClient.getShowCategoryGenre(category, genre);
-        showEmbedServiceImpl.upsert(responses);
+        showEmbedImpl.upsert(responses);
         log.info("장르 데이터 초기화 끝!");
     }
 
@@ -63,6 +63,6 @@ public class AiController {
     //공연 동기화
     @GetMapping("/performances")
     public void show(ShowCategory category, ShowGenre genre) {
-        showEmbedServiceImpl.syncShows(category, genre);
+        showEmbedImpl.syncShows(category, genre);
     }
 }

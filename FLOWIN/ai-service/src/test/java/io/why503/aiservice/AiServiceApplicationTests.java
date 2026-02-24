@@ -8,7 +8,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-@EnableFeignClients
 class AiServiceApplicationTests {
 
     @Test

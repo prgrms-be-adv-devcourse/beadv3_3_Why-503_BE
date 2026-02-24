@@ -2,8 +2,8 @@ package io.why503.aiservice.domain.ai.service;
 
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
-import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
+import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
+import io.why503.aiservice.domain.ai.repository.impl.PerformanceRepository;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import io.why503.aiservice.global.client.entity.mapper.PerformanceMapper;

@@ -1,4 +1,4 @@
-package io.why503.aiservice.domain.ai.model.embedding.genre;
+package io.why503.aiservice.domain.ai.model.embedding.genre.impl;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 

@@ -1,6 +1,6 @@
 package io.why503.aiservice.domain.ai.model.embedding;
 
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.global.exception.AiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;

@@ -1,6 +1,7 @@
 package io.why503.aiservice.domain.ai.model.embedding;
 
 import io.why503.aiservice.domain.ai.model.embedding.genre.*;
+import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.global.exception.AiException;
 import lombok.Getter;
 

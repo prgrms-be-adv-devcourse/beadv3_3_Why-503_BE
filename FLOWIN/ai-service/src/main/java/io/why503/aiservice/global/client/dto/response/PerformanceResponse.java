@@ -2,7 +2,7 @@ package io.why503.aiservice.global.client.dto.response;
 
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 
 import java.time.LocalDateTime;
 

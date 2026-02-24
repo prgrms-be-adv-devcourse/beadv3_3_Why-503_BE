@@ -1,7 +1,6 @@
 package io.why503.aiservice.domain.ai.model.embedding.genre;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 
 //뮤지컬
 public enum MusicalType implements ShowGenre {
@@ -27,4 +26,12 @@ public enum MusicalType implements ShowGenre {
         return Name;
     }
 
+    public static ShowGenre fromString(String genre) {
+        for (MusicalType type : values()) {
+            if (type.name().equalsIgnoreCase(genre) || type.getName().equalsIgnoreCase(genre)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unknown genre: " + genre);
+    }
 }

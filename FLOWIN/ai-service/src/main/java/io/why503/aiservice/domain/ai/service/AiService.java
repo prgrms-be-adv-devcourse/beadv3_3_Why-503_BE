@@ -3,7 +3,7 @@ package io.why503.aiservice.domain.ai.service;
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.*;
 import org.springframework.ai.document.Document;
 
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public interface AiService {
-    float[] embed(ResultRequest request);
+    float[] embed(ResultRequest request, Long userSq);
     double cosineSimilarity(float[] vectorA, float[] vectorB);
     Map<ShowCategory, Double> CategoryScores(ResultRequest request, float[] userVector);
     Map<ShowGenre, Double> GenreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores);
@@ -31,5 +31,5 @@ public interface AiService {
     ResultRequest Tickets(List<Booking> bookings);
     CompletableFuture<ResultResponse> getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre);
     List<String> findSimilarShows(List<Recommendations> fallbackRecommendations);
-    ResultResponse fallbackRecommendation(ResultRequest request);
+    ResultResponse fallbackRecommendation(ResultRequest request, Long userSq);
 }

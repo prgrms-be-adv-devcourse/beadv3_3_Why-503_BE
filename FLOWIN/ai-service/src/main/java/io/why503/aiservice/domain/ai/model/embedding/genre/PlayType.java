@@ -1,7 +1,6 @@
 package io.why503.aiservice.domain.ai.model.embedding.genre;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 
 //연극
 public enum PlayType implements ShowGenre {
@@ -34,4 +33,12 @@ public enum PlayType implements ShowGenre {
         return Name;
     }
 
+    public static ShowGenre fromString(String genre) {
+        for (PlayType type : values()) {
+            if (type.name().equalsIgnoreCase(genre) || type.getName().equalsIgnoreCase(genre)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unknown genre: " + genre);
+    }
 }

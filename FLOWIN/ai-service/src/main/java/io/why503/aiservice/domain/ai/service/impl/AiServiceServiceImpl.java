@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenreResolver;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.*;
 import io.why503.aiservice.domain.ai.model.vo.*;
 import io.why503.aiservice.domain.ai.service.AiService;
+import io.why503.aiservice.domain.ai.service.mapper.AiResponseMapper;
+import io.why503.aiservice.domain.ai.service.mapper.FallbackResultResponseMapper;
+import io.why503.aiservice.domain.ai.service.mapper.RecommendationsMapper;
+import io.why503.aiservice.domain.ai.service.mapper.ResultResponseMapper;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.entity.mapper.BookingMapper;
@@ -62,13 +65,42 @@ public class AiServiceServiceImpl implements AiService {
     private final ShowGenreResolver genreResolver;
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
-    public float[] embed(ResultRequest request) {
+    public float[] embed(ResultRequest request, Long userSq) {
 
-        String showCategory = request.showCategory().stream()
+        List<Booking> bookings =
+                reservationClient.findMyBookings(userSq)
+                        .stream()
+                        .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
+                        .map(bookingResponse -> bookingMapper.from(bookingResponse))
+                        .toList();
+
+        List<ShowCategory> categories = bookings.stream()
+                .filter(b -> "PAID".equalsIgnoreCase(b.status()))
+                .map(booking -> ShowCategory.valueOf(booking.category()))
+                .toList();
+
+        List<ShowGenre> genres = bookings.stream()
+                .filter(b -> "PAID".equalsIgnoreCase(b.status()))
+                .map(booking -> {
+                    switch (ShowCategory.valueOf(booking.category())) {
+                        case MUSICAL:
+                            return MusicalType.fromString(booking.genre());
+                        // 다른 카테고리의 장르는 각각 다른 구현체에서 fromString 호출
+                        case CONCERT:
+                            return ConcertType.fromString(booking.genre());
+                        case PLAY:
+                            return PlayType.fromString(booking.genre());
+                        default:
+                            throw new IllegalArgumentException("Unknown category: " + booking.category());
+                    }
+                })
+                .toList();
+
+        String showCategory = categories.stream()
                 .map(Category -> Category.name())
                 .collect(Collectors.joining(","));
 
-        String genre = request.genre().stream()
+        String genre = genres.stream()
                 .map(Genre -> Genre.getName())
                 .collect(Collectors.joining(","));
 
@@ -415,7 +447,7 @@ public class AiServiceServiceImpl implements AiService {
 
                 ResultRequest ticketRequest = Tickets(bookings);
                 //임베딩 시작
-                float[] userVector = embed(ticketRequest);
+                float[] userVector = embed(ticketRequest, userSq);
                 //선호하는 공연 선정 계산 ( aiResponse -> categoryScore )
                 Map<ShowCategory, Double> categoryScores =
                         CategoryScores(ticketRequest, userVector);
@@ -432,8 +464,8 @@ public class AiServiceServiceImpl implements AiService {
                 //사용자의 최종 카테고리 공연 리스트
                 List<Performance> topCategoryPerformances =
                         performances.stream()
-                        .filter(p -> topShowCategory.contains(p.category()))
-                        .toList();
+                                .filter(p -> topShowCategory.contains(p.category()))
+                                .toList();
 
                 //공연 장르 문서 검색
                 List<Document> categoryDocs =
@@ -534,108 +566,62 @@ public class AiServiceServiceImpl implements AiService {
                         .distinct()
                         .toList();
 
-                String prompt = AiServicePromptImpl.prompt.formatted(categoryRule,performanceDocs,
+                String prompt = AiServicePromptImpl.prompt.formatted(
+                        categoryRule,
+                        performanceDocs,
                         ticketRequest.showCategory(),
                         ticketRequest.genre(),
                         topShowCategory,
                         topGenre,
-                        CategoryScore,
-                        GenreScore,
+                        convertCategoryScore(categoryScores),
+                        convertGenreScore(genreScores),
                         topScoreShows,
                         topFinalShows,
                         similarShows
                 );
 
-                //ai 호출 -> 프롬프트 입력
-                String content = ask(prompt).join();
-
                 //ai에게 받는 응답을 문자열 파싱
-                AiResponse aiResponse = parse(content);
-
-                List<AiRecommendation> recommendations = Optional.ofNullable(aiResponse.recommendations())
-                        .orElse(List.of()).stream().map(
-                                ar -> new AiRecommendation(
-                                        ar.showCategory(),
-                                        ar.reason(),
-                                        ar.explanations(),
-                                        ar.showCategory(),
-                                        ar.showGenre()
-                                ))
-                        .toList();
+                AiResponse aiResponse = parse(ask(prompt).join());
 
                 //null 객체 처리
-                AiResponse fixedResponse = new AiResponse(
-                        Optional.ofNullable(aiResponse.summary()).orElse(""),
-                        Optional.ofNullable(aiResponse.explanations()).orElse(List.of()),
-                        recommendations,
-                        Optional.ofNullable(aiResponse.categoryScore()).orElse(convertCategoryScore(categoryScores)),
-                        Optional.ofNullable(aiResponse.genreScore()).orElse(convertGenreScore(genreScores)),
-                        Optional.ofNullable(aiResponse.topCategory()).orElse(topShowCategory.stream().map(
-                                Category  -> Category.name()).toList()),
-                        Optional.ofNullable(aiResponse.topGenre()).orElse(topGenre.stream().map(
-                                Genre -> Genre.getName()).toList()),
-                        Optional.ofNullable(aiResponse.topFinalShows()).orElse(finalShows.stream().map(
-                                typeShowScore -> String.valueOf(typeShowScore.typeScore())).toList())
-
+                AiResponse fixedResponse = AiResponseMapper.toFixedResponse(
+                        aiResponse, categoryScores, genreScores, topShowCategory, topGenre, finalShows
                 );
 
                 //AiRecommendation -> 스트림, Recommendations -> 스트림
-                List<Recommendations> finalRecommendations =
-                        fixedResponse.recommendations().stream()
-                                .map(ar -> toDomain(ar))
-                                .toList();
+                List<Recommendations> finalRecommendations = RecommendationsMapper.toDomain(fixedResponse.recommendations());
 
 
                 //응답 반환
-                return new ResultResponse(
-                        fixedResponse.summary(),
-                        fixedResponse.explanations(),
+                return ResultResponseMapper.toResultResponse(
+                        fixedResponse,
                         finalRecommendations,
-                        fixedResponse.categoryScore(),
-                        fixedResponse.genreScore(),
-                        fixedResponse.topCategory(),
-                        fixedResponse.topGenre(),
-                        fixedResponse.topFinalShows(),
                         similarShows,
                         similarTopShows
-
                 );
+
             });
         } catch (Exception e) {
-            return CompletableFuture.completedFuture(fallbackRecommendation(request));
+            return CompletableFuture.completedFuture(fallbackRecommendation(request, userSq));
         }
 
     }
 
+    @Override
+    public List<String> findSimilarShows(List<Recommendations> recommendations) {
+        // fallback 예시
+        if (recommendations == null || recommendations.isEmpty()) {
+            return List.of();
+        }
+
+        // 간단 예: 추천 장르 이름 목록 반환
+        return recommendations.stream()
+                .map(r -> r.showGenre().getName())
+                .distinct()
+                .toList();
+    }
     //비슷한 장르 찾기
-    public List<String> findSimilarShows(List<Recommendations> fallbackRecommendations) {
-        Set<String> similarShows = new HashSet<>();
-
-        for (Recommendations rec : fallbackRecommendations) {
-            ShowCategory showCategory = rec.showCategory();
-            ShowGenre topShowType = rec.showGenre();
-
-            List<? extends ShowGenre> candidates = showCategory.getTypes().stream()
-                    .filter(Genre -> !Genre.equals(topShowType))
-                    .toList();
-
-            Map<ShowGenre, Integer> score = new HashMap<>();
-
-            score.entrySet().stream()
-                    .sorted(Map.Entry.<ShowGenre, Integer>comparingByValue().reversed())
-                    .map(entry -> entry.getKey().getName()).limit(2)
-                    .forEach(entry -> similarShows.add(entry));
-        }
-
-        return new ArrayList<>(similarShows);
-    }
-
-
-
-    //ai 요청 실패시 기본결과 값으로 호출
-    public ResultResponse fallbackRecommendation(
-            ResultRequest request
-    ) {
+    public ResultResponse fallbackRecommendation(ResultRequest request, Long userSq) {
 
         List<Recommendations> fallbackRecommendations = List.of(
                 new Recommendations(
@@ -646,35 +632,45 @@ public class AiServiceServiceImpl implements AiService {
                 new Recommendations(
                         ShowCategory.CONCERT,
                         "라이브 공연 선호",
-                        ShowCategory.CONCERT.getTypes().iterator().next()),
-                new Recommendations(ShowCategory.PLAY, "대화 중심 작품 선호", ShowCategory.PLAY.getTypes().iterator().next()),
-                new Recommendations(ShowCategory.CLASSIC, "차분한 분위기, 클래식 선호", ShowCategory.CLASSIC.getTypes().iterator().next())
+                        ShowCategory.CONCERT.getTypes().iterator().next()
+                ),
+                new Recommendations(
+                        ShowCategory.PLAY,
+                        "대화 중심 작품 선호",
+                        ShowCategory.PLAY.getTypes().iterator().next()
+                ),
+                new Recommendations(
+                        ShowCategory.CLASSIC,
+                        "차분한 분위기, 클래식 선호",
+                        ShowCategory.CLASSIC.getTypes().iterator().next()
+                )
         );
-        //임베딩 관련 데이터 초기화
+
         float[] userVector;
         try {
-            userVector = embed(request);
+            userVector = embed(request, userSq);
         } catch (Exception e) {
-//            userVector = new float[0];
             userVector = new float[embeddingModel.dimensions()];
         }
-        Map<ShowCategory, Double> categoryScores = CategoryScores(request, userVector);
 
+        Map<ShowCategory, Double> categoryScores = CategoryScores(request, userVector);
         Map<ShowGenre, Double> genreScores = GenreScores(request, categoryScores);
 
-        Map<String, String> categoryScore = convertCategoryScore(CategoryScores(request, userVector));
+        Map<String, String> categoryScore = convertCategoryScore(categoryScores);
         Map<String, String> genreScore = convertGenreScore(genreScores);
-        List<String> topCategory = TopCategory(request, userVector).stream().map(showCategory -> showCategory.name()).toList();
-        List<String> topGenre = TopGenre(request, categoryScores).stream().map(showCategory -> showCategory.getName()).toList();
-        List<String> topFinalShows = fallbackRecommendations.stream().map(recommendations -> recommendations.showGenre().getName()).toList();
+        List<String> topCategory = TopCategory(request, userVector).stream().map(ShowCategory::name).toList();
+        List<String> topGenre = TopGenre(request, categoryScores).stream().map(ShowGenre::getName).toList();
+        List<String> topFinalShows = fallbackRecommendations.stream()
+                .map(r -> r.showGenre().getName())
+                .toList();
         List<String> similarShows = findSimilarShows(fallbackRecommendations);
         List<String> similarTopShows = fallbackRecommendations.stream()
-                .map(recommendations -> recommendations.showGenre().getName())
-                .distinct().limit(3).toList();
+                .map(r -> r.showGenre().getName())
+                .distinct().limit(3)
+                .toList();
 
-        return new ResultResponse(
-                "기본 추천 결과입니다.",
-                List.of("AI 응답 실패로 기본 추천을 제공합니다."),
+        // Mapper 사용
+        return FallbackResultResponseMapper.toResultResponse(
                 fallbackRecommendations,
                 categoryScore,
                 genreScore,

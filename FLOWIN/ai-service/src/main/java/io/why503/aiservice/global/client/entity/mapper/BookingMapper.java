@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookingMapper {
 
-    public Booking from(BookingResponse r) {
+    public Booking BookingResponseToBooking(BookingResponse r) {
         return new Booking(
                 r.sq(),
                 r.userSq(),

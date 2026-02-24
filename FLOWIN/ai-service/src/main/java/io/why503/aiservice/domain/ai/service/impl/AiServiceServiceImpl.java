@@ -71,7 +71,7 @@ public class AiServiceServiceImpl implements AiService {
                 reservationClient.findMyBookings(userSq)
                         .stream()
                         .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
-                        .map(bookingResponse -> bookingMapper.from(bookingResponse))
+                        .map(bookingResponse -> bookingMapper.BookingResponseToBooking(bookingResponse))
                         .toList();
 
         List<ShowCategory> categories = bookings.stream()
@@ -433,14 +433,14 @@ public class AiServiceServiceImpl implements AiService {
                         reservationClient.findMyBookings(userSq)
                                 .stream()
                                 .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
-                                .map(bookingResponse -> bookingMapper.from(bookingResponse))
+                                .map(bookingResponse -> bookingMapper.BookingResponseToBooking(bookingResponse))
                                 .toList();
 
 
                 List<Performance> performances =
                         performanceClient.getShowCategoryGenre(showCategory, genre)
                                 .stream()
-                                .map(performanceResponse -> performanceMapper.toDomain(performanceResponse))
+                                .map(performanceResponse -> performanceMapper.PerformanceResponseToPerformance(performanceResponse))
                                 .toList();
 
 

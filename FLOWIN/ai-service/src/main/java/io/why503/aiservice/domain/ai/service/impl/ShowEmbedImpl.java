@@ -28,7 +28,7 @@ public class ShowEmbedImpl implements ShowEmbed {
 
     public void upsert(List<PerformanceResponse> performanceResponses) {
         List<Performance> performances = performanceResponses.stream()
-                .map(response -> performanceMapper.toDomain(response))
+                .map(response -> performanceMapper.PerformanceResponseToPerformance(response))
                 .toList();
 
         if (performances.isEmpty()) {

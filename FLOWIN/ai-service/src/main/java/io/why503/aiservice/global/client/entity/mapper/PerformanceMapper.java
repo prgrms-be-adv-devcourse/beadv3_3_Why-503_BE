@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PerformanceMapper {
 
-    public Performance toDomain(PerformanceResponse response) {
+    public Performance PerformanceResponseToPerformance(PerformanceResponse response) {
         return new Performance(
                 response.category(),
                 response.genre()

@@ -1,4 +1,4 @@
-package io.why503.aiservice.domain.ai.repository.impl;
+package io.why503.aiservice.domain.ai.repository;
 
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;

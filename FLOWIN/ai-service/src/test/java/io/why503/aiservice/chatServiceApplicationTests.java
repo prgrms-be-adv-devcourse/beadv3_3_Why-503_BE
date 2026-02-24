@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 //@SpringBootTest
 //@ActiveProfiles("test")
 //@EnableFeignClients
-class AiServiceApplicationTests {
+class AiServiceImplApplicationTests {
 
     @Test
     void contextLoads() {

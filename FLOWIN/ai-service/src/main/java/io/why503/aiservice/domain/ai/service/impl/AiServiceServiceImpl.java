@@ -1,13 +1,14 @@
-package io.why503.aiservice.domain.ai.service;
+package io.why503.aiservice.domain.ai.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenreResolver;
+import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.*;
-import io.why503.aiservice.domain.ai.repository.impl.PerformanceRepository;
+import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
+import io.why503.aiservice.domain.ai.service.AiService;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @EnableAsync
-public class AiService {
+public class AiServiceServiceImpl implements AiService {
 
     private final ChatClient chatClient;
     private final ObjectMapper mapper;
@@ -105,7 +106,7 @@ public class AiService {
     }
 
     //장르 점수 계산 (빈도 + 임베딩 유사도)
-    private Map<ShowCategory, Double> CategoryScores(ResultRequest request, float[] userVector) {
+    public Map<ShowCategory, Double> CategoryScores(ResultRequest request, float[] userVector) {
         Map<ShowCategory, Double> scoreMap = new EnumMap<>(ShowCategory.class);
 
         //구매 횟수 (가중치 적용하기 위해 장르 중복 발생 시 로그 처리)
@@ -167,7 +168,7 @@ public class AiService {
 
 
     //Category 점수를 ShowCategory에 분배
-    private Map<ShowGenre, Double> GenreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
+    public Map<ShowGenre, Double> GenreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
 
         Map<ShowGenre, Double> scoreMap = new HashMap<>();
 
@@ -206,7 +207,7 @@ public class AiService {
 
 
     //최종 점수 = 카테고리 점수 50% + 분위기 점수 합 50% ( 최종 추천에 대한 점수 계산 )
-    private double FinalScore(
+    public double FinalScore(
             Performance performance,
             Map<ShowCategory, Double> categoryScores,
             Map<ShowGenre, Double> genreScores
@@ -226,7 +227,7 @@ public class AiService {
 
 
     //상위 장르 + 점수 -> 매김
-    private List<TypeShowScore> FinalShowRanking(
+    public List<TypeShowScore> FinalShowRanking(
             List<Performance> performances,
             Map<ShowCategory, Double> categoryScores,
             Map<ShowGenre, Double> genreScores
@@ -246,7 +247,7 @@ public class AiService {
 
 
     //유사 공연
-    private List<String> SimilarShows(List<TypeShowScore> topFinalShows, List<Performance> performances) {
+    public List<String> SimilarShows(List<TypeShowScore> topFinalShows, List<Performance> performances) {
         Set<String> similarShows = new LinkedHashSet<>();
 
         //각 장르마다 점수가 높은 점수 지정
@@ -265,7 +266,7 @@ public class AiService {
 
 
     //사용자의 행동 기반 상위 카테고리 결정
-    private List<ShowCategory> TopCategory(ResultRequest request, float[] userVector) {
+    public List<ShowCategory> TopCategory(ResultRequest request, float[] userVector) {
         Map<ShowCategory, Double> scores = CategoryScores(request, userVector);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<ShowCategory, Double>comparingByValue().reversed())
@@ -273,7 +274,7 @@ public class AiService {
                 .limit(2).toList();
     }
     //상위 장르 결정
-    private List<ShowGenre> TopGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
+    public List<ShowGenre> TopGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
         if (request.genre() == null || request.genre().isEmpty()) return List.of();
 
         Map<ShowGenre, Double> scores = GenreScores(request, categoryScores);
@@ -303,7 +304,7 @@ public class AiService {
         }
     }
     //출력에 빈 리스트를 받지 않기 위한 json에 불필요한 정보 지우기
-    private String cleanJson(String content) {
+    public String cleanJson(String content) {
         if (content == null) return "{}";
         int start = content.indexOf("{");
         int end = content.lastIndexOf("}");
@@ -312,7 +313,7 @@ public class AiService {
 
 
     //문자열 ai용 추천 반환
-    private Recommendations toDomain(AiRecommendation ar) {
+    public Recommendations toDomain(AiRecommendation ar) {
         ShowCategory showCategory = ShowCategory.fromString(ar.showCategory());
         ShowGenre showGenre = genreResolver.fromString(ar.showGenre());
         if (!showCategory.supports(showGenre)) {
@@ -327,7 +328,7 @@ public class AiService {
     }
 
     //점수 반환
-    private Map<String, String> convertCategoryScore(Map<ShowCategory, Double> scores) {
+    public Map<String, String> convertCategoryScore(Map<ShowCategory, Double> scores) {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> entry.getKey().name(),
@@ -336,7 +337,7 @@ public class AiService {
     }
 
     //점수 반환
-    private Map<String, String> convertGenreScore(Map<ShowGenre, Double> scores) {
+    public Map<String, String> convertGenreScore(Map<ShowGenre, Double> scores) {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> entry.getKey().getName(),
@@ -345,7 +346,7 @@ public class AiService {
     }
 
     //장르 문서 검색용 함수
-    private List<Document> searchCategoryRules(List<ShowCategory> topShowCategory) {
+    public List<Document> searchCategoryRules(List<ShowCategory> topShowCategory) {
         String query = topShowCategory.stream()
                 .map(showCategory -> showCategory.name())
                 .collect(Collectors.joining(" "));
@@ -361,7 +362,7 @@ public class AiService {
     }
 
     //공연 문서 검색용 함수
-    private List<Document> searchPerformances(List<ShowCategory> topShowCategory) {
+    public List<Document> searchPerformances(List<ShowCategory> topShowCategory) {
         return vectorStore.similaritySearch(
                         SearchRequest.builder()
                                 .query("공연")
@@ -373,7 +374,7 @@ public class AiService {
     }
 
     //구매한 내역 반환
-    private ResultRequest Tickets(List<Booking> bookings) {
+    public ResultRequest Tickets(List<Booking> bookings) {
 
         List<ShowCategory> showCategory = bookings.stream()
                 .map(booking -> ShowCategory.valueOf(booking.category()))
@@ -693,7 +694,7 @@ public class AiService {
     }
 
     //비슷한 장르 찾기
-    private List<String> findSimilarShows(List<Recommendations> fallbackRecommendations) {
+    public List<String> findSimilarShows(List<Recommendations> fallbackRecommendations) {
         Set<String> similarShows = new HashSet<>();
 
         for (Recommendations rec : fallbackRecommendations) {

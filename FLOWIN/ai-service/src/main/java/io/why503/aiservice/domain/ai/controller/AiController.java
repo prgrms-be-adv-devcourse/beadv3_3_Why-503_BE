@@ -4,8 +4,8 @@ import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
-import io.why503.aiservice.domain.ai.service.AiService;
-import io.why503.aiservice.domain.ai.service.ShowEmbedService;
+import io.why503.aiservice.domain.ai.service.impl.AiServiceServiceImpl;
+import io.why503.aiservice.domain.ai.service.impl.ShowEmbedServiceImpl;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,9 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/recommend")
 public class AiController {
 
-    private final AiService aiService;
+    private final AiServiceServiceImpl aiServiceImpl;
     private final VectorStore vectorStore;
-    private final ShowEmbedService showEmbedService;
+    private final ShowEmbedServiceImpl showEmbedServiceImpl;
     private final PerformanceClient performanceClient;
     private final CategoryDocument categoryDocument;
 
@@ -39,7 +39,7 @@ public class AiController {
         //공연 문서
         List<PerformanceResponse> responses =
                 performanceClient.getShowCategoryGenre(category, genre);
-        showEmbedService.upsert(responses);
+        showEmbedServiceImpl.upsert(responses);
         log.info("장르 데이터 초기화 끝!");
     }
 
@@ -56,13 +56,13 @@ public class AiController {
     public CompletableFuture<ResultResponse> getRecommendations(
             @RequestBody ResultRequest request, Long userSq, ShowCategory category, ShowGenre genre
     ) {
-        return aiService.getRecommendations( request, userSq, category, genre);
+        return aiServiceImpl.getRecommendations( request, userSq, category, genre);
     }
 
 
     //공연 동기화
     @GetMapping("/performances")
     public void show(ShowCategory category, ShowGenre genre) {
-        showEmbedService.syncShows(category, genre);
+        showEmbedServiceImpl.syncShows(category, genre);
     }
 }

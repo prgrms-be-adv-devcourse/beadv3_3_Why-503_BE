@@ -14,11 +14,4 @@ public record TypeShowScore(
         double typeScore,
         //공연
         Performance performance
-) {
-        public TypeShowScore (ShowCategory showCategory, ShowGenre genre, double typeScore, Performance performance) {
-                this.showCategory = showCategory;
-                this.genre = genre;
-                this.typeScore = typeScore;
-                this.performance = performance;
-        }
-}
+) { }

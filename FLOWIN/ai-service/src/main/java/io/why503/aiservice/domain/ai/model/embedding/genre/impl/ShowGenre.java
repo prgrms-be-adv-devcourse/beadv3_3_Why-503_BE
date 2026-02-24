@@ -10,7 +10,6 @@ public interface ShowGenre {
     //공연 장르
     String getName();
 
-
     //카테고리와 장르 연결
     default boolean matches(String value) {
         return getName().equalsIgnoreCase(value);

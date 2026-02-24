@@ -589,7 +589,7 @@ public class AiServiceServiceImpl implements AiService {
                 );
 
                 //AiRecommendation -> 스트림, Recommendations -> 스트림
-                List<Recommendations> finalRecommendations = RecommendationsMapper.toDomain(fixedResponse.recommendations());
+                List<Recommendations> finalRecommendations = RecommendationsMapper.toAiRecommendations(fixedResponse.recommendations());
 
 
                 //응답 반환

@@ -1,11 +1,11 @@
-name: Account Service CD (Test)
+name: Reservation Service CD (Test)
 
 on:
   push:
     branches:
-      - FI-222_feat_cd-sc-2
+      - main
     paths:
-      - 'FLOWIN/account-service/**'
+      - 'FLOWIN/reservation-service/**'
 
 jobs:
   tagging:
@@ -16,7 +16,7 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: account-service
+      service-name: reservation-service
 
   releasing:
     needs: tagging
@@ -27,7 +27,7 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: account-service
+      service-name: reservation-service
       tag_name: ${{ needs.tagging.outputs.tag_name }}
 
   deploy:
@@ -39,5 +39,5 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: account-service
+      service-name: reservation-service
       tag_name: ${{ needs.tagging.outputs.tag_name }}

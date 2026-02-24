@@ -1,11 +1,11 @@
-name: Performance Service CD (Test)
+name: Payment Service CD (Test)
 
 on:
   push:
     branches:
-      - FI-222_feat_cd-sc-2
+      - main
     paths:
-      - 'FLOWIN/performance-service/**'
+      - 'FLOWIN/payment-service/**'
 
 jobs:
   tagging:
@@ -16,7 +16,7 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: performance-service
+      service-name: payment-service
 
   releasing:
     needs: tagging
@@ -27,7 +27,7 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: performance-service
+      service-name: payment-service
       tag_name: ${{ needs.tagging.outputs.tag_name }}
 
   deploy:
@@ -39,5 +39,5 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: performance-service
+      service-name: payment-service
       tag_name: ${{ needs.tagging.outputs.tag_name }}

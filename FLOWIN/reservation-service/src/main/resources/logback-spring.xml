@@ -10,7 +10,7 @@
 
     <!-- Logstash TCP -->
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>localhost:5000</destination>
+        <destination>logstash-service.flowin:5000</destination>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"service":"reservation-service"}</customFields>
         </encoder>

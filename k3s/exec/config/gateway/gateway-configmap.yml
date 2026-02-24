@@ -1,0 +1,173 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: flowin
+data:
+  application.yml: |
+    server:
+      port: 8000
+
+    spring:
+      application:
+        name: gateway-service
+      
+      cloud:
+        gateway:
+          # [중요] 프론트엔드(React/Vue 등) 연동 시 발생하는 CORS 에러 사전 차단
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+
+          routes:
+            # ==========================================
+            # 1. 인증/계정 (Account: 8100)
+            # ==========================================
+            # [핵심] 로그인/회원가입은 토큰이 '없는' 상태로 들어오므로 JwtValidationFilter 생략
+            - id: account-login
+              uri: http://account-service.flowin:8100  # 네임스페이스(.flowin)까지 명시하여 오작동 완벽 차단
+              predicates:
+                - Path=/auth/login
+                - Method=POST
+            
+            - id: account-logout
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/auth/logout
+                - Method=POST
+            
+            - id: account-sign-up
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/auth/sign-up
+                - Method=POST
+            
+            - id: account-login-page
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/auth/login.html
+                - Method=GET
+                
+            - id: zipkin
+              uri: http://zipkin-service.flowin:9411
+              predicates:
+                - Path=/zipkin/**
+            
+            - id: kibana
+              uri: http://kibana-service.flowin:5601
+              predicates:
+                - Path=/kibana/**
+            
+            # [핵심] 여기서부터는 철저한 보안 구역 (JwtValidationFilter 통과 필수)
+            - id: company-auth
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/auth/company/**
+              filters:
+                - JwtValidationFilter
+
+            - id: account-general
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/accounts/**
+              filters:
+                - JwtValidationFilter
+
+            - id: company-general
+              uri: http://account-service.flowin:8100
+              predicates:
+                - Path=/company/**
+              filters:
+                - JwtValidationFilter
+
+            # ==========================================
+            # 2. 공연 서비스 (Performance: 8200)
+            # ==========================================
+            - id: performance-show
+              uri: http://performance-service.flowin:8200
+              predicates:
+                - Path=/shows/**
+              filters:
+                - JwtValidationFilter
+
+            - id: performance-show-seats
+              uri: http://performance-service.flowin:8200
+              predicates:
+                - Path=/show-seats/**
+              filters:
+                - JwtValidationFilter
+
+            - id: performance-hall
+              uri: http://performance-service.flowin:8200
+              predicates:
+                - Path=/hall/**
+              filters:
+                - JwtValidationFilter
+
+            - id: performance-round
+              uri: http://performance-service.flowin:8200
+              predicates:
+                - Path=/round/**
+              filters:
+                - JwtValidationFilter
+
+            - id: performance-round-seats
+              uri: http://performance-service.flowin:8200
+              predicates:
+                - Path=/round-seats/**
+              filters:
+                - JwtValidationFilter
+
+            # ==========================================
+            # 3. 결제 서비스 (Payment: 8300)
+            # ==========================================
+            - id: payment-points
+              uri: http://payment-service.flowin:8300
+              predicates:
+                - Path=/points/**
+              filters:
+                - JwtValidationFilter
+
+            - id: payment-tickets
+              uri: http://payment-service.flowin:8300
+              predicates:
+                - Path=/tickets/**
+              filters:
+                - JwtValidationFilter
+
+            - id: payment-payments
+              uri: http://payment-service.flowin:8300
+              predicates:
+                - Path=/payments/**
+              filters:
+                - JwtValidationFilter
+
+            - id: payment-view
+              uri: http://payment-service.flowin:8300
+              predicates:
+                - Path=/payment-view/**
+              filters:
+                - JwtValidationFilter
+
+            # ==========================================
+            # 4. 예매 서비스 (Reservation: 8400)
+            # ==========================================
+            - id: reservation-service
+              uri: http://reservation-service.flowin:8400
+              predicates:
+                - Path=/bookings/**
+              filters:
+                - JwtValidationFilter
+
+            # ==========================================
+            # 5. [추가] AI 서비스 (AI: 8500)
+            # ==========================================
+            - id: ai-service
+              uri: http://ai-service.flowin:8500
+              predicates:
+                - Path=/ai/**
+              filters:
+                - JwtValidationFilter

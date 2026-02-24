@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: flowin
+data:
+  redis.conf: |
+    bind 0.0.0.0
+    protected-mode yes
+    port 6379
+
+    # AOF(모든 쓰기 로그 저장) 비활성화로 디스크 I/O 부하 감소
+    appendonly no
+    save 900 1
+    save 300 100
+    
+    # [중요] Redis 메모리 제한 및 만료 정책 (EC2 OOM 방지)
+    maxmemory 200mb
+    # 용량 초과 시 가장 오래 참조되지 않은 데이터부터 삭제
+    maxmemory-policy allkeys-lru
+    
+    tcp-keepalive 300

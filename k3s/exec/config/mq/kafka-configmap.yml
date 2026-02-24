@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+  namespace: flowin
+data:
+  KAFKA_NODE_ID: "1"
+  KAFKA_PROCESS_ROLES: "broker,controller"
+  KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9091"
+
+  # K8s 내부 DNS(kafka-service)를 활용한 리스너 설정
+  KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9091"
+  KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka-service:9092"
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+  KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+  KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+  # [핵심] JVM 힙 메모리 고정 할당 (EC2 OOM 강제 방지)
+  KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+
+  # [핵심] 메시지 로그 보관 디스크 용량 제한 (1GB 초과 시 오래된 데이터부터 삭제)
+  KAFKA_LOG_RETENTION_BYTES: "1073741824"
+  KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+
+  # 단일 브로커 환경에 맞춘 복제본(Replication) 설정
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+
+  # 토픽 자동 생성 허용 (개발 및 테스트 편의성)
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"

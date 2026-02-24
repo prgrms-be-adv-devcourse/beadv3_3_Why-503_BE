@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-proxy-manager
+  namespace: flowin
+  labels:
+    app: nginx-proxy-manager
+spec:
+  replicas: 1
+  # [핵심] 내장 SQLite 데이터베이스 파일의 동시 접근 부하 및 깨짐을 방지하는 재생성 전략
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nginx-proxy-manager
+  template:
+    metadata:
+      labels:
+        app: nginx-proxy-manager
+    spec:
+      containers:
+        - name: npm
+          image: jc21/nginx-proxy-manager:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+            - containerPort: 81
+              name: admin-ui
+            - containerPort: 443
+              name: https
+
+          # [중요] SSL 핸드셰이크 및 트래픽 스파이크 시 전체 노드 자원 고갈을 막기 위한 상한선
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # Admin UI(81번 포트)를 기준으로 한 웹 서버 구동 상태 헬스 체크
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 81
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 81
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          volumeMounts:
+            # [최고급 튜닝] 단 하나의 물리적 PVC(npm-pvc)를 논리적인 두 개의 폴더로 분할 마운트
+            - name: npm-data
+              mountPath: /data
+              subPath: data
+            - name: npm-data
+              mountPath: /etc/letsencrypt
+              subPath: letsencrypt
+
+      volumes:
+        # 단일 볼륨 클레임으로 데이터와 인증서를 모두 영구 보관
+        - name: npm-data
+          persistentVolumeClaim:
+            claimName: npm-pvc

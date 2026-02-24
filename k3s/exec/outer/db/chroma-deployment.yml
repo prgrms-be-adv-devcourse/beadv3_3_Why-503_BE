@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chroma
+  namespace: flowin
+spec:
+  replicas: 1
+  # [핵심] 기존 파드 완전 종료 후 새 파드 생성 (SQLite DB File 깨짐 완벽 방지)
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: chroma
+  template:
+    metadata:
+      labels:
+        app: chroma
+    spec:
+      securityContext:
+        fsGroup: 0
+        runAsUser: 0
+
+      # [핵심] 메인 앱 구동 전, K8s 고질병인 호스트 볼륨 권한 문제를 사전 타겟팅하여 교정
+      initContainers:
+        - name: fix-permissions
+          image: busybox:latest
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "chown -R 1000:1000 /chroma/chroma"]
+          volumeMounts:
+            - name: chroma-data
+              mountPath: /chroma/chroma
+
+      containers:
+        - name: chroma
+          image: chromadb/chroma:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: IS_PERSISTENT
+              value: "TRUE"
+            - name: PERSIST_DIRECTORY
+              value: "/chroma/chroma"
+            - name: ANONYMIZED_TELEMETRY
+              value: "FALSE"
+
+            # t3.large 자원 보호를 위한 백그라운드 워커 스레드 제한
+            - name: CHROMA_SERVER_WORKERS
+              value: "1"
+
+            - name: CHROMA_SERVER_HOST
+              value: "0.0.0.0"
+            - name: CHROMA_SERVER_HTTP_PORT
+              value: "8000"
+
+          # 임베딩/벡터 검색 시 순간적인 메모리 스파이크를 견디기 위한 넉넉한 Limit(2Gi)
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "2Gi"
+
+          volumeMounts:
+            - name: chroma-data
+              mountPath: /chroma/chroma
+
+      volumes:
+        - name: chroma-data
+          persistentVolumeClaim:
+            claimName: chroma-pvc

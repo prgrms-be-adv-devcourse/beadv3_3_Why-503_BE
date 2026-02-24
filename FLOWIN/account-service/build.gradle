@@ -75,12 +75,17 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
-    //elk
+// 기존 기능 (메일, 레디스)
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // ELK (로그 수집)
     implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
-    //zipkin
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+    // Zipkin 및 모니터링 (Feign 통신 추적 포함)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
     implementation 'io.github.openfeign:feign-micrometer'
 }
 dependencyManagement {

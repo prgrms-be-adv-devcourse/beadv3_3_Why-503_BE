@@ -22,7 +22,6 @@ import java.util.List;
 public class ShowEmbedImpl implements ShowEmbed {
 
     private final VectorStore vectorStore;
-    private final PerformanceRepository performanceRepository;
     private final PerformanceClient performanceClient;
     private final PerformanceMapper performanceMapper;
     private final Performance performance;

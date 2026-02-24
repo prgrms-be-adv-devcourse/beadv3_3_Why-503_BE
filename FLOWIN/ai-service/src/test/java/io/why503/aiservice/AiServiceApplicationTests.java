@@ -6,10 +6,10 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.test.context.ActiveProfiles;
 
 
-//@SpringBootTest
-//@ActiveProfiles("test")
-//@EnableFeignClients
-class AiServiceImplApplicationTests {
+@ActiveProfiles("test")
+@SpringBootTest
+@EnableFeignClients
+class AiServiceApplicationTests {
 
     @Test
     void contextLoads() {

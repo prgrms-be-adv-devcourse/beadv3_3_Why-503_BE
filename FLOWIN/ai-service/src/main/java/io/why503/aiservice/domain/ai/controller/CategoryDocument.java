@@ -5,7 +5,7 @@ import org.springframework.ai.document.Document;
 import java.util.HashMap;
 
 public class CategoryDocument {
-    public static Document create(ShowCategory c) {
+    public Document create(ShowCategory c) {
         String content = switch (c) {
             case MUSICAL -> """
                     장르: MUSICAL

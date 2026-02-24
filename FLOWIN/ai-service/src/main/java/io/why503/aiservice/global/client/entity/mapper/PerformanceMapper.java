@@ -1,7 +1,8 @@
-package io.why503.aiservice.global.client.entity;
+package io.why503.aiservice.global.client.entity.mapper;
 
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
+
 
 public interface PerformanceMapper {
 

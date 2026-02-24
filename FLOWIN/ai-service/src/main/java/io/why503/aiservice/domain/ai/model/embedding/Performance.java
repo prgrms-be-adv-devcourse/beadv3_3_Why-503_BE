@@ -1,5 +1,7 @@
 package io.why503.aiservice.domain.ai.model.embedding;
 
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.global.exception.AiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 
@@ -12,12 +14,8 @@ public record Performance(
         ShowGenre genre
 ) {
 
-
-
     //문서화 반환
-    public static Document toDocument(Performance p) {
-
-
+    public Document toDocument(Performance p) {
         String content = """
         카테고리: %s
         장르: %s
@@ -37,7 +35,7 @@ public record Performance(
     }
 
     //공연 문서 반환
-    public static Performance toPerformance(Document doc) {
+    public Performance toPerformance(Document doc) {
         try {
             ShowCategory category = ShowCategory.valueOf(doc.getMetadata().get("category").toString());
             ShowGenre showCategory = category.findShowType(doc.getMetadata().get("genre").toString());
@@ -48,7 +46,7 @@ public record Performance(
             );
         } catch (Exception e) {
             log.error("Performance 변환 실패: doc={}", doc, e);
-            return null;
+            throw AiException.performanceFailed(doc);
         }
     }
 }

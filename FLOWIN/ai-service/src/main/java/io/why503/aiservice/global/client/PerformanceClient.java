@@ -1,7 +1,7 @@
 package io.why503.aiservice.global.client;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,4 +1,4 @@
-package io.why503.aiservice.global.client.entity;
+package io.why503.aiservice.global.client.entity.mapper;
 
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.global.client.dto.response.BookingResponse;
@@ -14,5 +14,4 @@ public interface BookingMapper {
                 r.genre()
         );
     };
-
 }

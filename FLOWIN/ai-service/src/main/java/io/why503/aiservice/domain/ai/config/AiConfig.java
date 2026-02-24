@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Configuration
 public class AiConfig {
-
-
     //모든 서비스에서 chatClient 연결 위한 기본베이스
     @Bean
     public ChatClient chatClient(
@@ -19,6 +17,5 @@ public class AiConfig {
             ) {
         return ChatClient.builder(chatModel).build();
     }
-
 
 }

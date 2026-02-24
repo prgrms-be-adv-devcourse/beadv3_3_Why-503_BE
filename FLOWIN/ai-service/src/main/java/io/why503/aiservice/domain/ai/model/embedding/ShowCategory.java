@@ -1,7 +1,11 @@
 package io.why503.aiservice.domain.ai.model.embedding;
 
+import io.why503.aiservice.domain.ai.model.embedding.genre.*;
+import io.why503.aiservice.global.exception.AiException;
 import lombok.Getter;
-import java.util.*;
+
+import java.util.Map;
+import java.util.Set;
 
 //장르 속성 추가
 public enum ShowCategory {
@@ -41,43 +45,38 @@ public enum ShowCategory {
 
 
     //속성 json 인식할 때 문자열만 인식으로 인한 장르 문자열 바꿔줌
-    public static Optional<ShowCategory> fromString(String value) {
+    public static ShowCategory fromString(String value) {
         if (value == null || value.isBlank()) {
-            return Optional.empty();
+            throw AiException.invalidCategory();
         }
 
         String raw = value.trim();
 
         //alias 먼저 체크
         if (ALIAS.containsKey(raw)) {
-            return Optional.of(ALIAS.get(raw));
+            return ALIAS.get(raw);
         }
 
         //enum 직접 매칭
-        Optional<ShowCategory> direct = Parse(raw.toUpperCase());
-        if (direct.isPresent()) return direct;
+        try {
+            return ShowCategory.valueOf(raw.toUpperCase());
+        } catch (IllegalArgumentException ignored) {}
 
         //특수문자 제거 후 매칭
         String filtered = raw.replaceAll("[^a-zA-Z가-힣]", "");
-        Optional<ShowCategory> filteredResult = Parse(filtered.toUpperCase());
-        if (filteredResult.isPresent()) return filteredResult;
-
-        return Optional.empty();
-    }
-
-    private static Optional<ShowCategory> Parse(String value) {
         try {
-            return Optional.of(ShowCategory.valueOf(value));
-        } catch (IllegalArgumentException e) {
-            return Optional.empty();
-        }
+            return ShowCategory.valueOf(filtered.toUpperCase());
+        } catch (IllegalArgumentException ignored) {}
+
+        throw AiException.invalidCategory();
     }
+
 
     //공연 종류 찾기
     public ShowGenre findShowType(String category) {
 
         if (category == null || category.isBlank()) {
-            return types.stream().findFirst().orElse(null);
+            throw AiException.invalidCategory();
         }
 
         String normalized = category.trim().toLowerCase();
@@ -85,6 +84,12 @@ public enum ShowCategory {
         return types.stream()
                 .filter(type -> type.matches(normalized))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 장르 없음"));
+                .orElseThrow(() ->
+                        AiException.NotFound(category)
+                );
+    }
+
+    public boolean supports(ShowGenre genre) {
+        return types.contains(genre);
     }
 }

@@ -4,14 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenreResolver;
 import io.why503.aiservice.domain.ai.model.vo.*;
 import io.why503.aiservice.domain.ai.repository.PerformanceRepository;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
-import io.why503.aiservice.global.client.entity.BookingMapper;
-import io.why503.aiservice.global.client.entity.PerformanceMapper;
+import io.why503.aiservice.global.client.entity.mapper.BookingMapper;
+import io.why503.aiservice.global.client.entity.mapper.PerformanceMapper;
+import io.why503.aiservice.global.exception.AiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -19,7 +21,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +60,8 @@ public class AiService {
     private final PerformanceClient performanceClient;
     private final BookingMapper bookingMapper;
     private final PerformanceMapper performanceMapper;
+    private final Performance performance;
+    private final ShowGenreResolver genreResolver;
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest request) {
@@ -283,7 +286,6 @@ public class AiService {
 
 
     //ai 프롬프트 보냄(AI서버) -> 문자열 응답식으로 받음
-    @Async
     public CompletableFuture<String> ask(String prompt) {
         try {
             return CompletableFuture.supplyAsync(() -> chatClient.prompt(prompt).call().content());
@@ -297,7 +299,7 @@ public class AiService {
     private AiResponse parse(String content) {
         try { return mapper.readValue(cleanJson(content), AiResponse.class);
         } catch (Exception e) { log.error("AI 응답 파싱 실패. content={}", content, e);
-            throw new IllegalStateException("AI 응답 파싱 실패");
+            throw AiException.invalidResponse();
         }
     }
     //출력에 빈 리스트를 받지 않기 위한 json에 불필요한 정보 지우기
@@ -311,9 +313,17 @@ public class AiService {
 
     //문자열 ai용 추천 반환
     private Recommendations toDomain(AiRecommendation ar) {
-        ShowCategory showCategory = ShowCategory.fromString(ar.showCategory()).orElse(null);
-        ShowGenre showGenre = Objects.requireNonNull(showCategory).findShowType(ar.showCategory());
-        return new Recommendations(showCategory, ar.reason(), showGenre);
+        ShowCategory showCategory = ShowCategory.fromString(ar.showCategory());
+        ShowGenre showGenre = genreResolver.fromString(ar.showGenre());
+        if (!showCategory.supports(showGenre)) {
+            throw AiException.invalidGenre();
+        }
+
+        return new Recommendations(
+                showCategory,
+                ar.reason(),
+                showGenre
+        );
     }
 
     //점수 반환
@@ -370,7 +380,7 @@ public class AiService {
                 .toList();
 
         List<ShowGenre> genre = bookings.stream()
-                .map(booking -> ShowGenre.fromString(booking.genre()))
+                .map(booking -> genreResolver.fromString(booking.genre()))
                 .toList();
 
         return new ResultRequest(
@@ -436,8 +446,6 @@ public class AiService {
 
 
 
-
-
                 //CATEGORY 관련 문서 사용자 맞춤 규칙 검색
                 Map<ShowCategory, Document> categoryRule =
                         categoryDocs.stream()
@@ -453,7 +461,7 @@ public class AiService {
 
                 List<Performance> performancesVector =
                         performanceDocs.stream()
-                                .map(document -> Performance.toPerformance(document))
+                                .map(document -> performance.toPerformance(document))
                                 .filter(performance -> Objects.nonNull(performance))
                                 .toList();
 
@@ -636,7 +644,8 @@ public class AiService {
                                         ar.showCategory(),
                                         ar.reason(),
                                         ar.explanations(),
-                                        ar.showCategory()
+                                        ar.showCategory(),
+                                        ar.showGenre()
                                 ))
                         .toList();
 

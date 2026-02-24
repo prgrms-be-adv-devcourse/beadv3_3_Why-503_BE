@@ -13,7 +13,8 @@ public record AiRecommendation(
         //추가 설명들
         List<String> explanations,
         //공연장르
-        String showCategory
+        String showCategory,
+        String showGenre
 
 ) {
 

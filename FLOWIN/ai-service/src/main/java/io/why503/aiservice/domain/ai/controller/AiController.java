@@ -1,7 +1,7 @@
 package io.why503.aiservice.domain.ai.controller;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
 import io.why503.aiservice.domain.ai.service.AiService;
@@ -28,6 +28,7 @@ public class AiController {
     private final VectorStore vectorStore;
     private final ShowEmbedService showEmbedService;
     private final PerformanceClient performanceClient;
+    private final CategoryDocument categoryDocument;
 
 //    @PostConstruct
     @EventListener(ApplicationReadyEvent.class)
@@ -46,7 +47,7 @@ public class AiController {
     //카테고리 문서 생성
     public void upsert() {
         for (ShowCategory c : ShowCategory.values()) {
-            vectorStore.add(List.of(CategoryDocument.create(c)));
+            vectorStore.add(List.of(categoryDocument.create(c)));
         }
     }
 

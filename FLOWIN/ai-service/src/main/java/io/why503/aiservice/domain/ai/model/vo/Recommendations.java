@@ -1,7 +1,7 @@
 package io.why503.aiservice.domain.ai.model.vo;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 
 public record Recommendations(
         // 장르타입 추가

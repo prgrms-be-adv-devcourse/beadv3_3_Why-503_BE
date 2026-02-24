@@ -1,5 +1,6 @@
-package io.why503.aiservice.domain.ai.model.embedding;
+package io.why503.aiservice.domain.ai.model.embedding.genre;
 
+import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import lombok.Getter;
 
 //클래식

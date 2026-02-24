@@ -78,7 +78,7 @@ public class BookingController {
     public ResponseEntity<BookingResponse> cancelBooking(
             @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long bookingSq,
-            @RequestBody(required = false) BookingCancelRequest request) {
+            @RequestBody(required = false) @Valid BookingCancelRequest request) {
 
         validateUserHeader(userSq);
 

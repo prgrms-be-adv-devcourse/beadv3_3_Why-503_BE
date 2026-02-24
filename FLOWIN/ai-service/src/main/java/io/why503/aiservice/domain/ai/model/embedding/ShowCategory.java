@@ -11,17 +11,15 @@ import java.util.Set;
 //장르 속성 추가
 public enum ShowCategory {
     //콘서트
-    CONCERT("현장감, 몰입", Set.of(ConcertType.values())),
+    CONCERT(Set.of(ConcertType.values())),
     //뮤지컬
-    MUSICAL("감동, 서사, 스토리 중심", Set.of(MusicalType.values())),
+    MUSICAL(Set.of(MusicalType.values())),
     //연극
-    PLAY("대화 중심", Set.of(PlayType.values())),
+    PLAY(Set.of(PlayType.values())),
     //클래식
-    CLASSIC("차분, 정제된 분위기", Set.of(ClassicType.values()));
+    CLASSIC(Set.of(ClassicType.values()));
     //Category.CONCERT.supports(ConcertType.ROCK);
 
-    @Getter
-    private final String mood;
     @Getter
     private final Set<? extends ShowGenre> types;
 
@@ -39,8 +37,7 @@ public enum ShowCategory {
 
 
     //카테고리 생성자
-    ShowCategory(String mood, Set<? extends ShowGenre> types) {
-        this.mood = mood;
+    ShowCategory(Set<? extends ShowGenre> types) {
         this.types = types;
     }
 

@@ -2,7 +2,6 @@ package io.why503.aiservice.domain.ai.model.embedding.genre;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
-import lombok.Getter;
 
 //콘서트
 public enum ConcertType implements ShowGenre {
@@ -15,9 +14,7 @@ public enum ConcertType implements ShowGenre {
     TROT(ShowCategory.CONCERT,"트로트"); //트로트
 
 
-    @Getter
     private final ShowCategory showCategory;
-    @Getter
     private final String Name;
 
     //장르 이름

@@ -2,7 +2,6 @@ package io.why503.aiservice.domain.ai.model.embedding.genre;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
-import lombok.Getter;
 
 //클래식
 public enum ClassicType implements ShowGenre {
@@ -14,9 +13,7 @@ public enum ClassicType implements ShowGenre {
     VOCAL(ShowCategory.CLASSIC,"성악"),         //성악
     CHOIR(ShowCategory.CLASSIC,"합창");         //합창
 
-    @Getter
     private final ShowCategory showCategory;
-    @Getter
     private final String Name;
 
 

@@ -2,7 +2,6 @@ package io.why503.aiservice.domain.ai.model.embedding.genre;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.impl.ShowGenre;
-import lombok.Getter;
 
 //연극
 public enum PlayType implements ShowGenre {
@@ -15,9 +14,7 @@ public enum PlayType implements ShowGenre {
     HISTORICAL(ShowCategory.PLAY,"시대극"),    //시대극
     MONODRAMA(ShowCategory.PLAY,"1인극");     //1인극
 
-    @Getter
     private final ShowCategory showCategory;
-    @Getter
     private final String Name;
 
     //공연 이름

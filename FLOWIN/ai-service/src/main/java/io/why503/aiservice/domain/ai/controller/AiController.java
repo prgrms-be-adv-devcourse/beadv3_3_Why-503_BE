@@ -45,7 +45,7 @@ public class AiController {
 
 
     //카테고리 문서 생성
-    public void upsert() {
+    private void upsert() {
         for (ShowCategory c : ShowCategory.values()) {
             vectorStore.add(List.of(categoryDocument.create(c)));
         }

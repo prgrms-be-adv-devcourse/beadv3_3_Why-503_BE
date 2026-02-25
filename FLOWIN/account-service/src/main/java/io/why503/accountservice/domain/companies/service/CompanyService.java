@@ -3,6 +3,7 @@ package io.why503.accountservice.domain.companies.service;
 import io.why503.accountservice.domain.companies.model.dto.requset.CompanyRequest;
 import io.why503.accountservice.domain.companies.model.dto.response.CompanySummaryResponse;
 import io.why503.accountservice.domain.companies.model.entity.Company;
+import io.why503.accountservice.domain.companies.model.dto.response.CompanySettlementResponse;
 
 public interface CompanyService {
 
@@ -14,4 +15,5 @@ public interface CompanyService {
     // sq로 회사 엔티티 반환(서비스 내부 소통용)
     Company readCompanyBySq(Long sq);
 
+    CompanySettlementResponse getCompanySettlementInfo(Long sq);
 }

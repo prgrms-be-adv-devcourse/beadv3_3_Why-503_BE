@@ -1,7 +1,6 @@
 package io.why503.paymentservice.domain.ticket.service.impl;
 
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
-import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.domain.ticket.mapper.TicketMapper;
 import io.why503.paymentservice.domain.ticket.model.dto.request.TicketCreateRequest;
 import io.why503.paymentservice.domain.ticket.model.dto.response.TicketResponse;
@@ -9,6 +8,7 @@ import io.why503.paymentservice.domain.ticket.model.entity.Ticket;
 import io.why503.paymentservice.domain.ticket.model.enums.DiscountPolicy;
 import io.why503.paymentservice.domain.ticket.repository.TicketRepository;
 import io.why503.paymentservice.domain.ticket.service.TicketService;
+import io.why503.paymentservice.domain.ticket.util.TicketExceptionFactory;
 import io.why503.paymentservice.global.client.PerformanceClient;
 import io.why503.paymentservice.global.client.dto.request.SeatReserveRequest;
 import io.why503.paymentservice.global.client.dto.response.BookingSeatResponse;
@@ -43,14 +43,14 @@ public class TicketServiceImpl implements TicketService {
     @Transactional
     public void createTicketSlots(TicketCreateRequest request) {
         if (request == null || request.roundSeatSqs() == null || request.roundSeatSqs().isEmpty()) {
-            throw PaymentExceptionFactory.paymentBadRequest("생성할 티켓 좌석 정보가 없습니다.");
+            throw TicketExceptionFactory.ticketBadRequest("생성할 티켓 좌석 정보가 없습니다.");
         }
 
         List<Long> requestedSeatSqs = request.roundSeatSqs();
 
         List<Ticket> existingTickets = ticketRepository.findAllByRoundSeatSqIn(requestedSeatSqs);
         if (!existingTickets.isEmpty()) {
-            throw PaymentExceptionFactory.paymentConflict(
+            throw TicketExceptionFactory.ticketConflict(
                     String.format("이미 생성된 티켓 슬롯이 존재합니다. (중복 건수: %d)", existingTickets.size())
             );
         }
@@ -66,11 +66,11 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse findTicketByRoundSeat(Long roundSeatSq) {
         if (roundSeatSq == null) {
-            throw PaymentExceptionFactory.paymentBadRequest("조회할 좌석 ID는 필수입니다.");
+            throw TicketExceptionFactory.ticketBadRequest("조회할 좌석 ID는 필수입니다.");
         }
 
         Ticket ticket = ticketRepository.findByRoundSeatSq(roundSeatSq)
-                .orElseThrow(() -> PaymentExceptionFactory.paymentNotFound("해당 좌석의 티켓 슬롯이 존재하지 않습니다. RoundSeatSq: " + roundSeatSq));
+                .orElseThrow(() -> TicketExceptionFactory.ticketNotFound("해당 좌석의 티켓 슬롯이 존재하지 않습니다. RoundSeatSq: " + roundSeatSq));
 
         return ticketMapper.entityToResponse(ticket);
     }
@@ -79,13 +79,13 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<TicketResponse> findTicketsByRoundSeats(List<Long> roundSeatSqs) {
         if (roundSeatSqs == null || roundSeatSqs.isEmpty()) {
-            throw PaymentExceptionFactory.paymentBadRequest("조회할 좌석 ID 목록이 비어있습니다.");
+            throw TicketExceptionFactory.ticketBadRequest("조회할 좌석 ID 목록이 비어있습니다.");
         }
 
         List<Ticket> tickets = ticketRepository.findAllByRoundSeatSqIn(roundSeatSqs);
 
         if (tickets.size() != roundSeatSqs.size()) {
-            throw PaymentExceptionFactory.paymentNotFound(
+            throw TicketExceptionFactory.ticketNotFound(
                     String.format("요청한 좌석 중 일부 티켓 슬롯을 찾을 수 없습니다. (요청: %d, 조회: %d)",
                             roundSeatSqs.size(), tickets.size())
             );
@@ -99,7 +99,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<TicketResponse> findMyTickets(Long userSq) {
         if (userSq == null || userSq <= 0) {
-            throw PaymentExceptionFactory.paymentBadRequest("사용자 정보가 유효하지 않습니다.");
+            throw TicketExceptionFactory.ticketBadRequest("사용자 정보가 유효하지 않습니다.");
         }
 
         List<Ticket> tickets = ticketRepository.findAllByUserSqOrderByCreatedDtDesc(userSq);
@@ -112,17 +112,17 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse findMyTicket(Long userSq, Long ticketSq) {
         if (userSq == null || userSq <= 0) {
-            throw PaymentExceptionFactory.paymentBadRequest("사용자 정보가 유효하지 않습니다.");
+            throw TicketExceptionFactory.ticketBadRequest("사용자 정보가 유효하지 않습니다.");
         }
         if (ticketSq == null) {
-            throw PaymentExceptionFactory.paymentBadRequest("티켓 ID는 필수입니다.");
+            throw TicketExceptionFactory.ticketBadRequest("티켓 ID는 필수입니다.");
         }
 
         Ticket ticket = ticketRepository.findById(ticketSq)
-                .orElseThrow(() -> PaymentExceptionFactory.paymentNotFound("존재하지 않는 티켓입니다."));
+                .orElseThrow(() -> TicketExceptionFactory.ticketNotFound("존재하지 않는 티켓입니다."));
 
         if (!Objects.equals(ticket.getUserSq(), userSq)) {
-            throw PaymentExceptionFactory.paymentForbidden("해당 티켓에 대한 접근 권한이 없습니다.");
+            throw TicketExceptionFactory.ticketForbidden("해당 티켓에 대한 접근 권한이 없습니다.");
         }
 
         return ticketMapper.entityToResponse(ticket);

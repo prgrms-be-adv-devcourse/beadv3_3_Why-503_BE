@@ -95,4 +95,12 @@ public class RoundSeatController {
 
         return ResponseEntity.ok(roundSeatService.getRoundSeatDetails(request.roundSeatSqs()));
     }
+
+    @GetMapping("/shows/{showSq}/sqs")
+    public ResponseEntity<List<Long>> getRoundSeatSqsByShowSq(
+            @PathVariable(name = "showSq") Long showSq) {
+
+        List<Long> sqs = roundSeatService.getRoundSeatSqsByShowSq(showSq);
+        return ResponseEntity.ok(sqs);
+    }
 }

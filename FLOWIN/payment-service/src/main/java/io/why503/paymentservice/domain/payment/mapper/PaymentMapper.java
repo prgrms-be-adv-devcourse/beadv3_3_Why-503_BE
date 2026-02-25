@@ -32,6 +32,8 @@ public class PaymentMapper {
                 payment.getTotalAmount(),
                 payment.getPgAmount(),
                 payment.getPointAmount(),
+                payment.getRemainPgAmount(),
+                payment.getRemainPointAmount(),
                 payment.getApprovedDt(),
                 payment.getCreatedDt()
         );

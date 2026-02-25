@@ -17,6 +17,8 @@ public record PaymentResponse(
         Long totalAmount,
         Long pgAmount,
         Long pointAmount,
+        Long remainPgAmount,
+        Long remainPointAmount,
         LocalDateTime approvedDt,
         LocalDateTime createdDt
 ) {

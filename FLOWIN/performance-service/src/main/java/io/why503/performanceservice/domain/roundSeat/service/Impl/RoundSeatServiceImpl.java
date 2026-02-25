@@ -326,4 +326,9 @@ public class RoundSeatServiceImpl implements RoundSeatService {
             log.error("[Scheduler] 만료 좌석 해제 중 오류 발생", e);
         }
     }
+
+    @Override
+    public List<Long> getRoundSeatSqsByShowSq(Long showSq) {
+        return roundSeatRepository.findRoundSeatSqsByShowSq(showSq);
+    }
 }

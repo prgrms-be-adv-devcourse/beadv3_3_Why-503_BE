@@ -42,7 +42,7 @@ public enum ShowCategory {
 
 
     //속성 json 인식할 때 문자열만 인식으로 인한 장르 문자열 바꿔줌
-    public static ShowCategory fromString(String value) {
+    public ShowCategory fromString(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalStateException();
         }

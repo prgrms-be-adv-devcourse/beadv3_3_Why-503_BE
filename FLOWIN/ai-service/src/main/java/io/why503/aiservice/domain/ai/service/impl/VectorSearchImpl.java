@@ -25,6 +25,10 @@ public class VectorSearchImpl implements VectorSearch {
     private final ReservationClient reservationClient;
     private final BookingMapper bookingMapper;
     private final EmbeddingModel embeddingModel;
+    private final MusicalType musicalType;
+    private final ConcertType concertType;
+    private final PlayType playType;
+    private final ClassicType classicType;
 
 
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
@@ -42,14 +46,14 @@ public class VectorSearchImpl implements VectorSearch {
                 .map(booking -> {
                     switch (ShowCategory.valueOf(booking.category())) {
                         case MUSICAL:
-                            return MusicalType.fromString(booking.genre());
+                            return musicalType.fromString(booking.genre());
                         // 다른 카테고리의 장르는 각각 다른 구현체에서 fromString 호출
                         case CONCERT:
-                            return ConcertType.fromString(booking.genre());
+                            return concertType.fromString(booking.genre());
                         case PLAY:
-                            return PlayType.fromString(booking.genre());
+                            return playType.fromString(booking.genre());
                         case CLASSIC:
-                            return ClassicType.fromString(booking.genre());
+                            return classicType.fromString(booking.genre());
                         default:
                             throw new IllegalArgumentException("Unknown category: " + booking.category());
                     }

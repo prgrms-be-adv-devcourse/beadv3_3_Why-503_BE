@@ -15,10 +15,11 @@ import java.util.List;
 public class RecommendationsMapper implements Recommendation {
 
     private final ShowGenreResolver genreResolver;
+    private final ShowCategory category;
 
     public Recommendations toDomain(AiRecommendation aiRecommendation) {
         ShowCategory showCategory =
-                ShowCategory.fromString(aiRecommendation.showCategory());
+                category.fromString(aiRecommendation.showCategory());
 
         ShowGenre showGenre =
                 genreResolver.fromString(aiRecommendation.showGenre());

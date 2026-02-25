@@ -32,7 +32,7 @@ public enum ClassicType implements ShowGenre {
         return Name;
     }
 
-    public static ShowGenre fromString(String genre) {
+    public ShowGenre fromString(String genre) {
         for (ClassicType type : values()) {
             if (type.name().equalsIgnoreCase(genre) || type.getName().equalsIgnoreCase(genre)) {
                 return type;

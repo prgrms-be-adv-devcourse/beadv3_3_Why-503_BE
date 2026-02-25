@@ -1,6 +1,6 @@
 package io.why503.aiservice.domain.ai.service.impl;
 
-import io.why503.aiservice.domain.ai.model.embedding.Performance;
+import io.why503.aiservice.global.client.dto.response.Performance;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
@@ -46,7 +46,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
     }
 
     //장르 점수 계산 (빈도 + 임베딩 유사도)
-    public Map<ShowCategory, Double> CategoryScores(ResultRequest request, float[] userVector) {
+    public Map<ShowCategory, Double> categoryScores(ResultRequest request, float[] userVector) {
         Map<ShowCategory, Double> scoreMap = new EnumMap<>(ShowCategory.class);
 
         //구매 횟수 (가중치 적용하기 위해 장르 중복 발생 시 로그 처리)
@@ -108,7 +108,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
 
 
     //Category 점수를 ShowCategory에 분배
-    public Map<ShowGenre, Double> GenreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
+    public Map<ShowGenre, Double> genreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
 
         Map<ShowGenre, Double> scoreMap = new HashMap<>();
 
@@ -145,7 +145,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
     }
 
     //최종 점수 = 카테고리 점수 50% + 분위기 점수 합 50% ( 최종 추천에 대한 점수 계산 )
-    public double FinalScore(
+    public double finalScore(
             Performance performance,
             Map<ShowCategory, Double> categoryScores,
             Map<ShowGenre, Double> genreScores
@@ -165,7 +165,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
 
 
     //상위 장르 + 점수 -> 매김
-    public List<TypeShowScore> FinalShowRanking(
+    public List<TypeShowScore> finalShowRanking(
             List<Performance> performances,
             Map<ShowCategory, Double> categoryScores,
             Map<ShowGenre, Double> genreScores
@@ -174,7 +174,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
 
         //공연의 점수를 지정된 것들을 포장
         for (Performance performance : performances) {
-            double score = FinalScore(performance, categoryScores,genreScores);
+            double score = finalScore(performance, categoryScores,genreScores);
             results.add(new TypeShowScore(performance.category(), performance.genre(), score, performance));
 
         }

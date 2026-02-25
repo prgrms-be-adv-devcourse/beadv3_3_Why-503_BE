@@ -53,7 +53,7 @@ public class AiController {
 
     //추천 결과값 반환
     @PostMapping
-    public CompletableFuture<ResultResponse> getRecommendations(
+    public ResultResponse getRecommendations(
             @RequestBody ResultRequest request, Long userSq, ShowCategory category, ShowGenre genre
     ) {
         return aiServiceImpl.getRecommendations( request, userSq, category, genre);

@@ -2,8 +2,11 @@ package io.why503.aiservice.domain.ai.controller;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import org.springframework.ai.document.Document;
+import org.springframework.stereotype.Component;
+
 import java.util.HashMap;
 
+@Component
 public class CategoryDocument {
     public Document create(ShowCategory c) {
         String content = switch (c) {

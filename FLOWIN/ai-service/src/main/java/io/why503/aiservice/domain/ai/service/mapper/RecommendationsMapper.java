@@ -24,16 +24,10 @@ public class RecommendationsMapper implements Recommendation {
                 genreResolver.fromString(aiRecommendation.showGenre());
 
         return new Recommendations(
-                showCategory,
+                showCategory.name(),
                 aiRecommendation.reason(),
-                showGenre
+                showGenre.getName()
         );
-    }
-
-    public List<Recommendations> RecommendationsToAiRecommendations(List<Recommendations> aiRecommendations) {
-        return aiRecommendations.stream()
-                .map(this::toDomain)
-                .toList();
     }
 }
 

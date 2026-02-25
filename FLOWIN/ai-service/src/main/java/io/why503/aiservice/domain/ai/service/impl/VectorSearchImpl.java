@@ -1,6 +1,5 @@
 package io.why503.aiservice.domain.ai.service.impl;
 
-import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ConcertType;
 import io.why503.aiservice.domain.ai.model.embedding.genre.MusicalType;
@@ -9,6 +8,7 @@ import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.service.VectorSearch;
 import io.why503.aiservice.global.client.ReservationClient;
+import io.why503.aiservice.global.client.dto.response.BookingResponse;
 import io.why503.aiservice.global.client.entity.mapper.BookingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
@@ -33,12 +33,7 @@ public class VectorSearchImpl implements VectorSearch {
     //사용자가 이 문자열 입력에 의해 임베딩 모델 학습 (텍스트 -> 숫자) / float []
     public float[] embed(ResultRequest request, Long userSq) {
 
-        List<Booking> bookings =
-                reservationClient.findMyBookings(userSq)
-                        .stream()
-                        .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
-                        .map(bookingResponse -> bookingMapper.BookingResponseToBooking(bookingResponse))
-                        .toList();
+        List<BookingResponse> bookings = reservationClient.findMyBookings(userSq);
 
         List<ShowCategory> categories = bookings.stream()
                 .filter(b -> "PAID".equalsIgnoreCase(b.status()))

@@ -3,8 +3,6 @@ package io.why503.aiservice.domain.ai.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.why503.aiservice.domain.ai.model.vo.AiResponse;
 import io.why503.aiservice.domain.ai.service.AiChat;
-import io.why503.aiservice.domain.ai.service.AiService;
-import io.why503.aiservice.global.exception.AiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;

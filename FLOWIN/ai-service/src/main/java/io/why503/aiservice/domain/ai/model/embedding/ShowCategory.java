@@ -2,7 +2,6 @@ package io.why503.aiservice.domain.ai.model.embedding;
 
 import io.why503.aiservice.domain.ai.model.embedding.genre.*;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
-import io.why503.aiservice.global.exception.AiException;
 import lombok.Getter;
 
 import java.util.Map;
@@ -45,7 +44,7 @@ public enum ShowCategory {
     //속성 json 인식할 때 문자열만 인식으로 인한 장르 문자열 바꿔줌
     public static ShowCategory fromString(String value) {
         if (value == null || value.isBlank()) {
-            throw AiException.invalidCategory();
+            throw new IllegalStateException();
         }
 
         String raw = value.trim();
@@ -66,7 +65,7 @@ public enum ShowCategory {
             return ShowCategory.valueOf(filtered.toUpperCase());
         } catch (IllegalArgumentException ignored) {}
 
-        throw AiException.invalidCategory();
+        throw new IllegalStateException();
     }
 
 
@@ -74,7 +73,7 @@ public enum ShowCategory {
     public ShowGenre findShowType(String category) {
 
         if (category == null || category.isBlank()) {
-            throw AiException.invalidCategory();
+            throw new IllegalStateException();
         }
 
         String normalized = category.trim().toLowerCase();
@@ -83,7 +82,7 @@ public enum ShowCategory {
                 .filter(type -> type.matches(normalized))
                 .findFirst()
                 .orElseThrow(() ->
-                        AiException.NotFound(category)
+                        new IllegalStateException()
                 );
     }
 

@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -59,14 +56,14 @@ public class AiServiceImpl implements AiService {
     private final FallbackResultResponseMapper fallbackResultResponseMapper;
 
 
-    //유사 공연
+    //같은 카테고리 내에 다른 장르 추천
     public List<String> similarShows(List<TypeShowScore> topFinalShows, List<Performance> performances) {
         Set<String> similarShows = new LinkedHashSet<>();
 
         //각 장르마다 점수가 높은 점수 지정
         for (TypeShowScore show : topFinalShows) {
             performances.stream()
-                    .filter(p -> p.category().equals(show.showCategory())
+                    .filter(p -> p.category().equals(show.category())
                             && !p.genre().equals(show.genre()))
                     .map(p -> p.genre())
                     .forEach(e -> similarShows.add(e));
@@ -199,7 +196,7 @@ public class AiServiceImpl implements AiService {
 
                 ).stream()
                 .map(typeScore -> {
-                    String showCategoryString = typeScore.showCategory();
+                    String showCategoryString = typeScore.category();
                     String showGenreString = typeScore.genre();
 
                     //카테고리 문서 기반 가중치 적용
@@ -222,7 +219,7 @@ public class AiServiceImpl implements AiService {
         List<Recommendations> performanceRecommendations = topScoreShows.stream()
                 .map(TypeScore -> {
                     String genre = TypeScore.genre();
-                    String category = TypeScore.showCategory();
+                    String category = TypeScore.category();
 
 
                     //카테고리 기반 가중치

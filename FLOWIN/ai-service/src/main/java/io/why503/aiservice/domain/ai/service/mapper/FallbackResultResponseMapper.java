@@ -2,13 +2,15 @@ package io.why503.aiservice.domain.ai.service.mapper;
 
 import io.why503.aiservice.domain.ai.model.vo.Recommendations;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class FallbackResultResponseMapper {
 
-    public static ResultResponse toResultResponse(
+    public ResultResponse toResultResponse(
             List<Recommendations> fallbackRecommendations,
             Map<String, String> categoryScore,
             Map<String, String> genreScore,

@@ -4,7 +4,7 @@ import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
-import io.why503.aiservice.domain.ai.service.impl.AiServiceServiceImpl;
+import io.why503.aiservice.domain.ai.service.impl.AiServiceImpl;
 import io.why503.aiservice.domain.ai.service.impl.ShowEmbedImpl;
 import io.why503.aiservice.global.client.PerformanceClient;
 import io.why503.aiservice.global.client.dto.response.PerformanceResponse;
@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/recommend")
 public class AiController {
 
-    private final AiServiceServiceImpl aiServiceImpl;
+    private final AiServiceImpl aiServiceImpl;
     private final VectorStore vectorStore;
     private final ShowEmbedImpl showEmbedImpl;
     private final PerformanceClient performanceClient;

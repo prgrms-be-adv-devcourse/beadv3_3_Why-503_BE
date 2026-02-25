@@ -38,13 +38,13 @@ public class SettlementServiceImpl implements SettlementService {
     // 기획사 식별자를 기준으로 정산 이력 목록 반환
     @Override
     public List<SettlementResponse> getSettlementsByCompanySq(Long companySq) {
-        return settlementMapper.toResponseList(settlementRepository.findByCompanySqOrderByCreatedDtDesc(companySq));
+        return settlementMapper.entityToResponseList(settlementRepository.findByCompanySqOrderByCreatedDtDesc(companySq));
     }
 
     // 공연 식별자를 기준으로 정산 이력 목록 반환
     @Override
     public List<SettlementResponse> getSettlementsByShowSq(Long showSq) {
-        return settlementMapper.toResponseList(settlementRepository.findByShowSqOrderByCreatedDtDesc(showSq));
+        return settlementMapper.entityToResponseList(settlementRepository.findByShowSqOrderByCreatedDtDesc(showSq));
     }
 
     // 공연 종료 시점의 티켓 판매 수익을 집계하여 신규 정산 데이터 생성
@@ -84,15 +84,9 @@ public class SettlementServiceImpl implements SettlementService {
         long platformFee = (long) (totalRevenue * 0.1);
         long settlementAmount = totalRevenue - platformFee;
 
-        Settlement settlement = Settlement.builder()
-                .showSq(showSq)
-                .companySq(companySq)
-                .totalAmount(totalRevenue)
-                .feeAmount(platformFee)
-                .settlementAmount(settlementAmount)
-                .settlementStatus(SettlementStatus.READY)
-                .build();
-
+        Settlement settlement = settlementMapper.responseToEntity(
+                showSq, companySq, totalRevenue, platformFee, settlementAmount
+        );
         settlementRepository.save(settlement);
         log.info("[정산 대기 생성 완료] 공연: {}, 총수익: {}, 정산액: {}", showSq, totalRevenue, settlementAmount);
     }

@@ -7,32 +7,29 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 정산 엔티티 객체를 외부 응답용 DTO로 변환하는 매퍼
- */
 @Component
 public class SettlementMapper {
 
-    // 단일 정산 도메인 객체를 응답 규격에 맞게 변환
+    // 단건 엔티티 -> Record DTO 변환 (Builder 대신 생성자 직접 호출)
     public SettlementResponse toResponse(Settlement settlement) {
         if (settlement == null) {
             return null;
         }
 
-        return SettlementResponse.builder()
-                .sq(settlement.getSq())
-                .companySq(settlement.getCompanySq())
-                .showSq(settlement.getShowSq())
-                .totalAmount(settlement.getTotalAmount())
-                .feeAmount(settlement.getFeeAmount())
-                .settlementAmount(settlement.getSettlementAmount())
-                .settlementStatus(settlement.getSettlementStatus().name())
-                .settledDt(settlement.getSettledDt())
-                .createdDt(settlement.getCreatedDt())
-                .build();
+        return new SettlementResponse(
+                settlement.getSq(),
+                settlement.getCompanySq(),
+                settlement.getShowSq(),
+                settlement.getTotalAmount(),
+                settlement.getFeeAmount(),
+                settlement.getSettlementAmount(),
+                settlement.getSettlementStatus().name(), // Enum을 String으로 안전하게 변환
+                settlement.getSettledDt(),
+                settlement.getCreatedDt()
+        );
     }
 
-    // 다건의 정산 내역 목록을 응답 목록으로 일괄 변환
+    // 리스트 변환 (Stream 및 메서드 참조 대신 명시적 for 루프 사용)
     public List<SettlementResponse> toResponseList(List<Settlement> settlements) {
         if (settlements == null || settlements.isEmpty()) {
             return new ArrayList<>();
@@ -42,6 +39,7 @@ public class SettlementMapper {
         for (Settlement settlement : settlements) {
             responseList.add(toResponse(settlement));
         }
+
         return responseList;
     }
 }

@@ -1,10 +1,7 @@
 package io.why503.aiservice.domain.ai.service.impl;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ConcertType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.MusicalType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.PlayType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.*;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.service.VectorSearch;
 import io.why503.aiservice.global.client.ReservationClient;
@@ -51,6 +48,8 @@ public class VectorSearchImpl implements VectorSearch {
                             return ConcertType.fromString(booking.genre());
                         case PLAY:
                             return PlayType.fromString(booking.genre());
+                        case CLASSIC:
+                            return ClassicType.fromString(booking.genre());
                         default:
                             throw new IllegalArgumentException("Unknown category: " + booking.category());
                     }

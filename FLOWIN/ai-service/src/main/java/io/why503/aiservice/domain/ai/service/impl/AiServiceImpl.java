@@ -117,7 +117,7 @@ public class AiServiceImpl implements AiService {
 
 
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
-    public ResultResponse getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre) {
+    public ResultResponse getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre showGenre) {
 
         List<Booking> bookings =
                 reservationClient.findMyBookings(userSq)
@@ -128,7 +128,7 @@ public class AiServiceImpl implements AiService {
 
 
         List<Performance> performances =
-                performanceClient.getShowCategoryGenre(showCategory, genre)
+                performanceClient.getShowCategoryGenre(showCategory, showGenre)
                         .stream()
                         .map(performanceResponse -> performanceMapper.responseToPerformance(performanceResponse))
                         .toList();
@@ -180,6 +180,7 @@ public class AiServiceImpl implements AiService {
                 performanceDocs.stream()
                         .map(document -> performanceMapper.docToPerformance(document))
                         .filter(performance -> Objects.nonNull(performance))
+                        .filter(performance -> topShowCategory.contains(performance.category()) && topGenre.contains(performance.genre()))
                         .toList();
 
         //장르 점수 형식대로 출력 반환 ( ResultResponse -> categoryScore )
@@ -199,44 +200,44 @@ public class AiServiceImpl implements AiService {
                 ).stream()
                 .map(typeScore -> {
                     String showCategoryString = typeScore.showCategory();
-                    String showGenre = typeScore.genre();
+                    String showGenreString = typeScore.genre();
 
                     //카테고리 문서 기반 가중치 적용
                     Document ruleDoc = categoryRule.get(showCategoryString);
                     double ruleBoost = 0.0;
-                    if (ruleDoc != null && ruleDoc.getText().contains(showGenre)) {
+                    if (ruleDoc != null && ruleDoc.getText().contains(showGenreString)) {
                         ruleBoost = 2.0;
                     }
 
                     double newScore = typeScore.typeScore() + ruleBoost;
-                    return new TypeShowScore(showCategoryString, showGenre, newScore, typeScore.performance());
+                    return new TypeShowScore(showCategoryString, showGenreString, newScore, typeScore.performance());
                 })
                 .sorted(Comparator.comparing((TypeShowScore typeShowScore) -> typeShowScore.typeScore()).reversed())
                 .toList();
         List<TypeShowScore> topScoreShows = finalShows.stream()
-                .limit(3)
+                .limit(5)
                 .toList();
 
         //공연 문서 기반 ( Recommendations 통합 처리 )
         List<Recommendations> performanceRecommendations = topScoreShows.stream()
                 .map(TypeScore -> {
-                    String showGenre = TypeScore.genre();
-                    String showCategoryEnum = TypeScore.showCategory();
+                    String genre = TypeScore.genre();
+                    String category = TypeScore.showCategory();
 
 
                     //카테고리 기반 가중치
                     String reason = "사용자 점수 기반 추천";
-                    Document ruleDoc = categoryRule.get(showCategoryEnum);
-                    if (ruleDoc != null && ruleDoc.getText().contains(showGenre)) {
+                    Document ruleDoc = categoryRule.get(category);
+                    if (ruleDoc != null && ruleDoc.getText().contains(genre)) {
                         reason += " + 카테고리 룰 기반 추천";
                     }
 
 
 
                     return new Recommendations(
-                            showCategoryEnum,
+                            category,
                             reason,
-                            showGenre
+                            genre
                     );
                 })
                 .toList();
@@ -248,7 +249,7 @@ public class AiServiceImpl implements AiService {
 
         List<String> topGenres =
                 topGenre.stream()
-                        .map(showGenre -> showGenre.getName())
+                        .map(genre -> genre.getName())
                         .toList();
 
         // 장르 이름 리스트 ( Recommendations -> showCategory )

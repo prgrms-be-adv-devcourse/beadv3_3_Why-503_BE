@@ -50,7 +50,7 @@ public class CategoryDocument {
 
         HashMap<String, Object> meta = new HashMap<>();
         meta.put("type", "CATEGORY");
-        meta.put("category", c.name());
+        meta.put("showCategory", c.name());
 
         return Document.builder()
                 .id("category_" + c.name())

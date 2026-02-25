@@ -1,41 +1,56 @@
 package io.why503.aiservice.domain.ai.model.embedding.genre;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-/**
- *  카테고리와 장르 같이 매핑 처리용 클래스
- *  서비스 로직에 캐시 방식으로 적용 -> toDomain
- *  카테고리 안에 장르 찾고 장르 안에 카테고리 찾는 구조를 개선
- *
- */
+@Slf4j
 @Component
 public class ShowGenreResolver {
 
     private final Map<String, ShowGenre> genreMap = new HashMap<>();
 
     public ShowGenreResolver(List<ShowGenre> genres) {
-        genres.forEach(g ->
-                genreMap.put(g.getName().toUpperCase(), g)
-        );
+        for (ShowGenre g : genres) {
+            // 1) 한글 이름 키
+            putKey(g.getName(), g);
+
+            // 2) enum 이름 키 (OPERA, BALLAD 등)
+            putKey(g.toString(), g); // enum이면 toString() == name()
+
+        }
+
+        log.info("ShowGenreResolver loaded keys={}", genreMap.size());
+    }
+
+    private void putKey(String raw, ShowGenre genre) {
+        if (raw == null) return;
+
+        String key1 = normalize(raw);
+        if (!key1.isBlank()) genreMap.putIfAbsent(key1, genre);
+
+        // 특수문자 제거 버전 추가(예: "발라드!!!!" 같은 입력 방어)
+        String key2 = normalize(raw.replaceAll("[^a-zA-Z가-힣]", ""));
+        if (!key2.isBlank()) genreMap.putIfAbsent(key2, genre);
+    }
+
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().toUpperCase();
     }
 
     public ShowGenre fromString(String value) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalStateException();
+        ShowGenre g = fromStringOrNull(value);
+        if (g == null) {
+            throw new IllegalStateException("Unknown genre: " + value);
         }
-
-        ShowGenre genre = genreMap.get(value.trim().toUpperCase());
-
-        if (genre == null) {
-            throw new IllegalStateException();
-        }
-
-        return genre;
+        return g;
     }
 
+    public ShowGenre fromStringOrNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        return genreMap.get(normalize(value));
+    }
 }

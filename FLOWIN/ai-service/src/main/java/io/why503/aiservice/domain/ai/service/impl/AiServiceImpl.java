@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
@@ -61,8 +60,7 @@ public class AiServiceImpl implements AiService {
     private final RecommendationsMapper recommendationsMapper;
     private final FallbackResultResponseMapper fallbackResultResponseMapper;
 
-
-    //유사 공연
+    //같은 카테고리내 다른 장르 추천
     public List<String> SimilarShows(List<TypeShowScore> topFinalShows, List<Performance> performances) {
         Set<String> similarShows = new LinkedHashSet<>();
 
@@ -76,7 +74,6 @@ public class AiServiceImpl implements AiService {
         }
         return new ArrayList<>(similarShows);
     }
-
 
 
     //사용자의 행동 기반 상위 카테고리 결정
@@ -100,12 +97,6 @@ public class AiServiceImpl implements AiService {
     }
 
 
-
-
-
-
-
-
     //구매한 내역 반환
     public ResultRequest Tickets(List<Booking> bookings) {
 
@@ -127,7 +118,7 @@ public class AiServiceImpl implements AiService {
 
 
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
-    public  CompletableFuture<ResultResponse> getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre) {
+    public  CompletableFuture<ResultResponse> getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre showGenre) {
 
         try {
             return CompletableFuture.supplyAsync(() -> {
@@ -142,7 +133,7 @@ public class AiServiceImpl implements AiService {
 
 
                 List<Performance> performances =
-                        performanceClient.getShowCategoryGenre(showCategory, genre)
+                        performanceClient.getShowCategoryGenre(showCategory, showGenre)
                                 .stream()
                                 .map(performanceResponse -> performanceMapper.PerformanceResponseToPerformance(performanceResponse))
                                 .toList();
@@ -194,6 +185,7 @@ public class AiServiceImpl implements AiService {
                         performanceDocs.stream()
                                 .map(document -> performance.toPerformance(document))
                                 .filter(performance -> Objects.nonNull(performance))
+                                .filter(performance -> topShowCategory.contains(performance.category()) && topGenre.contains(performance.genre()))
                                 .toList();
 
                 //장르 점수 형식대로 출력 반환 ( ResultResponse -> categoryScore )
@@ -212,45 +204,44 @@ public class AiServiceImpl implements AiService {
 
                 ).stream()
                         .map(typeScore -> {
-                            ShowCategory showCategoryEnum = typeScore.showCategory();
-                            ShowGenre showGenre = typeScore.genre();
+                            ShowCategory category = typeScore.showCategory();
+                            ShowGenre genre = typeScore.genre();
 
                             //카테고리 문서 기반 가중치 적용
-                            Document ruleDoc = categoryRule.get(showCategoryEnum);
+                            Document ruleDoc = categoryRule.get(category);
                             double ruleBoost = 0.0;
-                            if (ruleDoc != null && ruleDoc.getText().contains(showGenre.getName())) {
+                            if (ruleDoc != null && ruleDoc.getText().contains(genre.getName())) {
                                 ruleBoost = 2.0;
                             }
 
                             double newScore = typeScore.typeScore() + ruleBoost;
-                            return new TypeShowScore(showCategoryEnum, showGenre, newScore, typeScore.performance());
+                            return new TypeShowScore(category, showGenre, newScore, typeScore.performance());
                         })
                         .sorted(Comparator.comparing((TypeShowScore typeShowScore) -> typeShowScore.typeScore()).reversed())
                         .toList();
                 List<TypeShowScore> topScoreShows = finalShows.stream()
-                        .limit(3)
+                        .limit(5)
                         .toList();
 
                 //공연 문서 기반 ( Recommendations 통합 처리 )
                 List<Recommendations> performanceRecommendations = topScoreShows.stream()
                         .map(TypeScore -> {
-                            ShowGenre showGenre = TypeScore.genre();
-                            ShowCategory showCategoryEnum = TypeScore.showCategory();
+                            ShowGenre showGenreData = TypeScore.genre();
+                            ShowCategory showCategoryData = TypeScore.showCategory();
 
 
                             //카테고리 기반 가중치
                             String reason = "사용자 점수 기반 추천";
-                            Document ruleDoc = categoryRule.get(showCategoryEnum);
-                            if (ruleDoc != null && ruleDoc.getText().contains(showGenre.getName())) {
+                            Document ruleDoc = categoryRule.get(showCategoryData);
+                            if (ruleDoc != null && ruleDoc.getText().contains(showGenreData.getName())) {
                                 reason += " + 카테고리 룰 기반 추천";
                             }
 
 
-
                             return new Recommendations(
-                                    showCategoryEnum,
+                                    showCategoryData,
                                     reason,
-                                    showGenre
+                                    showGenreData
                             );
                         })
                         .toList();
@@ -262,10 +253,10 @@ public class AiServiceImpl implements AiService {
 
                 List<String> topGenres =
                         topGenre.stream()
-                                .map(showGenre -> showGenre.getName())
+                                .map(showGenreData -> showGenre.getName())
                                 .toList();
 
-                // 장르 이름 리스트 ( Recommendations -> showCategory )
+                //장르 이름 리스트 ( Recommendations -> showCategory )
                 List<String> topFinalShows = performanceRecommendations.stream()
                         .map(recommendations -> recommendations.showGenre().getName())
                         .distinct()

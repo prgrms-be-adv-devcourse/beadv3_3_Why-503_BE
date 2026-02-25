@@ -32,7 +32,6 @@ public class RecommendationsMapper implements Recommendation {
 
     public List<Recommendations> RecommendationsToAiRecommendations(List<Recommendations> aiRecommendations) {
         return aiRecommendations.stream()
-                .map(this::toDomain)
                 .toList();
     }
 }

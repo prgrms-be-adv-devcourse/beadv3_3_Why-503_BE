@@ -2,10 +2,7 @@ package io.why503.aiservice.domain.ai.service.impl;
 
 import io.why503.aiservice.domain.ai.model.embedding.Booking;
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ConcertType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.MusicalType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.PlayType;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.*;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.service.VectorSearch;
 import io.why503.aiservice.global.client.ReservationClient;
@@ -51,11 +48,12 @@ public class VectorSearchImpl implements VectorSearch {
                     switch (ShowCategory.valueOf(booking.category())) {
                         case MUSICAL:
                             return MusicalType.fromString(booking.genre());
-                        // 다른 카테고리의 장르는 각각 다른 구현체에서 fromString 호출
                         case CONCERT:
                             return ConcertType.fromString(booking.genre());
                         case PLAY:
                             return PlayType.fromString(booking.genre());
+                        case CLASSIC:
+                            return ClassicType.fromString(booking.genre());
                         default:
                             throw new IllegalArgumentException("Unknown category: " + booking.category());
                     }
@@ -81,7 +79,7 @@ public class VectorSearchImpl implements VectorSearch {
         return embeddingModel.embed(text);
     }
 
-    //장르 문서 검색용 함수
+    //카테고리 문서 검색용 함수
     public List<Document> searchCategoryRules(List<ShowCategory> topShowCategory) {
         String query = topShowCategory.stream()
                 .map(showCategory -> showCategory.name())

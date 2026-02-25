@@ -23,6 +23,8 @@ configurations {
 repositories {
     mavenCentral()
 
+
+
 }
 
 ext {
@@ -31,6 +33,7 @@ ext {
 }
 dependencies {
 
+    //web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Source: https://mvnrepository.com/artifact/org.apache.commons/commons-csv
     implementation("org.apache.commons:commons-csv:1.14.1")
@@ -48,6 +51,11 @@ dependencies {
 
     implementation("org.apache.poi:poi-ooxml:5.5.1")
 
+    // feign (service to service)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+
     //test
     testRuntimeOnly 'com.h2database:h2'
 
@@ -56,6 +64,8 @@ dependencies {
 
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor("org.projectlombok:lombok")
+    testImplementation "org.testcontainers:testcontainers:1.19.2"
+    testImplementation "org.testcontainers:junit-jupiter:1.19.2"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

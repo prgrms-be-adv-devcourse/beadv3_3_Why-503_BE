@@ -1,6 +1,5 @@
 package io.why503.aiservice.domain.ai.model.embedding.genre;
 
-import io.why503.aiservice.global.exception.AiException;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -27,13 +26,13 @@ public class ShowGenreResolver {
 
     public ShowGenre fromString(String value) {
         if (value == null || value.isBlank()) {
-            throw AiException.invalidGenre();
+            throw new IllegalStateException();
         }
 
         ShowGenre genre = genreMap.get(value.trim().toUpperCase());
 
         if (genre == null) {
-            throw AiException.invalidGenre();
+            throw new IllegalStateException();
         }
 
         return genre;

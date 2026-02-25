@@ -1,7 +1,7 @@
 package io.why503.aiservice.domain.ai.service.impl;
 
-public class AiPromptImpl {
-    private AiPromptImpl() {}
+public class AiPrompt {
+    private AiPrompt() {}
     public static final String prompt =  """
                         공연 장르 추천해주는 서비스입니다.
                         아래 사용자 정보와 공연 목록을 기반으로

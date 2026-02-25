@@ -21,5 +21,4 @@ public record PerformanceResponse(
 
         Long hallSq,        // 공연장 식별자
         Long companySq             // 회사 식별자
-){
-}
+){ }

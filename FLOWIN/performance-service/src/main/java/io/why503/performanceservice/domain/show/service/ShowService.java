@@ -25,6 +25,9 @@ public interface ShowService {
 
     //공연 단건 조회
     ShowResponse readShowBySq(Long showSq);
+    
+    //공연 모두 조회
+    List<ShowResponse> readShowAll();
 
     //공연 단건 조회(round 생성용)
     ShowEntity findShowBySq(Long showSq);

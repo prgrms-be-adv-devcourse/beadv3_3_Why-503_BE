@@ -1,9 +1,5 @@
 package io.why503.aiservice.global.client.dto.response;
 
-
-import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
-import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
-
 import java.time.LocalDateTime;
 
 public record PerformanceResponse(
@@ -15,8 +11,8 @@ public record PerformanceResponse(
         String showTime,          // 러닝타임
         String viewingAge,        // 관람 등급
 
-        ShowCategory category,     // 공연 카테고리
-        ShowGenre genre,           //공연 장르
+        String category,     // 공연 카테고리
+        String genre,           //공연 장르
         String showStatus,       // 공연 상태
 
         Long hallSq,        // 공연장 식별자

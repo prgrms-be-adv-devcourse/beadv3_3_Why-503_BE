@@ -18,8 +18,6 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -85,12 +83,12 @@ public class AiServiceImpl implements AiService {
                 .limit(2).toList();
     }
     //상위 장르 결정
-    public List<ShowGenre> topGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
+    public List<String> topGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
         if (request.genre() == null || request.genre().isEmpty()) return List.of();
 
-        Map<ShowGenre, Double> scores = showCalculator.genreScores(request, categoryScores);
+        Map<String, Double> scores = showCalculator.genreScores(request, categoryScores);
         return scores.entrySet().stream()
-                .sorted(Map.Entry.<ShowGenre, Double>comparingByValue().reversed())
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .map(moodCategoryDoubleEntry -> moodCategoryDoubleEntry.getKey())
                 .limit(2)
                 .toList();
@@ -99,25 +97,20 @@ public class AiServiceImpl implements AiService {
     //구매한 내역 반환
     public ResultRequest tickets(List<Booking> bookings) {
 
-        List<ShowCategory> showCategory = bookings.stream()
-                .map(booking -> ShowCategory.valueOf(booking.category()))
-                .toList();
+        String showCategory = bookings.get(0).category();
 
-        List<ShowGenre> genre = bookings.stream()
-                .map(booking -> genreResolver.fromString(booking.genre()))
-                .toList();
+        String genre = bookings.get(0).genre();
 
         return new ResultRequest(
                 showCategory,
                 genre
-
         );
     }
 
 
 
     //추천 받는 명령어 (프롬프트에 명령한 규칙 수행)
-    public ResultResponse getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre) {
+    public ResultResponse getRecommendations(Long userSq , ShowCategory showCategory, ShowGenre genre) {
 
         List<Booking> bookings =
                 reservationClient.findMyBookings(userSq)
@@ -125,7 +118,7 @@ public class AiServiceImpl implements AiService {
                         .filter(bookingResponse -> "PAID".equals(bookingResponse.status()))
                         .map(bookingResponse -> bookingMapper.responseToBooking(bookingResponse))
                         .toList();
-
+        bookings.forEach(i -> log.info("{}/{}",i.category(), i.genre()));
 
         List<Performance> performances =
                 performanceClient.getShowCategoryGenre(showCategory, genre)
@@ -142,14 +135,14 @@ public class AiServiceImpl implements AiService {
         Map<ShowCategory, Double> categoryScores =
                 showCalculator.categoryScores(ticketRequest, userVector);
         //선호하는 공연의 장르 선정 ( aiResponse -> genreScores )
-        Map<ShowGenre, Double> genreScores =
+        Map<String, Double> genreScores =
                 showCalculator.genreScores(ticketRequest, categoryScores);
         //사용자의 상위 카테고리 데이터 ( aiResponse -> topCategory )
         List<ShowCategory> topShowCategory =
                 topCategory(ticketRequest, userVector);
 
         //사용자의 상위 장르 데이터 ( topGenre )
-        List<ShowGenre> topGenre =
+        List<String> topGenre =
                 topGenre(ticketRequest, categoryScores);
         //사용자의 최종 카테고리 공연 리스트
         List<Performance> topCategoryPerformances =
@@ -246,10 +239,7 @@ public class AiServiceImpl implements AiService {
                         .map(category -> category.name())
                         .toList();
 
-        List<String> topGenres =
-                topGenre.stream()
-                        .map(showGenre -> showGenre.getName())
-                        .toList();
+        List<String> topGenres = topGenre;
 
         // 장르 이름 리스트 ( Recommendations -> showCategory )
         List<String> topFinalShows = performanceRecommendations.stream()
@@ -351,14 +341,14 @@ public class AiServiceImpl implements AiService {
         }
 
         Map<ShowCategory, Double> categoryScores = showCalculator.categoryScores(request, userVector);
-        Map<ShowGenre, Double> genreScores = showCalculator.genreScores(request, categoryScores);
+        Map<String, Double> genreScores = showCalculator.genreScores(request, categoryScores);
 
         Map<String, String> categoryScore = scoreResponseMapper.convertCategoryScore(categoryScores);
         Map<String, String> genreScore = scoreResponseMapper.convertGenreScore(genreScores);
 
         List<String> topCategory = topCategory(request, userVector).stream().map(category -> category.name()).toList();
 
-        List<String> topGenre = topGenre(request, categoryScores).stream().map(showGenre -> showGenre.getName()).toList();
+        List<String> topGenre = topGenre(request, categoryScores);
 
         List<String> topFinalShows = fallbackRecommendations.stream()
                 .map(r -> r.showGenre())

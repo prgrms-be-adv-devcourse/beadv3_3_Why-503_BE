@@ -9,7 +9,6 @@ import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.service.VectorSearch;
 import io.why503.aiservice.global.client.ReservationClient;
 import io.why503.aiservice.global.client.dto.response.BookingResponse;
-import io.why503.aiservice.global.client.entity.mapper.BookingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -26,7 +25,6 @@ public class VectorSearchImpl implements VectorSearch {
 
     private final VectorStore vectorStore;
     private final ReservationClient reservationClient;
-    private final BookingMapper bookingMapper;
     private final EmbeddingModel embeddingModel;
 
 

@@ -17,5 +17,6 @@ public interface PerformanceClient {
             @RequestParam("category") ShowCategory category,
             @RequestParam("genre") ShowGenre genre
     );
-
+    @GetMapping("/shows")
+    public List<PerformanceResponse> getShowAll();
 }

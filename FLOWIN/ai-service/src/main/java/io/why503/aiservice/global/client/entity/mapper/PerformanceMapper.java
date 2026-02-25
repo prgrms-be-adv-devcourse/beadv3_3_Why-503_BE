@@ -14,8 +14,8 @@ public class PerformanceMapper {
         return new Performance(
                 response.showSq(),
                 response.showName(),
-                response.category().name(),
-                response.genre().getName()
+                response.category(),
+                response.genre()
         );
     }
     //공연 문서 반환

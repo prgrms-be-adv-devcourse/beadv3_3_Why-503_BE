@@ -24,10 +24,10 @@ public class ScoreResponseMapper implements ScoreResponse {
     }
 
     //점수 반환
-    public Map<String, String> convertGenreScore(Map<ShowGenre, Double> scores) {
+    public Map<String, String> convertGenreScore(Map<String, Double> scores) {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
-                        entry -> entry.getKey().getName(),
+                        entry -> entry.getKey(),
                         entry -> String.format("%.2f", entry.getValue())
                 ));
     }

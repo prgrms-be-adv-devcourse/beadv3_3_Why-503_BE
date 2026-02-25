@@ -2,6 +2,7 @@ package io.why503.aiservice.domain.ai.controller;
 
 import io.why503.aiservice.domain.ai.model.embedding.ShowCategory;
 import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenre;
+import io.why503.aiservice.domain.ai.model.embedding.genre.ShowGenreResolver;
 import io.why503.aiservice.domain.ai.model.vo.ResultRequest;
 import io.why503.aiservice.domain.ai.model.vo.ResultResponse;
 import io.why503.aiservice.domain.ai.service.impl.AiServiceImpl;
@@ -16,7 +17,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -32,13 +32,14 @@ public class AiController {
 
 //    @PostConstruct
     @EventListener(ApplicationReadyEvent.class)
-    public void init(ShowCategory category, ShowGenre genre) {
+    public void init() {
         log.info("장르 데이터 초기화 시작!");
+        
         //카테고리 문서
         upsert();
+
         //공연 문서
-        List<PerformanceResponse> responses =
-                performanceClient.getShowCategoryGenre(category, genre);
+        List<PerformanceResponse> responses =performanceClient.getShowAll();
         showEmbedImpl.upsert(responses);
         log.info("장르 데이터 초기화 끝!");
     }
@@ -54,9 +55,13 @@ public class AiController {
     //추천 결과값 반환
     @PostMapping
     public ResultResponse getRecommendations(
-            @RequestBody ResultRequest request, Long userSq, ShowCategory category, ShowGenre genre
+            @RequestBody ResultRequest request,
+            @RequestHeader("X-USER-SQ") Long userSq
     ) {
-        return aiServiceImpl.getRecommendations( request, userSq, category, genre);
+        ShowCategory category = ShowCategory.fromString(request.showCategory());
+        ShowGenre genre = category.findShowType(request.genre());
+
+        return aiServiceImpl.getRecommendations(userSq, category, genre);
     }
 
 

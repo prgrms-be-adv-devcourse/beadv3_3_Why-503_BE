@@ -8,8 +8,6 @@ import io.why503.aiservice.domain.ai.service.Recommendation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @RequiredArgsConstructor
 @Component
 public class RecommendationsMapper implements Recommendation {

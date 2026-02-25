@@ -8,14 +8,13 @@ import io.why503.aiservice.domain.ai.model.vo.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public interface AiService {
     List<String> similarShows(List<TypeShowScore> topFinalShows, List<Performance> performances);
     List<ShowCategory> topCategory(ResultRequest request, float[] userVector);
-    List<ShowGenre> topGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores);
+    List<String> topGenre(ResultRequest request, Map<ShowCategory, Double> categoryScores);
     ResultRequest tickets(List<Booking> bookings);
-    ResultResponse getRecommendations(ResultRequest request, Long userSq , ShowCategory showCategory, ShowGenre genre);
+    ResultResponse getRecommendations(Long userSq , ShowCategory showCategory, ShowGenre genre);
     List<String> findSimilarShows(List<Recommendations> recommendations);
     ResultResponse fallbackRecommendation(ResultRequest request, Long userSq);
 }

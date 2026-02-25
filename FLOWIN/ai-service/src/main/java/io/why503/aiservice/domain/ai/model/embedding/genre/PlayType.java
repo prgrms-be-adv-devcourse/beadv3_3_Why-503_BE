@@ -32,7 +32,7 @@ public enum PlayType implements ShowGenre {
     public String getName() {
         return Name;
     }
-
+    
     public static ShowGenre fromString(String genre) {
         for (PlayType type : values()) {
             if (type.name().equalsIgnoreCase(genre) || type.getName().equalsIgnoreCase(genre)) {
@@ -41,4 +41,5 @@ public enum PlayType implements ShowGenre {
         }
         throw new IllegalArgumentException("Unknown genre: " + genre);
     }
+
 }

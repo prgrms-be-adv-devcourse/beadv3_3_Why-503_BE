@@ -22,9 +22,10 @@ public class DocumentConverter {
                 .id(p.sq().toString())
                 .text(content)
                 .metadata(Map.of(
+                        "type", "PERFORMANCE",
                         "sq", p.sq(),
                         "name", p.name(),
-                        "category", p.category(),
+                        "showCategory", p.category(),
                         "genre", p.genre()
                 ))
                 .build();

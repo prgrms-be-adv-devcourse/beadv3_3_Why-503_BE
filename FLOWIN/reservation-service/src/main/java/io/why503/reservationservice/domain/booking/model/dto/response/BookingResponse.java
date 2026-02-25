@@ -1,7 +1,5 @@
 package io.why503.reservationservice.domain.booking.model.dto.response;
 
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 예매 상세 및 상태 정보를 반환하는 데이터 객체
@@ -10,9 +8,8 @@ import java.util.List;
 public record BookingResponse(
         Long sq,
         Long userSq,
-        String orderId,
         String status,
-        List<BookingSeatResponse> bookingSeats,
-        LocalDateTime createdDt
+        String category,
+        String genre
 ) {
 }

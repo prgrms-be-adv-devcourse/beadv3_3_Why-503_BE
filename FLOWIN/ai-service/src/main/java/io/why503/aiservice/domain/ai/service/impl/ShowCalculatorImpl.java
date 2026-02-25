@@ -50,15 +50,14 @@ public class ShowCalculatorImpl implements ShowCalculator {
         Map<ShowCategory, Double> scoreMap = new EnumMap<>(ShowCategory.class);
 
         //구매 횟수 (가중치 적용하기 위해 장르 중복 발생 시 로그 처리)
-        Map<ShowCategory, Long> categoryCount =
-                request.showCategory().stream()
-                        .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
+        Map<String, Long> categoryCount = new HashMap<>();
+        categoryCount.put(request.showCategory(), 1L);
 
 
         //로그 + 가중치 (중복 발생 시 로그 적용한 다음에 작은 수로 비율 적용)
         categoryCount.forEach((showCategory, count) -> {
             double score = Math.log1p(count) * 3.0;
-            scoreMap.merge(showCategory, score, (a, b) -> Double.sum(a, b));
+            scoreMap.merge(ShowCategory.fromString(showCategory), score, (a, b) -> Double.sum(a, b));
         });
 
 
@@ -108,22 +107,20 @@ public class ShowCalculatorImpl implements ShowCalculator {
 
 
     //Category 점수를 ShowCategory에 분배
-    public Map<ShowGenre, Double> genreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
+    public Map<String, Double> genreScores(ResultRequest request, Map<ShowCategory, Double> categoryScores) {
 
-        Map<ShowGenre, Double> scoreMap = new HashMap<>();
+        Map<String, Double> scoreMap = new HashMap<>();
 
         //사용자가 선택한 장르 직접 가중치
         if (request.genre() != null) {
-            request.genre().forEach(Genre ->
-                    scoreMap.merge(Genre, 3.0, (a, b) -> Double.sum(a, b))
-            );
+            scoreMap.put(request.genre(), 1.0);
         }
 
         for (ShowCategory showCategory : ShowCategory.values()) {
             double categoryScore = categoryScores.getOrDefault(showCategory, 0.0);
 
             for (ShowGenre show : showCategory.getTypes()) {
-                scoreMap.merge(show, categoryScore * 0.5, (a, b) -> Double.sum(a, b));
+                scoreMap.merge(show.getName(), categoryScore * 0.5, (a, b) -> Double.sum(a, b));
             }
         }
 
@@ -132,9 +129,9 @@ public class ShowCalculatorImpl implements ShowCalculator {
                 .mapToDouble(Double -> Double.doubleValue())
                 .sum();
 
-        Map<ShowGenre, Double> percentMap = new HashMap<>();
+        Map<String, Double> percentMap = new HashMap<>();
 
-        for (Map.Entry<ShowGenre, Double> entry : scoreMap.entrySet()) {
+        for (Map.Entry<String, Double> entry : scoreMap.entrySet()) {
             double percent = total == 0
                     ? 0.0
                     : (entry.getValue() / total) * percent100;
@@ -148,7 +145,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
     public double finalScore(
             Performance performance,
             Map<ShowCategory, Double> categoryScores,
-            Map<ShowGenre, Double> genreScores
+            Map<String, Double> genreScores
     ) {
 
         //set -> 리스트별로 하나씩 찾아야 함 / map : 문자 길이나 특정한 키값으로 통해 얻음
@@ -168,7 +165,7 @@ public class ShowCalculatorImpl implements ShowCalculator {
     public List<TypeShowScore> finalShowRanking(
             List<Performance> performances,
             Map<ShowCategory, Double> categoryScores,
-            Map<ShowGenre, Double> genreScores
+            Map<String, Double> genreScores
     ) {
         List<TypeShowScore> results = new ArrayList<>();
 

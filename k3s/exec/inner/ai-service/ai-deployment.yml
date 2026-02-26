@@ -26,11 +26,13 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dserver.port=8500"
 
-            # RDB가 아닌 벡터 검색 전용 데이터베이스(ChromaDB) 연결
-            - name: CHROMA_HOST
-              value: "chroma-service"
-            - name: CHROMA_PORT
+            # Spring Boot 완화된 바인딩(Relaxed Binding) 규칙에 맞춘 환경 변수명
+            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST
+              value: "chroma-service.flowin.svc.cluster.local"
+            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_PORT
               value: "8000"
+            - name: SPRING_AI_VECTORSTORE_CHROMA_INITIALIZE_SCHEMA
+              value: "true"
 
             - name: AI_SERVICE_OPENAI_API_KEY
               valueFrom:

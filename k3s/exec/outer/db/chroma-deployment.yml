@@ -34,15 +34,16 @@ spec:
 
       containers:
         - name: chroma
-          image: chromadb/chroma:0.5.3
+          image: chromadb/chroma:latest
           imagePullPolicy: Always
           command: [ "/bin/sh", "-c" ]
           args:
             - |
-              export CHROMA_SERVER_HOST=0.0.0.0
-              export CHROMA_SERVER_HTTP_PORT=8000
-              # --log-config를 완전히 제거한 순수 실행 명령어
-              uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --timeout-keep-alive 30
+              # 로그 설정 파일을 찾지 못하는 버그를 피하기 위해 옵션을 강제 제거하고 실행
+              export CHROMA_LOG_CONFIG=""
+              export CHROMA_API_IMPL="chromadb.api.segment.SegmentAPI"
+              # 이미지 내부의 정석 실행 스크립트를 호출하되, 인자만 우리가 조절합니다.
+              /docker_entrypoint.sh --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers
           ports:
             - containerPort: 8000
           env:

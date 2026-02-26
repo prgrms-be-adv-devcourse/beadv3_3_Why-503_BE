@@ -2,6 +2,7 @@ package io.why503.reservationservice.domain.booking.service;
 
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
+import io.why503.reservationservice.domain.booking.model.dto.response.BookingAiResponse;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
 
@@ -21,6 +22,8 @@ public interface BookingService {
     BookingResponse findBooking(Long userSq, Long bookingSq);
 
     List<BookingResponse> findBookingsByUser(Long userSq);
+
+    List<BookingAiResponse> findBookingsByUserToAi(Long userSq);
 
     // 예매 철회에 따른 데이터 무효화 및 점유 중인 좌석 자원 방출
     BookingResponse cancelBooking(Long userSq, Long bookingSq, List<Long> roundSeatSqs, String reason);

@@ -9,16 +9,8 @@ import java.util.List;
 public interface ReservationClient {
 
 
-    @GetMapping("/bookings")
+    @GetMapping("/bookings/ai")
     List<BookingResponse> findMyBookings(
             @RequestHeader("X-USER-SQ") Long userSq
     );
-
-    @GetMapping("/bookings/{bookingSq}")
-    List<BookingResponse> findBookings(
-            @RequestHeader("X-USER-SQ") Long userSq,
-            @PathVariable Long bookingSq
-    );
-
-
 }

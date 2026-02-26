@@ -27,13 +27,10 @@ spec:
           command:
             - sh
             - -c
-            - |
-              mkdir -p /chroma
-              chmod -R 777 /chroma
-              exit 0
+            - "mkdir -p /chroma/data && chmod -R 777 /chroma"
           volumeMounts:
             - name: chroma-data
-              mountPath: /chroma/chroma
+              mountPath: /chroma
 
       containers:
         - name: chroma
@@ -45,7 +42,7 @@ spec:
             - name: IS_PERSISTENT
               value: "TRUE"
             - name: PERSIST_DIRECTORY
-              value: "/chroma/chroma"
+              value: "/chroma/data"
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
 
@@ -67,7 +64,7 @@ spec:
 
           volumeMounts:
             - name: chroma-data
-              mountPath: /chroma/chroma
+              mountPath: /chroma
 
       volumes:
         - name: chroma-data

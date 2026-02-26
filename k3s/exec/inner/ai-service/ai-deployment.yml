@@ -42,11 +42,17 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dserver.port=8500"
 
+            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_BASE_URL
+              value: "http://chroma-service:8000"
+
             - name: SPRING_AI_VECTORSTORE_CHROMA_COLLECTION_NAME
               value: "SpringAiCollection"
 
-            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_BASE_URL
-              value: "http://chroma-service:8000"
+            # 3. 테넌트 및 데이터베이스 (가장 호환성 높은 이름으로 세팅)
+            - name: SPRING_AI_VECTORSTORE_CHROMA_TENANT
+              value: "default_tenant"
+            - name: SPRING_AI_VECTORSTORE_CHROMA_DATABASE
+              value: "default_database"
 
             # 핵심 테넌트와 데이터베이스를 Chroma 기본값으로 고정
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_TENANT
@@ -54,9 +60,8 @@ spec:
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_DATABASE
               value: "default_database"
 
-            # 스키마 초기화 끄기 (이미 initContainer가 했으므로 안전하게 false)
             - name: SPRING_AI_VECTORSTORE_CHROMA_INITIALIZE_SCHEMA
-              value: "false"
+              value: "true"
 
             - name: AI_SERVICE_OPENAI_API_KEY
               valueFrom:

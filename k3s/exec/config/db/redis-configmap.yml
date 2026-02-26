@@ -9,6 +9,9 @@ data:
     protected-mode yes
     port 6379
 
+    # Keyspace notifications (TTL expire events)
+    notify-keyspace-events Egx
+
     # AOF(모든 쓰기 로그 저장) 비활성화로 디스크 I/O 부하 감소
     appendonly no
     save 900 1

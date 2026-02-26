@@ -13,22 +13,6 @@ spec:
       labels:
         app: ai-service
     spec:
-      # [추가] 메인 컨테이너(ai-service)가 실행되기 전 실행되는 초기화 컨테이너
-      initContainers:
-        - name: ensure-collection
-          image: curlimages/curl
-          command:
-            - sh
-            - -c
-            - |
-              until curl -s http://chroma-service:8000/api/v1/heartbeat; do
-                sleep 2
-              done
-              # 명시적으로 default 테넌트의 default 데이터베이스에 생성
-              curl -X POST http://chroma-service:8000/api/v1/collections \
-                   -H "Content-Type: application/json" \
-                   -d '{"name": "SpringAiCollection", "get_or_create": true}'
-
       containers:
         - name: ai-service
           image: kkoj/ai-service:latest

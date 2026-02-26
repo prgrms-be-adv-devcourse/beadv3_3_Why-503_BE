@@ -11,9 +11,10 @@ public interface ShowSeatService {
     //특정 공연의 좌석 조회
     List<ShowSeatEntity> getByShow(Long showSq);
     //좌석 등급 변경
-    void changeGrade(Long showSeatSq, ShowSeatGrade grade);
+    void changeGrade(Long userSq, Long showSeatSq, ShowSeatGrade grade);
     //좌석 가격 변경
-    void changePrice(Long showSeatSq, Long price);
+    void changePrice(Long userSq, Long showSeatSq, Long price);
     //공연 식별자로 좌석 조회
     List<ShowSeatEntity> getSeatsByShowSq(Long showSq);
+    int changePriceByShowAndGrade(Long userSq, Long showSq, ShowSeatGrade grade, Long price);
 }

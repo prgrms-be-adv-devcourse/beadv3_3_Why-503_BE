@@ -4,8 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 예매 상세 및 상태 정보를 반환하는 데이터 객체
- * - 예매 식별자, 상태, 선점된 좌석 목록을 포함
+ * 예매 서비스로부터 수신한 주문 및 좌석 점유 정보
  */
 public record BookingResponse(
         Long sq,

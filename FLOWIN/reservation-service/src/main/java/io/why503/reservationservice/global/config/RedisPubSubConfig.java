@@ -17,7 +17,7 @@ import io.why503.reservationservice.domain.queue.listener.QueueEventSubscriber;
  * Subscriber 클래스 = 라디오 듣는 사람
  * 즉 Redis에서 발생하는 publish와 TTL 만료 이벤트를 Spring리스너 클래스들에 연결
  * ★ 테스트 할 때 주의사항 ★ 
- * config get notify-keyspace-events / config set notify-keyspace-events Ex
+ * config get notify-keyspace-events / config set notify-keyspace-events Egx
  * 켜야 이벤트 수신가능 
  *  E: Keyevent 이벤트
  *  x: expired

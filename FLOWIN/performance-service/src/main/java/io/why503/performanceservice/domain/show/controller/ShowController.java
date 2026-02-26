@@ -31,6 +31,13 @@ public class ShowController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // 공연 모두 조회
+    @GetMapping
+    public ResponseEntity<List<ShowResponse>> getShowAll() {
+        List<ShowResponse> response = showService.readShowAll();
+        return ResponseEntity.ok(response);
+    }
+
     // 공연 + 좌석 정책 동시 생성
     @PostMapping("/with-seats")
     public ResponseEntity<Long> createShowWithSeats(

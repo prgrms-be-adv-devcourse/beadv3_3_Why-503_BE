@@ -4,6 +4,7 @@ import io.why503.reservationservice.domain.booking.mapper.BookingMapper;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountSeatRequest;
+import io.why503.reservationservice.domain.booking.model.dto.response.BookingAiResponse;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
 import io.why503.reservationservice.domain.booking.model.entity.BookingSeat;
@@ -156,6 +157,13 @@ public class BookingServiceImpl implements BookingService {
         if (userSq == null) throw BookingExceptionFactory.bookingBadRequest("사용자 정보는 필수입니다.");
         return bookingRepository.findAllByUserSqOrderByCreatedDtDesc(userSq).stream()
                 .map(booking -> bookingMapper.entityToResponse(booking))
+                .toList();
+    }
+    @Override
+    public List<BookingAiResponse> findBookingsByUserToAi(Long userSq) {
+        if (userSq == null) throw BookingExceptionFactory.bookingBadRequest("사용자 정보는 필수입니다.");
+        return bookingRepository.findAllByUserSqOrderByCreatedDtDesc(userSq).stream()
+                .map(booking -> bookingMapper.entityToAiResponse(booking))
                 .toList();
     }
 

@@ -3,6 +3,7 @@ package io.why503.reservationservice.domain.booking.controller;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCancelRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingCreateRequest;
 import io.why503.reservationservice.domain.booking.model.dto.request.BookingDiscountRequest;
+import io.why503.reservationservice.domain.booking.model.dto.response.BookingAiResponse;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.service.BookingService;
 import io.why503.reservationservice.domain.booking.util.BookingExceptionFactory;
@@ -65,6 +66,14 @@ public class BookingController {
 
         validateUserHeader(userSq);
         return ResponseEntity.ok(bookingService.findBooking(userSq, bookingSq));
+    }
+
+    @GetMapping("/ai")
+    public ResponseEntity<List<BookingAiResponse>> findMyBookingsToAi(
+            @RequestHeader("X-USER-SQ") Long userSq) {
+
+        validateUserHeader(userSq);
+        return ResponseEntity.ok(bookingService.findBookingsByUserToAi(userSq));
     }
 
     // 결제 시스템의 데이터 대조 및 유효성 검증 목적

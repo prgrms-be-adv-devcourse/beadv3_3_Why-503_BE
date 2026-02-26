@@ -127,6 +127,14 @@ public class ShowServiceImpl implements ShowService {
         return showMapper.entityToResponse(show);
     }
 
+    //공연 모두 조회
+    @Override
+    public List<ShowResponse> readShowAll(){
+        List<ShowResponse> shows = showRepository.findAll().stream()
+        .map(i -> showMapper.entityToResponse(i))
+        .toList();
+        return shows;
+    }
     // 카테고리별 조회
     @Override
     public List<ShowResponse> findShowsByCategory(ShowCategory category) {

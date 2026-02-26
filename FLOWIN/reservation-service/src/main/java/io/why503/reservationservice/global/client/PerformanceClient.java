@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 공연 서비스와 통신하여 실시간 좌석 가용 상태를 동기화하고 점유 권한을 제어하는 클라이언트
  */
-@FeignClient(name = "performance-service")//, url = "http://performance-service:8200")
+@FeignClient(name = "performance-service", url = "http://performance-service:8200")
 public interface PerformanceClient {
 
     // >>>>>>>>예메 페이지 진입 이전>>>>>>>>>>>>>

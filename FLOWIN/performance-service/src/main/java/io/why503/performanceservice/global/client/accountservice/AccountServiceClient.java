@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "account-service")//, url = "http://account-service:8100")
+@FeignClient(name = "account-service", url = "http://account-service:8100")
 public interface AccountServiceClient {
 
     // 로그인 사용자 기준 회사 정보 조회

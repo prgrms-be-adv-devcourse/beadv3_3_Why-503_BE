@@ -57,6 +57,22 @@ public interface RoundSeatRepository extends JpaRepository<RoundSeatEntity, Long
             @Param("availableStatus") RoundSeatStatus availableStatus,
             @Param("reservedStatus") RoundSeatStatus reservedStatus
     );
+    // WAIT인 좌석만 AVAILABLE로 변경
+    @Modifying(clearAutomatically = true)
+        @Query("""
+        UPDATE RoundSeatEntity r
+        SET r.status = :newStatus,
+                r.statusDt = :now,
+                r.version = r.version + 1
+        WHERE r.round.sq = :roundSq
+        AND r.status = :oldStatus
+        """)
+        int updateStatusByRoundSqAndOldStatus(
+                @Param("roundSq") Long roundSq,
+                @Param("newStatus") RoundSeatStatus newStatus,
+                @Param("oldStatus") RoundSeatStatus oldStatus,
+                @Param("now") LocalDateTime now
+        );
 
     // 정산용: 특정 공연(showSq)에 속한 모든 회차 좌석(roundSeatSq)의 식별자 목록 조회
     @Query("SELECT rs.sq FROM RoundSeatEntity rs JOIN rs.round r WHERE r.show.sq = :showSq")

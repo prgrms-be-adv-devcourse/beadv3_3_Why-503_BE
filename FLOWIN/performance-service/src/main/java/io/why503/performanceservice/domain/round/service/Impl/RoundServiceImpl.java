@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -178,8 +178,20 @@ public class RoundServiceImpl implements RoundService {
             throw RoundExceptionFactory.roundBadRequest("공연 시간이 지난 회차는 예매 가능 상태로 변경할 수 없습니다.");
         }
 
+        RoundStatus oldStatus = entity.getStatus();
+
         //해당 회차의 상태를 새로운 상태로 변경
         entity.updateStat(newStatus);
+        //회차가 AVAILABLE로 전환되는 순간, 좌석 WAIT -> AVAILABLE 자동 전환
+        if (oldStatus != RoundStatus.AVAILABLE && newStatus == RoundStatus.AVAILABLE) {
+            int updated = roundSeatRepository.updateStatusByRoundSqAndOldStatus(
+                    roundSq,
+                    RoundSeatStatus.AVAILABLE,
+                    RoundSeatStatus.WAIT,
+                    LocalDateTime.now()
+            );
+            log.info("Round AVAILABLE 전환: roundSq={}, 좌석 WAIT->AVAILABLE {}건 변경", roundSq, updated);
+        }
         return roundMapper.entityToDto(entity);
     }
 

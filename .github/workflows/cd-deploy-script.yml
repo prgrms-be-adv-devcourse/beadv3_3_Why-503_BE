@@ -66,6 +66,14 @@ jobs:
             -n flowin \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Account redis key insert
+        if: ${{ inputs.service-name == 'account-service' }}
+        run: |
+          kubectl create secret generic redis-pass-key \
+            --from-literal=REDIS-PASS-KEY=${{ secrets.REDIS-PASS-KEY }} \
+            -n flowin \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       # 조건부 배포 B, 일반 서비스일 때 -> 해당 서비스만 배포
       - name: Deploy Microservice
         if: ${{ inputs.service-name != 'gateway-service' }}

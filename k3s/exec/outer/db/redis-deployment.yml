@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: flowin  # 공통 네임스페이스 적용
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          # 항상 최신 버전의 이미지를 유지하기 위한 태그 및 풀 정책
+          image: redis:latest
+          imagePullPolicy: Always
+
+          # [핵심] K8s Secret에서 가져온 환경변수를 Redis 구동 명령어 인자로 동적 주입
+          command: ["redis-server"]
+          args: ["/usr/local/etc/redis/redis.conf", "--requirepass", "$(REDIS_PASSWORD)"]
+
+          env:
+            # 1. 통합 보안 Secret(db-secret) 참조
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis-password
+
+            # 2. 캐시 데이터의 타임스탬프 일치를 위한 한국 시간대 설정
+            - name: TZ
+              value: "Asia/Seoul"
+
+          ports:
+            - containerPort: 6379
+              name: redis
+
+          # [중요] 인메모리 DB의 특성을 고려하여 t3.large 노드 보호용 메모리 엄격 제한
+          resources:
+            requests:
+              memory: "128Mi"
+            limits:
+              memory: "256Mi"
+
+          # TCP 소켓 기반의 경량 상태 진단
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          volumeMounts:
+            # 설정 파일 단일 마운트 및 데이터 영구 저장소 마운트
+            - name: redis-config
+              mountPath: /usr/local/etc/redis/redis.conf
+              subPath: redis.conf
+            - name: redis-data
+              mountPath: /data
+
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc

@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: flowin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: kkoj/gateway-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+
+          env:
+            # [핵심] JAR 내부의 기본 설정(classpath)과 외부 주입 설정(file)을 병합하여 읽음
+            - name: SPRING_CONFIG_LOCATION
+              value: "classpath:/,file:/config/application.yml"
+
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
+            # t3.large 환경에 맞춘 JVM 메모리 및 포트 고정
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -Dserver.port=8000"
+
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis-service"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis-password
+
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CLOUD_DISCOVERY_ENABLED
+              value: "false"
+
+          resources:
+            requests:
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          # [중요] 외부 ConfigMap을 컨테이너 내부의 물리적 파일로 연결
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config/application.yml
+              subPath: application.yml
+
+      # 컨테이너에 연결할 볼륨(ConfigMap) 정의
+      volumes:
+        - name: config-volume
+          configMap:
+            name: gateway-config

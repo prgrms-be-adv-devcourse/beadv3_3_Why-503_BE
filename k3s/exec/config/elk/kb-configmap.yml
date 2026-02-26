@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-config
+  namespace: flowin
+data:
+  kibana.yml: |
+    server.name: "kibana"
+    server.host: "0.0.0.0"
+    
+    # [핵심 추가] SCG의 Path=/kibana/** 라우팅을 타기 위한 설정
+    server.basePath: "/kibana"
+    server.rewriteBasePath: true
+    
+    # K8s 내부 DNS를 활용한 Elasticsearch 연결
+    elasticsearch.hosts: [ "http://elasticsearch-service:9200" ]
+    elasticsearch.username: "${ELASTICSEARCH_USERNAME}"
+    elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+
+    i18n.locale: "ko-KR"
+
+    # [중요] Kibana Node.js 힙 메모리 폭주 방지용 기능 차단
+    xpack.fleet.enabled: false
+    xpack.reporting.enabled: false
+    xpack.observability.enabled: false
+    
+    monitoring.enabled: false
+    telemetry.enabled: false
+
+    # 로그 I/O 부하 최소화를 위한 레벨 조정
+    logging:
+      root:
+        level: warn

@@ -50,6 +50,14 @@ jobs:
           echo '${{ secrets.GATEWAY_TEST_YML }}' > ./FLOWIN/gateway-service/src/test/resources/application-test.yml
           echo '${{ secrets.PUBLIC_KEY_TEST_PEM }}' > ./FLOWIN/gateway-service/src/test/resources/public-key-test.pem
 
+      - name: reservation test yml pem 세팅
+        if: ${{ inputs.service-name == 'reservation-service' }}
+        run: |
+          mkdir -p ./FLOWIN/reservation-service/src/main/resources
+          echo '${{ secrets.Reservation_TEST_YML }}' > ./FLOWIN/reservation-service/src/main/resources/application.yml
+          mkdir -p ./FLOWIN/reservation-service/src/test/resources
+          echo '${{ secrets.Reservation_TEST_YML }}' > ./FLOWIN/reservation-service/src/test/resources/application-test.yml
+
       - name: payment test yml pem 세팅
         if: ${{ inputs.service-name == 'payment-service' }}
         run: |

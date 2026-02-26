@@ -10,11 +10,20 @@
  */
 package io.why503.performanceservice.domain.show.repository;
 
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 
+import java.util.List;
+
 @Repository
 public interface ShowRepository extends JpaRepository<ShowEntity, Long> {
+
+    //카테고리별 공연 조회
+    List<ShowEntity> findByCategory(ShowCategory category);
+    //카테고리와 장르로 조회
+    List<ShowEntity> findByCategoryAndGenre(ShowCategory category, ShowGenre genre);
 }

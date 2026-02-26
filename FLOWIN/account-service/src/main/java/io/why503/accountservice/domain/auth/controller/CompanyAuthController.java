@@ -7,11 +7,12 @@
  */
 package io.why503.accountservice.domain.auth.controller;
 
+import io.why503.accountbase.model.enums.UserRole;
 import io.why503.accountservice.domain.accounts.service.AccountService;
-import io.why503.accountservice.domain.auth.model.request.CompanyEmailRequest;
-import io.why503.accountservice.domain.auth.model.request.CompanyVerifyRequest;
-import io.why503.accountservice.domain.auth.model.response.CompanyEmailResponse;
-import io.why503.accountservice.domain.auth.model.response.CompanyVerifyResponse;
+import io.why503.accountservice.domain.auth.model.dto.request.CompanyEmailRequest;
+import io.why503.accountservice.domain.auth.model.dto.request.CompanyVerifyRequest;
+import io.why503.accountservice.domain.auth.model.dto.response.CompanyEmailResponse;
+import io.why503.accountservice.domain.auth.model.dto.response.CompanyVerifyResponse;
 import io.why503.accountservice.domain.auth.service.impl.CompanyAuthServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -60,7 +61,7 @@ public class CompanyAuthController {
             );
         }
         //여기 지나면 성공이니까, 바로 COMPANY로 권한 변경
-        accountService.grantCompany(userSq);
+        accountService.grantAccount(userSq, UserRole.COMPANY);
         return ResponseEntity.ok(
                 new CompanyVerifyResponse(
                         true, // 인증 성공

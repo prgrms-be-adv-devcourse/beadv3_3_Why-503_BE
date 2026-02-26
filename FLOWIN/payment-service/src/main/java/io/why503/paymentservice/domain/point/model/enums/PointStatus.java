@@ -1,5 +1,6 @@
 package io.why503.paymentservice.domain.point.model.enums;
 
+import io.why503.paymentservice.domain.point.util.PointExceptionFactory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -20,12 +21,12 @@ public enum PointStatus {
     // 문자열 상태값을 매칭되는 Enum 상수로 변환
     public static PointStatus from(String status) {
         if (status == null || status.isBlank()) {
-            throw new IllegalArgumentException("PointStatus는 필수 값입니다.");
+            throw PointExceptionFactory.pointBadRequest("PointStatus는 필수 값입니다.");
         }
 
         return Arrays.stream(PointStatus.values())
                 .filter(s -> s.name().equalsIgnoreCase(status))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 PointStatus 입니다: " + status));
+                .orElseThrow(() -> PointExceptionFactory.pointBadRequest("유효하지 않은 PointStatus 입니다: " + status));
     }
 }

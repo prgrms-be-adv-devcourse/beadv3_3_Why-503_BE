@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 결제 시 사용된 주요 수단(카드, 포인트, 복합)을 정의하는 열거형
+ * 결제 거래에 사용된 수단에 대한 구분
  */
 @Getter
 @AllArgsConstructor

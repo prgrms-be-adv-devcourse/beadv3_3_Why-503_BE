@@ -22,7 +22,18 @@ configurations {
 
 repositories {
     mavenCentral()
-
+    // 이 부분 추가 하면 actions 사용시 라이브러리를 주입 받을 수 있음
+    if (System.getenv("CI") == "true") {
+        maven {
+            url = uri("https://maven.pkg.github.com/prgrms-be-adv-devcourse/beadv3_3_Why-503_BE")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    } else {
+        mavenLocal()
+    }
 }
 
 ext {
@@ -31,22 +42,41 @@ ext {
 }
 dependencies {
 
+    // 공통 라이브러리
+    implementation 'io.why503:common-base:0.0.5'
+    // web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     //ai
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
-
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
     // service discovery
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
 
-    compileOnly ("org.projectlombok:lombok")
-    annotationProcessor ("org.projectlombok:lombok")
+    implementation "org.apache.poi:poi-ooxml:5.5.1"
 
-    testCompileOnly("org.projectlombok:lombok")
-    testAnnotationProcessor("org.projectlombok:lombok")
+    // feign (service to service)
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+
+    // test
+    testRuntimeOnly 'com.h2database:h2'
+
+    // lombok
+    compileOnly "org.projectlombok:lombok"
+    annotationProcessor "org.projectlombok:lombok"
+
+    testCompileOnly "org.projectlombok:lombok"
+    testAnnotationProcessor "org.projectlombok:lombok"
+    testImplementation "org.testcontainers:testcontainers:1.19.2"
+    testImplementation "org.testcontainers:junit-jupiter:1.19.2"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

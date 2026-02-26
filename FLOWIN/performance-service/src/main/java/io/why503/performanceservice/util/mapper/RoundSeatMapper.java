@@ -6,6 +6,7 @@ import io.why503.performanceservice.domain.roundSeat.model.dto.request.RoundSeat
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.RoundSeatResponse;
 import io.why503.performanceservice.domain.roundSeat.model.dto.response.SeatReserveResponse;
 import io.why503.performanceservice.domain.roundSeat.model.entity.RoundSeatEntity;
+import io.why503.performanceservice.domain.roundSeat.model.enums.RoundSeatStatus;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import org.springframework.stereotype.Component;
@@ -71,12 +72,33 @@ public class RoundSeatMapper {
 
                 // ShowSeat -> Seat 정보 (구역, 번호)
                 .seatArea(showSeat.getSeat().getArea())
-                .areaSeatNumber(showSeat.getSeat().getNumInArea())
+                .seatAreaNum(showSeat.getSeat().getNumInArea())
 
                 // 공연 및 공연장 정보
                 .showName(show.getName())
+                .category(show.getCategory().name())
+                .genre(show.getGenre().name())
                 .hallName(concertHallName)
                 .roundDt(round.getStartDt())
                 .build();
     }
+
+    // ShowSeat 리스트 -> RoundSeat 리스트 변환 (RoundServiceImpl에서 호출)
+    public List<RoundSeatEntity> showSeatListToRoundSeatList(List<ShowSeatEntity> showSeats, RoundEntity round) {
+        return showSeats.stream()
+                .map(showSeat -> this.showSeatToRoundSeat(showSeat, round))
+                .toList();
+    }
+
+    // ShowSeat -> RoundSeat 변환
+    public RoundSeatEntity showSeatToRoundSeat(ShowSeatEntity showSeat, RoundEntity round) {
+        return RoundSeatEntity.builder()
+                .round(round)
+                .showSeatSq(showSeat.getSq())
+                .status(RoundSeatStatus.WAIT)
+                .statusDt(LocalDateTime.now())
+                .version(0L)
+                .build();
+    }
+
 }

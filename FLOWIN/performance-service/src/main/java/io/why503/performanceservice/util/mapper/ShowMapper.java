@@ -4,18 +4,11 @@ import io.why503.performanceservice.domain.hall.model.entity.HallEntity;
 import io.why503.performanceservice.domain.show.model.dto.request.ShowRequest;
 import io.why503.performanceservice.domain.show.model.dto.response.ShowResponse;
 import io.why503.performanceservice.domain.show.model.entity.ShowEntity;
-
+import io.why503.performanceservice.domain.show.model.enums.ShowCategory;
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import io.why503.performanceservice.domain.show.model.enums.ShowStatus;
 import org.springframework.stereotype.Component;
 
-/**
- * ShowMapper
- * 역할:
- * - ShowEntity -> ShowResponse 변환 책임
- * 설계 의도:
- * - Service 로직에서 DTO 변환 코드 제거
- * - 응답 구조 변경 시 Mapper만 수정
- */
 @Component
 public class ShowMapper {
 
@@ -28,9 +21,10 @@ public class ShowMapper {
                 .runningTime(request.showRunningTime())
                 .viewingAge(request.showViewingAge())
                 .hall(hallEntity)
-                .category(request.showCategory())
+                .category(ShowCategory.fromCode(request.showCategory()))
+                .genre(ShowGenre.fromCode(request.showGenre()))
                 .companySq(companySq)
-                .status(ShowStatus.valueOf(request.showStatus()))
+                .status(ShowStatus.fromCode(request.showStatus()))
                 .build();
     }
 
@@ -47,6 +41,7 @@ public class ShowMapper {
                 entity.getRunningTime(),
                 entity.getViewingAge(),
                 entity.getCategory(),
+                entity.getGenre(),
                 entity.getStatus(),
                 entity.getHall().getSq(),
                 entity.getCompanySq()

@@ -2,13 +2,14 @@ package io.why503.paymentservice.global.client;
 
 import io.why503.paymentservice.global.client.dto.response.AccountResponse;
 import io.why503.paymentservice.global.client.dto.request.PointUseRequest;
+import io.why503.paymentservice.global.client.dto.response.CompanySettlementResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * 계정 서비스와 통신하여 사용자 포인트 정보 조회 및 증감을 처리하는 클라이언트
  */
-@FeignClient(name = "account-service")
+@FeignClient(name = "account-service", url = "http://account-service:8100")
 public interface AccountClient {
 
     // 사용자 식별자를 통한 계정 포인트 정보 조회
@@ -26,4 +27,8 @@ public interface AccountClient {
     void decreasePoint(
             @PathVariable("sq") Long userSq,
             @RequestBody PointUseRequest request);
+
+    // 정산용: 기획사 정산 계좌 정보 조회 (Account Service 호출)
+    @GetMapping("/company/{companySq}/settlement")
+    CompanySettlementResponse getCompanySettlementInfo(@PathVariable("companySq") Long companySq);
 }

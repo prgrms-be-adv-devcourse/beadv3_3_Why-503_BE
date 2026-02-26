@@ -1,0 +1,15 @@
+name: AI CI 스크립트
+
+on:
+  pull_request:
+    branches:
+      - dev
+    paths: #얘 수정 밑에 이거
+      - 'FLOWIN/ai-service/**'
+
+jobs:
+   execute-test:
+    uses: ./.github/workflows/ci-script.yml
+    secrets: inherit
+    with:
+      service-name: ai-service #얘 수정

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin-deployment
+  namespace: flowin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zipkin
+  template:
+    metadata:
+      labels:
+        app: zipkin
+    spec:
+      containers:
+        - name: zipkin
+          # 최신 분산 추적 기능을 활용하기 위한 공식 이미지 사용
+          image: openzipkin/zipkin:latest
+          ports:
+            # Zipkin 기본 포트: 백엔드 서비스들이 트레이스 정보를 이 포트로 전송함
+            - containerPort: 9411

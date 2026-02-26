@@ -35,18 +35,23 @@ public class JwtKeyConfig {
     //publicKey 키 생성 (I/O처리기 때문에 한번만)
     private PublicKey getPublicKey(){
         try{
-            ClassPathResource publicPemFile = new ClassPathResource(publicPath);
+            // 1. yml에 "classpath:"가 적혀있다면 그 글자를 지워줍니다.
+            String cleanPath = publicPath.replace("classpath:", "");
+            ClassPathResource publicPemFile = new ClassPathResource(cleanPath);
 
-            String key = Files.readString(publicPemFile.getFile().toPath())
+            // 2. [핵심] getFile() 대신 getInputStream()을 사용해서 스트림으로 읽어야 JAR 환경에서 터지지 않습니다!
+            byte[] keyBytes = publicPemFile.getInputStream().readAllBytes();
+            String key = new String(keyBytes)
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s" ,"");
+
             byte[] decodedKey = Base64.getDecoder().decode(key);
             X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedKey);
             return KeyFactory.getInstance("RSA").generatePublic(spec);
         }
         catch (Exception e){
-            throw new RuntimeException(e);
+            throw new RuntimeException("퍼블릭 키를 읽는 중 오류가 발생했습니다.", e);
         }
     }
 }

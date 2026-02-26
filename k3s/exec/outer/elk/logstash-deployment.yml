@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: flowin
+  labels:
+    app: logstash
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:8.17.0
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            # Kafka 컨슈머로서 데이터를 Pull 하는 구조이므로 수집용 포트 오픈 불필요. 모니터링용 9600 포트만 개방
+            - containerPort: 9600
+              name: monitoring
+
+          env:
+            # [중요] 제한된 자원(t3.large) 환경에서 OOM 킬 방지를 위한 JVM 힙 메모리 고정 할당
+            - name: LS_JAVA_OPTS
+              value: "-Xmx512m -Xms512m"
+
+            - name: ELASTICSEARCH_USERNAME
+              value: "elastic"
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elastic-credentials
+                  key: password
+
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+
+          volumeMounts:
+            # [핵심] 불필요한 템플릿 마운트로 인한 파드 크래시 에러(CrashLoopBackOff)를 해결하고 필수 파이프라인만 안전하게 주입
+            - name: logstash-config-volume
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+            - name: logstash-config-volume
+              mountPath: /usr/share/logstash/pipeline/logstash.conf
+              subPath: logstash.conf
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9600
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9600
+            initialDelaySeconds: 90
+            periodSeconds: 30
+
+      volumes:
+        - name: logstash-config-volume
+          configMap:
+            name: logstash-config
+            items:
+              - key: logstash.yml
+                path: logstash.yml
+              - key: logstash.conf
+                path: logstash.conf

@@ -1,21 +1,24 @@
 package io.why503.paymentservice.domain.payment.mapper;
 
+import io.why503.paymentservice.domain.payment.model.dto.request.PaymentRequest;
 import io.why503.paymentservice.domain.payment.model.dto.response.PaymentResponse;
 import io.why503.paymentservice.domain.payment.model.entity.Payment;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
 import io.why503.paymentservice.domain.payment.model.enums.PaymentRefType;
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * 결제 엔티티 데이터를 응답용 객체로 변환하는 컴포넌트
+ * 결제 관련 엔티티와 데이터 전송 객체 간의 변환을 담당하는 컴포넌트
+ * - 도메인 모델 보호 및 클라이언트 응답 형식 규격화
  */
 @Component
 public class PaymentMapper {
 
-    // 결제 엔티티를 상태 및 수단 설명이 포함된 응답 객체로 변환
+    // 결제 이력 정보를 외부 응답 형식으로 가공
     public PaymentResponse entityToResponse(Payment payment) {
         if (payment == null) {
-            throw new IllegalArgumentException("변환할 Payment Entity는 필수입니다.");
+            throw PaymentExceptionFactory.paymentBadRequest("변환할 결제 정보가 없습니다.");
         }
 
         return new PaymentResponse(
@@ -29,29 +32,39 @@ public class PaymentMapper {
                 payment.getTotalAmount(),
                 payment.getPgAmount(),
                 payment.getPointAmount(),
+                payment.getRemainPgAmount(),
+                payment.getRemainPointAmount(),
                 payment.getApprovedDt(),
-                payment.getCanceledDt(),
                 payment.getCreatedDt()
         );
     }
 
-    public Payment responseToBookingEntity(Long userSq, String orderId, PaymentMethod method, Long totalAmount, Long pgAmount, Long pointAmount) {
+    // 예매 서비스의 결제 요청 데이터를 도메인 엔티티로 변환
+    public Payment responseToBookingEntity(Long userSq, Long bookingSq, PaymentRequest request) {
+        if (request == null) {
+            throw PaymentExceptionFactory.paymentBadRequest("결제 요청 정보가 누락되었습니다.");
+        }
+
+        long pgAmount = request.totalAmount() - request.usePointAmount();
+
         return Payment.builder()
                 .userSq(userSq)
-                .orderId(orderId)
                 .refType(PaymentRefType.BOOKING)
-                .method(method)
-                .totalAmount(totalAmount)
+                .bookingSq(bookingSq)
+                .orderId(request.orderId())
+                .method(request.method())
+                .totalAmount(request.totalAmount())
                 .pgAmount(pgAmount)
-                .pointAmount(pointAmount)
+                .pointAmount(request.usePointAmount())
                 .build();
     }
 
+    // 자체 포인트 충전 요청에 따른 결제 엔티티 생성
     public Payment responseToPointEntity(Long userSq, String orderId, Long amount) {
         return Payment.builder()
                 .userSq(userSq)
-                .orderId(orderId)
                 .refType(PaymentRefType.POINT)
+                .orderId(orderId)
                 .method(PaymentMethod.CARD)
                 .totalAmount(amount)
                 .pgAmount(amount)

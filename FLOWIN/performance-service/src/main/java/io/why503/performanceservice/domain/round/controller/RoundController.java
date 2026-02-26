@@ -27,6 +27,15 @@ public class RoundController {
         return ResponseEntity.ok(roundService.createRound(userSq, request));
     }
 
+    //회차 생성 + 좌석 자동 생성
+    @PostMapping("/with-seats")
+    public ResponseEntity<RoundResponse> createRoundWithSeats(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @Valid @RequestBody RoundRequest request) {
+
+        return ResponseEntity.ok(roundService.createRoundWithSeats(userSq, request));
+    }
+
     // 특정 공연의 모든 회차 조회 (관리자만)
     @GetMapping("/all/{showSq}")
     public ResponseEntity<List<RoundResponse>> getAllRounds(
@@ -37,7 +46,7 @@ public class RoundController {
 
     // 일반 유저용 예매 가능 회차 조회
     @GetMapping("/available/{showSq}")
-    public ResponseEntity<List<RoundResponse>> getAvailableRounds(@PathVariable Long showSq) {
+    public ResponseEntity<List<RoundResponse>> getAvailableRounds(@PathVariable("showSq") Long showSq) {
         return ResponseEntity.ok(roundService.getAvailableRoundList(showSq));
     }
 
@@ -61,6 +70,14 @@ public class RoundController {
         // req.getRoundStatus()에 변경할 상태가 들어옴
         RoundResponse response = roundService.patchRoundStat(userSq, roundSq, status);
         return ResponseEntity.ok(response);
+    }
+
+    //예매 가능한 회차인지 확인
+    @GetMapping("/{roundSq}/bookable")
+    public ResponseEntity<Boolean> checkRoundBookable(
+            @PathVariable("roundSq") Long roundSq
+    ) {
+        return ResponseEntity.ok(roundService.isRoundBookable(roundSq));
     }
 
 }

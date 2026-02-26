@@ -3,16 +3,19 @@ package io.why503.paymentservice.global.client.dto.response;
 import java.time.LocalDateTime;
 
 /**
- * 외부 공연 서비스로부터 수신한 회차별 좌석 상세 정보와 공연 스냅샷 데이터를 담는 객체
+ * 공연 서비스로부터 수신한 좌석 상세 정보 및 공연 개요
  */
 public record RoundSeatResponse(
         Long roundSeatSq,
+        String roundSeatStatus,
         Long price,
-        String showName,
-        String concertHallName,
-        LocalDateTime roundDateTime,
         String grade,
         String seatArea,
-        Integer areaSeatNum
+        Integer seatAreaNum,
+        String showName,
+        String hallName,
+        LocalDateTime roundDt,
+        String category,
+        String genre
 ) {
 }

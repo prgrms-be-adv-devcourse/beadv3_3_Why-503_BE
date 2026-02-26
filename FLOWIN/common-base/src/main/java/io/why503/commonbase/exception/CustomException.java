@@ -1,33 +1,37 @@
 package io.why503.commonbase.exception;
 
+
 import org.springframework.http.HttpStatus;
 
+import java.util.UUID;
+
 /**
- * 커스텀 예외, 추상클래스
- * 이걸 상속받아서 각 도메인의 예외 구현
- * md 파일
+ * 커스텀 예외, 추상클래스, 보관하는 역할
+ * md 파일 필독
  */
 public abstract class CustomException extends RuntimeException{
-    protected String code;
-    protected HttpStatus status;
-
-    /**
-     * 생성자
-     * @param message 늘 쓰는 그 메시지
-     * @param status httpStatus 입력
-     * @param port 포트번호
-     */
-    protected CustomException(String message, HttpStatus status, int port){
+    protected final String code;
+    protected final HttpStatus status;
+    protected final String id;
+    protected CustomException(String message, String code, HttpStatus status) {
         super(message);
+        this.code = code;
         this.status = status;
-        code = Integer.toString(port) + "-" + Integer.toString(status.value());
+        this.id = UUID.randomUUID().toString();
     }
-    //httpstatus 반환
-    public HttpStatus getHttpStatus(){
-        return status;
+    protected CustomException(Throwable cause, String code, HttpStatus status) {
+        super(cause);
+        this.code = code;
+        this.status = status;
+        this.id = UUID.randomUUID().toString();
     }
-    //이건 코드 반환 현재 {포트번호}-{http코드} 형태
     public String getCode(){
         return code;
+    }
+    public HttpStatus getStatus(){
+        return status;
+    }
+    public String getId(){
+        return id;
     }
 }

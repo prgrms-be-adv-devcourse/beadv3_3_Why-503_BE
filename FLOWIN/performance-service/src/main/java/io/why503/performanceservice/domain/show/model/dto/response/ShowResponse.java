@@ -7,6 +7,7 @@
  */
 package io.why503.performanceservice.domain.show.model.dto.response;
 
+import io.why503.performanceservice.domain.show.model.enums.ShowGenre;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,8 +26,9 @@ public record ShowResponse(
         @NotBlank String viewingAge,        // 관람 등급
 
         @NotNull ShowCategory category,     // 공연 카테고리
+        @NotNull ShowGenre genre,           //공연 장르
         @NotNull ShowStatus showStatus,       // 공연 상태
 
-        @NotNull Long concertHallSq,        // 공연장 식별자
+        @NotNull Long hallSq,        // 공연장 식별자
         @NotNull Long companySq             // 회사 식별자
 ) { }

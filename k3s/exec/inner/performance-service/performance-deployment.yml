@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: performance-service
+  namespace: flowin
+  labels:
+    app: performance-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: performance-service
+  template:
+    metadata:
+      labels:
+        app: performance-service
+    spec:
+      containers:
+        - name: performance-service
+          image: kkoj/performance-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8200
+          env:
+            # [중요] JVM 힙 메모리 고정 및 내장 톰캣 포트 지정
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xms256m -Xmx512m -Dserver.port=8200"
+
+            # DB 접속 시 KST 타임존 및 UTF-8 인코딩 강제 지정 (데이터 오염 및 시간 오차 방지)
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service.flowin:3306/performance_db?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: ""
+#             valueFrom:
+#               secretKeyRef:
+#                 name: db-secret
+#                 key: password
+
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis-service.flowin"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+
+            # 평문 노출을 방지하기 위해 K8s Secret 리소스를 참조하여 주입
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis-password
+
+            # [중요] 트랜잭션 보상 및 이벤트 발행을 위한 메시지 브로커 연동
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service.flowin:9092"
+
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CLOUD_DISCOVERY_ENABLED
+              value: "false"
+
+          # K8s 컨테이너 레벨의 리소스 제한 (JVM 옵션과 동기화)
+          resources:
+            requests:
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+
+          # Spring Actuator 의존성 없이도 동작하는 범용 TCP 소켓 기반 헬스 체크
+          livenessProbe:
+            tcpSocket:
+              port: 8200
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8200
+            initialDelaySeconds: 15
+            periodSeconds: 10

@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-
-import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -35,14 +33,18 @@ public class JwtKeyConfig {
         return privateKey;
     }
 
-    //private-key를 해석하고 반환, 위 함수와 달리 한번만 실행한 이유는 i/o처리를 줄이기 위해서
-    private PrivateKey getPrivateKey(){
+    //private-key를 해석하고 반환, i/o처리를 줄이기 위해서 시스템 시작 시 한번만 실행
+    private PrivateKey getPrivateKey() {
         try{
-            //빌드 후 Resource에 있는 파일의 경로
-            ClassPathResource privatePemFile = new ClassPathResource(privatePath);
+            // [수정 1] yml 설정에 "classpath:"가 섞여 있을 수 있으니 안전하게 제거
+            String cleanPath = privatePath.replace("classpath:", "");
+            ClassPathResource privatePemFile = new ClassPathResource(cleanPath);
 
-            //전처리
-            String key = Files.readString(privatePemFile.getFile().toPath())
+            // [수정 2] getFile() 대신 getInputStream()을 사용해 바이트로 읽기!
+            byte[] keyBytes = privatePemFile.getInputStream().readAllBytes();
+
+            // [수정 3] 바이트를 문자열로 변환 후 전처리
+            String key = new String(keyBytes)
                     .replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s" ,"");
@@ -57,7 +59,8 @@ public class JwtKeyConfig {
             return KeyFactory.getInstance("RSA").generatePrivate(spec);
         }
         catch (Exception e){
-            throw new RuntimeException(e);
+            // 에러 메시지를 조금 더 명확하게 남겨두면 나중에 찾기 편합니다.
+            throw new RuntimeException("프라이빗 키를 읽는 중 오류가 발생했습니다. 경로: " + privatePath, e);
         }
     }
 }

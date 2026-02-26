@@ -1,18 +1,6 @@
-/**
- * Concert Hall Entity
- * 공연장(concert_hall) 테이블과 매핑되는 JPA Entity
- *
- * 사용 목적 :
- * - 공연 등록 시 참조되는 공연장 기본 정보 관리
- * - 공연(showRequest) 도메인의 FK 기준 테이블
- *
- * 설계 메모 :
- * - 공연장은 공연보다 선행 생성되는 데이터
- * - 좌석(seat), 공연(showRequest) 등 다른 도메인에서 참조됨
- */
 package io.why503.performanceservice.domain.hall.model.entity;
 
-import io.why503.performanceservice.domain.hall.model.dto.enums.HallStatus;
+import io.why503.performanceservice.domain.hall.model.enums.HallStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -46,17 +34,14 @@ public class HallEntity {
     private String detailAddr;
 
     // 공연장 상태 (Enum)
-    @Column(name = "status", nullable = false, length = 1)
+    @Column(name = "status", nullable = false, length = 20)
     private String status;
 
     // 공연장 총 좌석 수
     @Column(name = "seat_scale", nullable = false)
     private Integer seatScale;
 
-    /**
-     * 공연장 구조 정보
-     * (예: 단층, 2층, 원형 등)
-     */
+    // 공연장 구조 정보 (예: 단층, 2층, 원형 등)
     @Column(name = "structure", nullable = false, length = 50)
     private String structure;
 
@@ -89,9 +74,7 @@ public class HallEntity {
         this.latitude = latitude;
         this.longitude = longitude;
     }
-
-// ===== Enum 변환 메서드 =====
-
+    
     // 콘서트 상태 코드 -> Enum 반환
     public HallStatus getHallStatus() {
         return HallStatus.fromCode(this.status);

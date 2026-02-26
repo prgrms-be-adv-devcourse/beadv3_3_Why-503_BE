@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: flowin
+  labels:
+    app: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.17.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5601
+              name: ui
+
+          env:
+            # K8s 내부 DNS를 활용한 Elasticsearch 통신
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch-service:9200"
+
+            # [중요] Kibana가 ES에 접속하기 위한 인증 정보를 Secret에서 동적 추출
+            - name: ELASTICSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: kibana-auth-secret
+                  key: username
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kibana-auth-secret
+                  key: password
+
+            # 한글화 UI 적용
+            - name: I18N_LOCALE
+              value: "ko-KR"
+
+          # Node.js 기반 Kibana의 힙 메모리 폭주를 막기 위한 리소스 상한선
+          resources:
+            requests:
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+
+          # [중요] 플러그인 최적화 및 초기 번들링 시간을 고려한 장기 대기 프로브
+          readinessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: 5601
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            failureThreshold: 3
+
+          volumeMounts:
+            # [핵심] 컨테이너 내부의 기본 설정 파일을 우리가 만든 다이어트 설정으로 덮어쓰기
+            - name: kibana-config
+              mountPath: /usr/share/kibana/config/kibana.yml
+              subPath: kibana.yml
+
+      volumes:
+        - name: kibana-config
+          configMap:
+            name: kibana-config
+            items:
+              - key: kibana.yml
+                path: kibana.yml

@@ -1,0 +1,46 @@
+name: Build and Docker release
+
+on:
+  workflow_call: #불렀을 때만 사용
+    inputs: #인자
+      service-name: #서비스 이름
+        required: true
+        type: string
+    outputs: #반환값
+      tag_name:
+        value: ${{ jobs.tagging.outputs.tag_name }}
+
+env:
+  DOCKER: docker.io
+
+jobs:
+  # job 1. 태깅 및 릴리즈 노트 생성
+  # 업데이트 시 이미지 태그 충돌을 막기 위해 랜덤 문자열(예: a3f9c1d2)을 생성하고,
+  # 이를 기반으로 GitHub Release를 자동 생성하는 단계입니다.
+  tagging:
+    name: tagging 및 git release
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag_version.outputs.new_tag }}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: versioning and tagging
+        id: tag_version #GITHUB_OUTPUT는 반환값 묶음, GITHUB_OUTPUT의 new_tag와 changelog에 값 저장
+        run: |
+          RANDOM_STR=$(openssl rand -hex 8)  
+          echo "Generated random string: $RANDOM_STR"
+          echo "new_tag=$RANDOM_STR" >> $GITHUB_OUTPUT 
+          echo "changelog=자동 생성된 릴리즈 노트입니다." >> $GITHUB_OUTPUT
+        # 예: a3f9c1d2bb44e21f
+        # 랜덤인 이유가 업데이트 할때 계속 생성되는데 중복으로 충돌이 없게하기 위함
+
+      - name: releasing # 배포 기록?
+        uses: ncipollo/release-action@v1 #git release 해주는 서드파티
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}

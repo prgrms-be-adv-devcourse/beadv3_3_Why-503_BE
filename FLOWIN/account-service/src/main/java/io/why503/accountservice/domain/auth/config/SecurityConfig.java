@@ -1,5 +1,6 @@
 package io.why503.accountservice.domain.auth.config;
 
+import io.why503.accountservice.domain.auth.service.impl.AuthenticationFailureHandlerImpl;
 import io.why503.accountservice.domain.auth.service.impl.AuthenticationSuccessHandlerImpl;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,14 +26,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            AuthenticationSuccessHandlerImpl authenticationSuccessHandler) throws Exception{
+            AuthenticationSuccessHandlerImpl authenticationSuccessHandler,
+            AuthenticationFailureHandlerImpl authenticationFailureHandler) throws Exception{
         return http
                 .csrf((csrf -> csrf.disable()))     //csrf 설정 false
                 .cors(Customizer.withDefaults())    //다른 도메인에서 api호출 가능하게
                 .formLogin(form ->form  //post를 보낼 url
-                        .loginPage("/auth/login")    //로그인 페이지
+                        .loginPage("/auth/login.html")    //로그인 페이지
                         .loginProcessingUrl("/auth/login") //post보낼 위치
                         .successHandler(authenticationSuccessHandler)   //성공핸들러
+                        .failureHandler(authenticationFailureHandler)
                 )
                 .logout(logout -> logout
                         .logoutUrl("/auth/logout") //로그아웃 url
@@ -44,11 +47,11 @@ public class SecurityConfig {
                                 }
                         )
                 )
-                .sessionManagement((session) ->
+                .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)  //서버에서 세션 안만듬, JWT로만 인증
                 )
                 .authorizeHttpRequests( //허용 url 리스트
-                        (auth) -> auth
+                        auth -> auth
                                 .anyRequest().permitAll()
                 )
                 .build();

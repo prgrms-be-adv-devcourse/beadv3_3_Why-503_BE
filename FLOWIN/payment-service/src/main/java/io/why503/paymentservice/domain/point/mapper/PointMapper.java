@@ -2,6 +2,7 @@ package io.why503.paymentservice.domain.point.mapper;
 
 import io.why503.paymentservice.domain.point.model.dto.response.PointResponse;
 import io.why503.paymentservice.domain.point.model.entity.Point;
+import io.why503.paymentservice.domain.point.util.PointExceptionFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,7 +14,7 @@ public class PointMapper {
     // 포인트 엔티티 정보를 상태 설명이 포함된 응답 DTO로 변환
     public PointResponse entityToResponse(Point point) {
         if (point == null) {
-            throw new IllegalArgumentException("변환할 Point Entity는 필수입니다.");
+            throw PointExceptionFactory.pointBadRequest("변환할 Point Entity는 필수입니다.");
         }
 
         return new PointResponse(

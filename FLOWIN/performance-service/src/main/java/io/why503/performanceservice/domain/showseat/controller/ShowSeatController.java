@@ -1,26 +1,18 @@
-/**
- * ShowSeat Controller
- * 공연 좌석 정책(show_seat) 관리 API
- * 역할:
- * - 공연별 좌석 정책 조회
- * - 좌석 등급 변경
- * - 좌석 가격 변경
- */
 package io.why503.performanceservice.domain.showseat.controller;
 
+import io.why503.performanceservice.domain.showseat.model.dto.response.ShowSeatBulkPriceChangeResponse;
 import io.why503.performanceservice.domain.showseat.model.dto.response.ShowSeatResponse;
 import io.why503.performanceservice.util.mapper.ShowSeatMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-
 import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatGradeChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.dto.request.ShowSeatPriceChangeRequest;
 import io.why503.performanceservice.domain.showseat.model.entity.ShowSeatEntity;
 import io.why503.performanceservice.domain.showseat.model.enums.ShowSeatGrade;
 import io.why503.performanceservice.domain.showseat.service.ShowSeatService;
+import io.why503.performanceservice.global.validator.UserValidator;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +21,7 @@ public class ShowSeatController {
 
     private final ShowSeatService showSeatService;
     private final ShowSeatMapper showSeatMapper;
+    private final UserValidator userValidator;
     /**
      * 공연별 좌석 등급/가격 조회
      */
@@ -46,28 +39,39 @@ public class ShowSeatController {
         );
     }
 
-    /**
-     * 좌석 등급 변경
-     */
+    // 좌석 등급 변경
     @PatchMapping("/{showSeatSq}/grade")
     public ResponseEntity<Void> changeGrade(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long showSeatSq,
             @RequestBody ShowSeatGradeChangeRequest request
     ) {
         ShowSeatGrade grade = ShowSeatGrade.valueOf(request.grade());
-        showSeatService.changeGrade(showSeatSq, grade);
+        showSeatService.changeGrade(userSq, showSeatSq, grade);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 좌석 가격 변경
-     */
+    // 좌석 가격 변경
     @PatchMapping("/{showSeatSq}/price")
     public ResponseEntity<Void> changePrice(
+            @RequestHeader("X-USER-SQ") Long userSq,
             @PathVariable Long showSeatSq,
             @RequestBody ShowSeatPriceChangeRequest request
     ) {
-        showSeatService.changePrice(showSeatSq, request.price());
+        showSeatService.changePrice(userSq, showSeatSq, request.price());
         return ResponseEntity.ok().build();
+    }
+    
+    // 등급별 좌석 가격 일괄 변경
+    @PatchMapping("/shows/{showSq}/grades/{grade}/price")
+    public ResponseEntity<ShowSeatBulkPriceChangeResponse> changePriceByGrade(
+            @RequestHeader("X-USER-SQ") Long userSq,
+            @PathVariable("showSq") Long showSq,
+            @PathVariable("grade") String grade,
+            @RequestBody ShowSeatPriceChangeRequest request
+    ) {
+        ShowSeatGrade gradeEnum = ShowSeatGrade.valueOf(grade);
+        int updatedCount = showSeatService.changePriceByShowAndGrade(userSq, showSq, gradeEnum, request.price());
+        return ResponseEntity.ok(new ShowSeatBulkPriceChangeResponse(showSq, gradeEnum.name(), request.price(), updatedCount));
     }
 }

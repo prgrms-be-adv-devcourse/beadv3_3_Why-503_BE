@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>예매 페이지</title>
+</head>
+<body>
+
+<h2>예매 페이지 진입 성공</h2>
+
+<p>Entry Token: <span id="token"></span></p>
+
+<script>
+const token = localStorage.getItem("entryToken");
+document.getElementById("token").innerText = token ?? "없음";
+</script>
+
+</body>
+</html>

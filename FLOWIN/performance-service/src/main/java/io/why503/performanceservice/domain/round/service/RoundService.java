@@ -11,6 +11,9 @@ public interface RoundService {
     //회차 생성
     RoundResponse createRound(Long userSq, RoundRequest request);
 
+    //회차생성 + 회차 좌석 생성
+    RoundResponse createRoundWithSeats(Long userSq, RoundRequest request);
+
     //특정 공연의 모든 회차 조회
     //예매 가능 여부와 상관없이 해당 공연의 전체 스케줄 확인
     List<RoundResponse> getRoundListByShow(Long userSq, Long showSq);
@@ -24,4 +27,6 @@ public interface RoundService {
     //회차 상태 변경
     RoundResponse patchRoundStat(Long userSq, Long roundSq, RoundStatus newStatus);
 
+    //예매 가능 여부 판단
+    boolean isRoundBookable(Long roundSq);
 }

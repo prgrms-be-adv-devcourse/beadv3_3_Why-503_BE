@@ -1,8 +1,8 @@
 package io.why503.gatewayservice.auth.config.filter;
 
-import io.why503.gatewayservice.auth.exception.JwtAuthenticationException;
 import io.why503.gatewayservice.auth.model.dto.TokenBody;
 import io.why503.gatewayservice.auth.service.JwtValidator;
+import io.why503.gatewayservice.auth.util.exception.AuthUnauthorized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -10,10 +10,12 @@ import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFac
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
 import java.util.Optional;
 
 @Slf4j
-@Component 
+@Component
 public class JwtValidationFilter 
         extends AbstractGatewayFilterFactory<JwtValidationFilter.Config> {
     
@@ -26,7 +28,8 @@ public class JwtValidationFilter
     public static class Config{}
 
     // 생성자 특성상 @Builder을 못쓰기에 명시적으로 초기화
-    public JwtValidationFilter(JwtValidator jwtValidator){
+    public JwtValidationFilter(
+            JwtValidator jwtValidator){
         super(Config.class);
         this.jwtValidator = jwtValidator;
     }
@@ -41,20 +44,19 @@ public class JwtValidationFilter
 
             // 1차 검증, 일단 쿠키가 없으면 401반환 로그인 x라는 뜻
             if(!request.getCookies().containsKey(cookieName)){
-                log.info("token or cookie is empty");
-                throw new JwtAuthenticationException("token or cookie is empty"); 
+                return Mono.error(new AuthUnauthorized("token or cookie is empty"));
             }
 
             // Optional을 풀어주는 절차
-            String token = pullTokenOfRequest(request)
-                    .orElseThrow(() -> 
-                            new IllegalArgumentException("token is empty")
-                    );
+            Optional<String> optionalToken = pullTokenOfRequest(request);
+            if(optionalToken.isEmpty()){
+                return Mono.error(new AuthUnauthorized("token is empty"));
+            }
+            String token = optionalToken.get();
 
             // 2차 검증, 이 곳에서 걸리는 토큰은 위변조된 토큰, 401에러
             if(!jwtValidator.validate(token)){
-                log.info("invalid token");
-                throw new JwtAuthenticationException("invalid token");
+                return Mono.error(new AuthUnauthorized("invalid token"));
             }
 
             // 토큰을 파싱해서 sq만 저장

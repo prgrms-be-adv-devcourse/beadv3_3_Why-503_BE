@@ -1,30 +1,29 @@
 package io.why503.paymentservice.domain.payment.model.dto.request;
 
+import io.why503.paymentservice.domain.payment.model.enums.PaymentMethod;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 
 /**
- * 결제 승인 요청 시 필요한 주문 정보와 포인트 사용 금액을 담는 객체
+ * 결제 승인 요청에 필요한 정보를 전달하는 객체
+ * - 외부 결제 시스템 승인에 필요한 키 값과 금액 정보를 포함
  */
 public record PaymentRequest(
-        @NotBlank(message = "주문 번호는 필수입니다.")
+        @NotBlank(message = "주문 ID는 필수입니다.")
         String orderId,
 
+        @NotBlank(message = "PG 결제 키는 필수입니다.")
         String paymentKey,
 
-        @NotNull(message = "총 결제 금액은 필수입니다.")
-        @Positive(message = "총 결제 금액은 양수여야 합니다.")
-        Long amount,
+        @NotNull(message = "결제 수단은 필수입니다.")
+        PaymentMethod method,
 
-        @PositiveOrZero(message = "포인트 사용 금액은 0원 이상이어야 합니다.")
+        @NotNull(message = "총 결제 금액은 필수입니다.")
+        @Min(0)
+        Long totalAmount,
+
+        @NotNull(message = "포인트 사용액은 필수입니다.")
+        @Min(0)
         Long usePointAmount
-) {
-    // 포인트 사용 금액 미입력 시 0원으로 초기화
-    public PaymentRequest {
-        if (usePointAmount == null) {
-            usePointAmount = 0L;
-        }
-    }
-}
+) { }

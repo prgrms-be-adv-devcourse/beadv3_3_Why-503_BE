@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: flowin
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate # [필수] PVC 다중 마운트 충돌 및 데이터 오염 방지
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+
+          env:
+            # 1. 통합 Secret(db-secret)을 통한 관리형 패스워드 동적 주입
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+
+            # 2. 컨테이너 초기 구동 시 기본 데이터베이스 자동 생성
+            - name: MYSQL_DATABASE
+              value: "account_db"
+
+            # 3. KST 타임존 강제 할당 (애플리케이션 간 시간 오차 방지)
+            - name: TZ
+              value: "Asia/Seoul"
+
+          # [중요] 제한된 EC2(t3.large) 자원 보호를 위한 메모리 한계선 설정
+          resources:
+            requests:
+              memory: "400Mi"
+            limits:
+              memory: "600Mi"
+
+          # TCP 소켓 기반의 경량 헬스 체크 (DB 커넥션 상태 검증)
+          livenessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            # ConfigMap 갱신 시 파드 재시작 없이 반영하기 위한 디렉토리 통째 마운트 (subPath 배제)
+            - name: config-volume
+              mountPath: /etc/mysql/conf.d
+
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: config-volume
+          configMap:
+            name: mysql-config # 최적화 튜닝이 적용된 ConfigMap 연결

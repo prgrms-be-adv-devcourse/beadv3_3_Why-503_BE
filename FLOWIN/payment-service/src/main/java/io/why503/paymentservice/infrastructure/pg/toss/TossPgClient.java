@@ -1,11 +1,13 @@
 package io.why503.paymentservice.infrastructure.pg.toss;
 
+import io.why503.paymentservice.domain.payment.util.PaymentExceptionFactory;
 import io.why503.paymentservice.global.client.PgClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -15,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 토스 페이먼츠 API를 사용하여 실제 결제 승인 및 취소 통신을 수행하는 클라이언트
+ * 외부 결제 대행사와의 통신을 통해 실결제 승인 및 거래 취소를 처리하는 클라이언트
  */
 @Slf4j
 @Component
@@ -30,7 +32,7 @@ public class TossPgClient implements PgClient {
     @Value("${toss.client.secret-key}")
     private String secretKey;
 
-    // 인증 정보를 포함하여 토스측에 결제 승인 요청
+    // 결제 식별자와 주문 정보를 대조하여 대행사에 최종 승인 요청
     @Override
     public String approvePayment(String paymentKey, String orderId, Long amount) {
         HttpHeaders headers = createHeaders();
@@ -50,18 +52,18 @@ public class TossPgClient implements PgClient {
             );
 
             if (response.getBody() == null || response.getBody().paymentKey() == null) {
-                throw new IllegalStateException("Toss 결제 승인 응답이 비어있습니다.");
+                throw PaymentExceptionFactory.paymentConflict("결제 대행사 승인 응답이 비어있습니다.");
             }
 
             return response.getBody().paymentKey();
 
         } catch (Exception e) {
-            log.error("Toss 결제 승인 실패: {}", e.getMessage());
-            throw new IllegalArgumentException("PG사 결제 승인 실패: " + e.getMessage());
+            log.error("결제 승인 실패: {}", e.getMessage());
+            throw PaymentExceptionFactory.paymentConflict("대행사 결제 승인 실패: " + e.getMessage());
         }
     }
 
-    // 승인된 결제 키를 기반으로 토스측에 취소 요청 전송
+    // 승인된 거래 키를 기반으로 전체 또는 부분 취소 명령 전송
     @Override
     public void cancelPayment(String pgKey, String reason, Long cancelAmount) {
         HttpHeaders headers = createHeaders();
@@ -88,13 +90,23 @@ public class TossPgClient implements PgClient {
                 log.info("Toss 전액 결제 취소 성공: {}", pgKey);
             }
 
+        } catch (HttpClientErrorException e) {
+            String errorBody = e.getResponseBodyAsString();
+            if (errorBody.contains("ALREADY_CANCELED_PAYMENT")) {
+                log.warn("이미 토스측에서 취소된 결제입니다. 로컬 상태 변경을 위해 진행합니다. (pgKey: {})", pgKey);
+                return;
+            }
+
+            log.error("Toss 결제 취소 요청 실패. status: {}, body: {}", e.getStatusCode(), errorBody);
+            throw PaymentExceptionFactory.paymentConflict("PG사 결제 취소 실패: " + e.getMessage());
+
         } catch (Exception e) {
             log.error("Toss 결제 취소 실패 (pgKey: {}): {}", pgKey, e.getMessage());
-            throw new IllegalStateException("PG사 결제 취소 처리에 실패했습니다.");
+            throw PaymentExceptionFactory.paymentConflict("PG사 결제 취소 처리에 실패했습니다.");
         }
     }
 
-    // API 호출에 필요한 기본 인증 및 미디어 타입 헤더 생성
+    // 보안 통신을 위한 인증 정보 및 데이터 형식 설정
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
         String encodedKey = Base64.getEncoder().encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));

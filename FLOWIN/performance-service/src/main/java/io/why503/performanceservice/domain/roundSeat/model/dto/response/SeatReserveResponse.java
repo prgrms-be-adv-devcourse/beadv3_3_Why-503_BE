@@ -8,13 +8,14 @@ import java.time.LocalDateTime;
 public record SeatReserveResponse(
         Long roundSeatSq,       // 티켓과 연결될 ID
         String roundSeatStatus, // 상태
-        Integer price,          // 가격
+        Long price,          // 가격
         String grade,           // 등급
         String seatArea,        // 구역
-        Integer areaSeatNumber,  // 번호
-
+        Integer seatAreaNum,  // 번호
         String showName,        // 공연명
-        String hallName, // 공연장명
-        LocalDateTime roundDt // 회차일시
+        String hallName,    // 공연장명
+        LocalDateTime roundDt, // 회차일시
+        String category,    // 카테고리
+        String genre            //장르
 ) {
 }

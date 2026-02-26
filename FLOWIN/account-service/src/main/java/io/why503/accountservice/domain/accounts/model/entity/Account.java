@@ -84,7 +84,7 @@ public class Account extends BasicEntity {
         this.basicAddr = basicAddr;
         this.detailAddr = detailAddr;
         this.post = post;
-        this.withdrawDt = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+        this.withdrawDt = LocalDateTime.of(9999, 12, 31, 0, 0, 0);
     }
     //포인트 증가, 후에 포인트(예치금) 계산을 위해 생성
     public void increasePoint(Long increase){

@@ -31,7 +31,7 @@ spec:
 
       containers:
         - name: chroma
-          image: chromadb/chroma:0.5.20
+          image: chromadb/chroma:0.5.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -42,10 +42,6 @@ spec:
               value: "/data"
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
-
-            # 0.5.x 버전에서 발생하는 로그 설정 오류를 방지
-            - name: CHROMA_LOG_CONFIG
-              value: ""
 
             # Spring AI (v1 API)와의 호환성을 유지하기 위한 설정
             - name: CHROMA_API_IMPL

@@ -27,16 +27,10 @@ spec:
               value: "-Dserver.port=8500"
 
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_BASE_URL
-              value: "http://chroma-service.flowin.svc.cluster.local:8000"
+              value: "http://chroma-service:8000"
 
             - name: SPRING_AI_VECTORSTORE_CHROMA_COLLECTION_NAME
               value: "SpringAiCollection"
-
-            # 3. 테넌트 및 데이터베이스 (가장 호환성 높은 이름으로 세팅)
-            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_TENANT
-              value: "default_tenant"
-            - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_DATABASE
-              value: "default_database"
 
             - name: SPRING_AI_VECTORSTORE_CHROMA_INITIALIZE_SCHEMA
               value: "true"

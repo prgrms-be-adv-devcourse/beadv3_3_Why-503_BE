@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: ai-service
-          image: /ai-service:latest  # 이미지 경로 오타 수정됨
+          image: kkoj/ai-service:latest  # 이미지 경로 오타 수정됨
           imagePullPolicy: Always
           ports:
             - containerPort: 8500

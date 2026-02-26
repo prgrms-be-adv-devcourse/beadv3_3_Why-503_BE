@@ -27,12 +27,12 @@ spec:
           command: ["sh", "-c", "mkdir -p /data && chmod -R 777 /data"]
           volumeMounts:
             - name: chroma-data
-              mountPath: /chroma
+              mountPath: /data
 
       containers:
         - name: chroma
-          image: chromadb/chroma:latest
-          imagePullPolicy: Always
+          image: chromadb/chroma:0.5.20
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           env:

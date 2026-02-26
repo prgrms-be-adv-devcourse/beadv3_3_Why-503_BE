@@ -22,25 +22,15 @@ spec:
 
       # [핵심] 메인 앱 구동 전, K8s 고질병인 호스트 볼륨 권한 문제를 사전 타겟팅하여 교정
       initContainers:
-        - name: fix-permissions-and-create-collection
-          image: curlimages/curl:latest
-          securityContext:
-            runAsUser: 0
+        - name: fix-permissions
+          image: busybox
           command:
             - sh
             - -c
             - |
-              # 권한 수정
-              chown -R 1000:1000 /chroma/chroma
-
-              # 컬렉션 생성 (존재하지 않으면 POST)
-              until curl -s http://localhost:8000/collections | grep SpringAiCollection; do
-                echo "Creating collection..."
-                curl -X POST "http://localhost:8000/collections" \
-                     -H "Content-Type: application/json" \
-                     -d '{"name":"SpringAiCollection"}' || true
-                sleep 2
-              done
+              mkdir -p /chroma
+              chmod -R 777 /chroma
+              exit 0
           volumeMounts:
             - name: chroma-data
               mountPath: /chroma/chroma

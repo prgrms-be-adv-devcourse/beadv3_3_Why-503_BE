@@ -34,7 +34,7 @@ spec:
 
       containers:
         - name: chroma
-          image: chromadb/chroma:latest
+          image: chromadb/chroma:0.5.20
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

@@ -39,11 +39,18 @@ spec:
           command: [ "/bin/sh", "-c" ]
           args:
             - |
-              # 로그 설정 파일을 찾지 못하는 버그를 피하기 위해 옵션을 강제 제거하고 실행
+              # 환경 변수 강제 주입
+              export IS_PERSISTENT=TRUE
+              export PERSIST_DIRECTORY=/chroma/data
+              export ANONYMIZED_TELEMETRY=FALSE
               export CHROMA_LOG_CONFIG=""
               export CHROMA_API_IMPL="chromadb.api.segment.SegmentAPI"
-              # 이미지 내부의 정석 실행 스크립트를 호출하되, 인자만 우리가 조절합니다.
-              /docker_entrypoint.sh --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers
+              export CHROMA_SERVER_HOST=0.0.0.0
+              export CHROMA_SERVER_HTTP_PORT=8000
+              
+              # 이미지 내부에 설치된 uvicorn의 위치를 시스템이 찾도록 직접 실행
+              # 이 방식은 'ModuleNotFoundError'와 'Path not found'를 모두 피할 수 있습니다.
+              python3 -m uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --timeout-keep-alive 30
           ports:
             - containerPort: 8000
           env:

@@ -27,7 +27,7 @@ spec:
               value: "-Dserver.port=8500"
 
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_BASE_URL
-              value: "http://chroma-service:8000"
+              value: "http://chroma-service.flowin.svc.cluster.local:8000"
 
             - name: SPRING_AI_VECTORSTORE_CHROMA_COLLECTION_NAME
               value: "SpringAiCollection"

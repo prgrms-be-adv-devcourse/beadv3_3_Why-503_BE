@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
-@Configuration
+//@Configuration
 public class ChromaConfig {
 
     @Value("${spring.ai.vectorstore.chroma.client.host}")

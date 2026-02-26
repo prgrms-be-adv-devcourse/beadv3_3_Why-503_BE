@@ -34,12 +34,8 @@ spec:
 
       containers:
         - name: chroma
-          image: chromadb/chroma:0.4.15
+          image: chromadb/chroma:0.5.3
           imagePullPolicy: Always
-          command: [ "/bin/sh", "-c" ]
-          args:
-            - |
-              uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --timeout-keep-alive 30
           ports:
             - containerPort: 8000
           env:
@@ -49,6 +45,14 @@ spec:
               value: "/chroma/data"
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
+
+            # 0.5.x 버전에서 발생하는 로그 설정 오류를 방지
+            - name: CHROMA_LOG_CONFIG
+              value: ""
+
+            # Spring AI (v1 API)와의 호환성을 유지하기 위한 설정
+            - name: CHROMA_API_IMPL
+              value: "chromadb.api.segment.SegmentAPI"
 
             # t3.large 자원 보호를 위한 백그라운드 워커 스레드 제한
             - name: CHROMA_SERVER_WORKERS

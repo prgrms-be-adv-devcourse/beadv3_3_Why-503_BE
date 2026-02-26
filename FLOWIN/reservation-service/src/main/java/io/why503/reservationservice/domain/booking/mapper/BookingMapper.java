@@ -28,9 +28,10 @@ public class BookingMapper {
         return new BookingResponse(
                 booking.getSq(),
                 booking.getUserSq(),
+                booking.getOrderId(),
                 booking.getStatus().name(),
-                booking.getCategory(),
-                booking.getGenre()
+                seatResponses,
+                booking.getCreatedDt()
         );
     }
 

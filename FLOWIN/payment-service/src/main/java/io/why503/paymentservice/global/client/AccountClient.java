@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 계정 서비스와 통신하여 사용자 포인트 정보 조회 및 증감을 처리하는 클라이언트
  */
-@FeignClient(name = "account-service", url = "http://account-service:8100")
+@FeignClient(name = "account-service")// url = "http://account-service:8100")
 public interface AccountClient {
 
     // 사용자 식별자를 통한 계정 포인트 정보 조회

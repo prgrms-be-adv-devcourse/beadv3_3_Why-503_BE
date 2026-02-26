@@ -24,10 +24,7 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox
-          command:
-            - sh
-            - -c
-            - "mkdir -p /chroma/data && chmod -R 777 /chroma"
+          command: ["sh", "-c", "mkdir -p /data && chmod -R 777 /data"]
           volumeMounts:
             - name: chroma-data
               mountPath: /chroma
@@ -42,7 +39,7 @@ spec:
             - name: IS_PERSISTENT
               value: "TRUE"
             - name: PERSIST_DIRECTORY
-              value: "/chroma/data"
+              value: "/data"
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
 
@@ -72,7 +69,7 @@ spec:
 
           volumeMounts:
             - name: chroma-data
-              mountPath: /chroma
+              mountPath: /data
 
       volumes:
         - name: chroma-data

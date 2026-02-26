@@ -15,12 +15,13 @@ spec:
     spec:
       containers:
         - name: ai-service
-          image: kkoj/ai-service:latest  # 이미지 경로 오타 수정됨
+          image: /ai-service:latest  # 이미지 경로 오타 수정됨
           imagePullPolicy: Always
           ports:
             - containerPort: 8500
 
           env:
+
             # 힙 메모리 강제 고정(-Xmx)을 해제하여 JVM의 컨테이너 자동 인식(Ergonomics) 활용
             - name: JAVA_TOOL_OPTIONS
               value: "-Dserver.port=8500"
@@ -30,6 +31,12 @@ spec:
               value: "chroma-service"
             - name: CHROMA_PORT
               value: "8000"
+
+            - name: AI_SERVICE_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-secret
+                  key: AI_SERVICE_OPENAI_API_KEY
 
           # [중요] 일반 API 서비스(512Mi) 대비 2배의 넉넉한 메모리 한도 부여
           resources:

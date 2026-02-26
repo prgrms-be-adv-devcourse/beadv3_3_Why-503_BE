@@ -54,6 +54,18 @@ spec:
                   name: ai-secret
                   key: AI_SERVICE_OPENAI_API_KEY
 
+          # 앱이 완전히 뜰 때까지 쿠버네티스가 기다려주게 만듭니다.
+          livenessProbe:
+            tcpSocket:
+              port: 8500
+            initialDelaySeconds: 120 # 앱 기동 후 2분 동안은 살아 있음
+            periodSeconds: 20
+          readinessProbe:
+            tcpSocket:
+              port: 8500
+            initialDelaySeconds: 60
+            periodSeconds: 10
+
           # [중요] 일반 API 서비스(512Mi) 대비 2배의 넉넉한 메모리 한도 부여
           resources:
             requests:

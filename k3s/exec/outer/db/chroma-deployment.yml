@@ -36,6 +36,10 @@ spec:
         - name: chroma
           image: chromadb/chroma:0.4.15
           imagePullPolicy: Always
+          command: [ "/bin/sh", "-c" ]
+          args:
+            - |
+              uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers --timeout-keep-alive 30
           ports:
             - containerPort: 8000
           env:

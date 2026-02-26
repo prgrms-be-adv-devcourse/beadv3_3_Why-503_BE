@@ -151,6 +151,14 @@ data:
                 - Path=/payment-view/**
               filters:
                 - JwtValidationFilter
+            
+
+            - id: payment-settlement
+              uri: http://payment-service.flowin:8300
+              predicates:
+                - Path=/settlements/**
+              filters:
+                - JwtValidationFilter
 
             # ==========================================
             # 4. 예매 서비스 (Reservation: 8400)
@@ -168,6 +176,6 @@ data:
             - id: ai-service
               uri: http://ai-service.flowin:8500
               predicates:
-                - Path=/ai/**
+                - Path=/recommend/**
               filters:
                 - JwtValidationFilter

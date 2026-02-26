@@ -1,5 +1,6 @@
 package io.why503.reservationservice.domain.booking.mapper;
 
+import io.why503.reservationservice.domain.booking.model.dto.response.BookingAiResponse;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingResponse;
 import io.why503.reservationservice.domain.booking.model.dto.response.BookingSeatResponse;
 import io.why503.reservationservice.domain.booking.model.entity.Booking;
@@ -32,6 +33,21 @@ public class BookingMapper {
                 booking.getStatus().name(),
                 seatResponses,
                 booking.getCreatedDt()
+        );
+    }
+
+    // 도메인 모델을 AI용 데이터 객체로 변환
+    public BookingAiResponse entityToAiResponse(Booking booking) {
+        if (booking == null) {
+            throw BookingExceptionFactory.bookingBadRequest("변환할 Booking Entity는 필수입니다.");
+        }
+
+        return new BookingAiResponse(
+                booking.getSq(),
+                booking.getUserSq(),
+                booking.getStatus().name(),
+                booking.getCategory(),
+                booking.getGenre()
         );
     }
 

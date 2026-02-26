@@ -33,12 +33,6 @@ spec:
               value: "SpringAiCollection"
 
             # 3. 테넌트 및 데이터베이스 (가장 호환성 높은 이름으로 세팅)
-            - name: SPRING_AI_VECTORSTORE_CHROMA_TENANT
-              value: "default_tenant"
-            - name: SPRING_AI_VECTORSTORE_CHROMA_DATABASE
-              value: "default_database"
-
-            # 핵심 테넌트와 데이터베이스를 Chroma 기본값으로 고정
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_TENANT
               value: "default_tenant"
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_DATABASE

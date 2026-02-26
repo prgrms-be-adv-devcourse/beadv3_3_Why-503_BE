@@ -49,11 +49,14 @@ spec:
 
             # Spring Boot 완화된 바인딩(Relaxed Binding) 규칙에 맞춘 환경 변수명
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_HOST
-              value: "http://chroma-service"
+              value: "chroma-service"
             - name: SPRING_AI_VECTORSTORE_CHROMA_CLIENT_PORT
               value: "8000"
             - name: SPRING_AI_VECTORSTORE_CHROMA_INITIALIZE_SCHEMA
               value: "true"
+
+            - name: SPRING_AI_VECTORSTORE_CHROMA_COLLECTION_NAME
+              value: "SpringAiCollection"
 
             - name: AI_SERVICE_OPENAI_API_KEY
               valueFrom:

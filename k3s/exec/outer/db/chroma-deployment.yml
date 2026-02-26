@@ -36,23 +36,6 @@ spec:
         - name: chroma
           image: chromadb/chroma:latest
           imagePullPolicy: Always
-          command: [ "/bin/sh", "-c" ]
-          args:
-            - |
-              # 1. 환경 변수 우선 선언 (로그 에러 방지용)
-              export CHROMA_LOG_CONFIG=""
-              export CHROMA_API_IMPL="chromadb.api.segment.SegmentAPI"
-              
-              # 2. 실행 우선순위 결정 (가장 확실한 방법부터 차례대로)
-              if command -v python3 > /dev/null; then
-                  exec python3 -m uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers
-              elif command -v uvicorn > /dev/null; then
-                  exec uvicorn chromadb.app:app --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers
-              else
-                  # 3. 모든 경로 탐색 실패 시 이미지 내부의 기본 진입점 호출 시도
-                  echo "Searching for entrypoint..."
-                  exec /docker_entrypoint.sh --workers 1 --host 0.0.0.0 --port 8000 --proxy-headers
-              fi
           ports:
             - containerPort: 8000
           env:

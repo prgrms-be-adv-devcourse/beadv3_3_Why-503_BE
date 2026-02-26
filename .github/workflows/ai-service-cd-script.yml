@@ -1,10 +1,25 @@
-name: ai-service ci/cd #필요 시 이거 이름 바꿔야 함
+name: AI Service CD (Test)
 
 on:
-  workflow_call:
+  push:
+    branches:
+      - main
+    paths:
+      - 'FLOWIN/ai-service/**'
 
 jobs:
+  tagging:
+    uses: ./.github/workflows/cd-tagging-script.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      attestations: write
+      packages: write
+    with:
+      service-name: ai-service
+
   releasing:
+    needs: tagging
     uses: ./.github/workflows/cd-release-script.yml
     secrets: inherit
     permissions:
@@ -12,4 +27,17 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: ai-service #필요 시 이것도 바꿔야 함
+      service-name: ai-service
+      tag_name: ${{ needs.tagging.outputs.tag_name }}
+
+  deploy:
+    needs: [tagging, releasing]
+    uses: ./.github/workflows/cd-deploy-script.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      attestations: write
+      packages: write
+    with:
+      service-name: account-service
+      tag_name: ${{ needs.tagging.outputs.tag_name }}

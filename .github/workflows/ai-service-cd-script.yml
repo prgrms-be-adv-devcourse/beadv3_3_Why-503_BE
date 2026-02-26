@@ -39,5 +39,5 @@ jobs:
       attestations: write
       packages: write
     with:
-      service-name: account-service
+      service-name: ai-service
       tag_name: ${{ needs.tagging.outputs.tag_name }}

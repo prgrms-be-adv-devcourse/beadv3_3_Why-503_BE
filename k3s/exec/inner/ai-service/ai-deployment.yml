@@ -13,6 +13,20 @@ spec:
       labels:
         app: ai-service
     spec:
+      # [추가] 메인 컨테이너(ai-service)가 실행되기 전 실행되는 초기화 컨테이너
+      initContainers:
+        - name: wait-for-chroma
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              until nc -zv chroma-service.flowin.svc.cluster.local 8000; do
+                echo "Waiting for ChromaDB (chroma-service:8000)..."
+                sleep 3
+              done
+              echo "ChromaDB is up and running!"
+
       containers:
         - name: ai-service
           image: kkoj/ai-service:latest

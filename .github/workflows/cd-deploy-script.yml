@@ -82,14 +82,11 @@ jobs:
           # K8s YAML 파일 경로 수정 (exec/inner/...)
           kubectl apply -f k3s/exec/inner/${{ inputs.service-name }}/
 
-      # 3. 파드 재시작(Rollout)
-      # 이미지가 latest로 동일하더라도 K3s가 새 이미지를 당겨오도록
-      # 기존 파드를 안전하게 껐다 켜는 무중단 롤아웃을 수행합니다.
-      - name: Update deployment image
+      # 이미지 태그를 강제로 바꾸는 대신,
+      # Deployment.yaml의 설정(환경변수 포함)을 그대로 쓰면서 파드만 새로 띄웁니다.
+      - name: Restart deployment (Refresh)
         run: |
-          kubectl set image deployment/${{ inputs.service-name }} \
-            ${{ inputs.service-name }}=${{ env.DOCKER }}/${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:${{ inputs.tag_name }} \
-            -n flowin
+          kubectl rollout restart deployment/${{ inputs.service-name }} -n flowin
       - name: Wait for rollout
         run: |
           kubectl rollout status deployment/${{ inputs.service-name }} -n flowin

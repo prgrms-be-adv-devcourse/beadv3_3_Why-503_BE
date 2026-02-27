@@ -55,8 +55,6 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
     implementation 'org.springframework.ai:spring-ai-starter-vector-store-chroma'
-    // service discovery
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
 
     implementation "org.apache.poi:poi-ooxml:5.5.1"

@@ -17,14 +17,14 @@ spec:
         app: chroma
     spec:
       securityContext:
-        fsGroup: 0
-        runAsUser: 0
-
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
       # [핵심] 메인 앱 구동 전, K8s 고질병인 호스트 볼륨 권한 문제를 사전 타겟팅하여 교정
       initContainers:
         - name: fix-permissions
           image: busybox:1.36.1
-          command: ["sh", "-c", "mkdir -p /data && chmod -R 777 /data"]
+          command: ["sh", "-c", "chown -R 1000:1000 /data && chmod -R 775 /data"]
           volumeMounts:
             - name: chroma-data
               mountPath: /data
@@ -36,21 +36,13 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: IS_PERSISTENT
-              value: "TRUE"
             - name: PERSIST_DIRECTORY
               value: "/data"
             - name: ANONYMIZED_TELEMETRY
               value: "FALSE"
-
-            # Spring AI (v1 API)와의 호환성을 유지하기 위한 설정
-            - name: CHROMA_API_IMPL
-              value: "chromadb.api.segment.SegmentAPI"
-
             # t3.large 자원 보호를 위한 백그라운드 워커 스레드 제한
             - name: CHROMA_SERVER_WORKERS
               value: "1"
-
             - name: CHROMA_SERVER_HOST
               value: "0.0.0.0"
             - name: CHROMA_SERVER_HTTP_PORT

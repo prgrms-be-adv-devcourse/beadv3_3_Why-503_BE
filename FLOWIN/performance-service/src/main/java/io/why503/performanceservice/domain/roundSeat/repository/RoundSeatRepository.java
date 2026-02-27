@@ -58,7 +58,7 @@ public interface RoundSeatRepository extends JpaRepository<RoundSeatEntity, Long
             @Param("reservedStatus") RoundSeatStatus reservedStatus
     );
     // WAIT인 좌석만 AVAILABLE로 변경
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
         @Query("""
         UPDATE RoundSeatEntity r
         SET r.status = :newStatus,

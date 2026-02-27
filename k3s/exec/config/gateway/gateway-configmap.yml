@@ -169,7 +169,14 @@ data:
                 - Path=/bookings/**
               filters:
                 - JwtValidationFilter
-
+                
+            - id: reservation-static
+              uri: http://reservation-service.flowin:8400
+              predicates:
+                - Path=/show-detail.html,/queue.html,/booking.html
+                - Method=GET
+              filters:
+                - JwtValidationFilter
             # ==========================================
             # 5. [추가] AI 서비스 (AI: 8500)
             # ==========================================
